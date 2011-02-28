@@ -1,0 +1,14 @@
+export(makeNamesFile, makeDataFile,
+       cubistControl,
+       cubist.default)
+
+S3method(cubist, default)
+
+S3method(QuinlanAttributes, numeric)
+S3method(QuinlanAttributes, factor)
+S3method(QuinlanAttributes, character)
+S3method(QuinlanAttributes, ordered)
+S3method(QuinlanAttributes, matrix)
+S3method(QuinlanAttributes, data.frame)
+
+       
