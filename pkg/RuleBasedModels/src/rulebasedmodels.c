@@ -1,55 +1,5 @@
-#include <R.h>
-#include <Rinternals.h>
-#include <R_ext/Rdynload.h>
-
 #include "defns.i"
 #include "extern.i"
-
-/* XXX Fake */
-void cubist(char **namesv,
-            char **datav,
-            int *unbiased,
-            char **compositev,
-            int *neighbors,
-            int *committees,
-            double *sample,
-            int *seed,
-            int *rules,
-            double *extrapolation,
-            char **modelv)
-{
-    Rprintf("Hello, world\n");
-    char *namesString = namesv[0];
-    char *model = R_alloc(strlen(namesString) + 1, 1);
-    strcpy(model, namesString);
-    modelv[0] = model;
-}
-
-static const R_NativePrimitiveArgType cubist_t[] = {
-    STRSXP,   // namesv
-    STRSXP,   // datav
-    LGLSXP,   // unbiased
-    STRSXP,   // compositev
-    INTSXP,   // neighbors
-    INTSXP,   // committees
-    REALSXP,  // sample
-    INTSXP,   // seed
-    INTSXP,   // rules
-    REALSXP,  // extrapolation
-    STRSXP    // modelv
-};
-
-static const R_CMethodDef cEntries[] = {
-    {"cubist", (DL_FUNC) &cubist, 11, cubist_t},
-    {NULL, NULL, 0}
-};
-
-void R_init_RuleBasedModels(DllInfo *dll)
-{
-    Rprintf("R_init_RuleBasedModels called\n");
-    R_registerRoutines(dll, cEntries, NULL, NULL, NULL);
-    R_useDynamicSymbols(dll, FALSE);
-}
 
 /*
  * Reset all global variables to their initial value
