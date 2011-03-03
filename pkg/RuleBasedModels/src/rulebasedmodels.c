@@ -1,5 +1,6 @@
 #include "defns.i"
 #include "extern.i"
+#include "rulebasedmodels.h"
 
 /*
  * Reset all global variables to their initial value
@@ -150,7 +151,7 @@ void initglobals(void)
 /*
  * Set global variables in preparation for creating a model
  */
-void setglobals(int unbiased, int composite, int neighbors, int committees,
+void setglobals(int unbiased, char *composite, int neighbors, int committees,
                 double sample, int seed, int rules, double extrapolation)
 {
     UNBIASED = unbiased != 0 ? true : false;
@@ -163,4 +164,42 @@ void setglobals(int unbiased, int composite, int neighbors, int committees,
     KRInit = seed;
     MAXRULES = rules;
     EXTRAP = extrapolation;
+}
+
+void setOf()
+{
+    // XXX This should use a different name everytime it's called
+    Of = fopen("rulebasedmodels.tmp", "w");
+}
+
+void closeOf()
+{
+    if (Of)
+        fclose(Of);
+}
+
+void RBM_GetNames(char *names)
+{
+    // XXX TODO
+}
+
+void RBM_GetData(char *data)
+{
+    // XXX TODO
+}
+
+void rulebasedmodels()
+{
+    // XXX Should check value of CWtAtt
+    AvCWt = 1;
+
+    // Build and evaluate cubist model
+    Rprintf("Calling InitialiseEnvData\n");
+    InitialiseEnvData();
+
+    // XXX We don't support XVAL yet
+    Rprintf("Skipping call to SingleCttee\n");
+    // SingleCttee();
+
+    Rprintf("rulebasedmodels finished\n");
 }
