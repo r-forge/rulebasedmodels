@@ -1,6 +1,8 @@
+useDynLib(RuleBasedModels)
+
 export(makeNamesFile, makeDataFile,
        cubistControl,
-       cubist.default)
+       cubist)
 
 S3method(cubist, default)
 
