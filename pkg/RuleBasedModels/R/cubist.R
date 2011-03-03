@@ -61,14 +61,11 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
   invisible(NULL)
 }
 
-if(FALSE)
+testcubist <- function()
   {
     ## testing example
-
     cubist(iris[,-1], iris[,1])
   }
-
-
 
 cubistControl <- function(unbiased = FALSE,
                           composite = "auto",
