@@ -1,0 +1,2 @@
+# This is gcc-specific, but it was used in the original Makefile
+PKG_CFLAGS = -ffloat-store

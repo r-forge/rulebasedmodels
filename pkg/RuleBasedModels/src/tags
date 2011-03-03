@@ -1,0 +1,307 @@
+AExpression	implicitatt.c	/^Boolean AExpression(void)$/
+AddDefAtts	formtree.c	/^void AddDefAtts(void)$/
+AddModels	formtree.c	/^void AddModels(CaseNo Fp, CaseNo Lp, Tree T, Tree /
+AddRow	regress.c	/^void AddRow(double *Model, short From, short To, d/
+AddSplitAtts	formtree.c	/^void AddSplitAtts(Tree T)$/
+AddToList	formrules.c	/^void AddToList(CaseNo *List, CaseNo N)$/
+AdjustAllThresholds	contin.c	/^void AdjustAllThresholds(Tree T)$/
+AdjustThresholds	contin.c	/^void AdjustThresholds(Tree T, Attribute Att)$/
+AdjustedValue	instance.c	/^#define  AdjustedValue(i,b)	(Cttee?(Class(Instance/
+Alloc	defns.i	/^\/\/#define  Alloc(N,T)		(T *) Pmalloc((N)*sizeof(/
+AllocZero	defns.i	/^#define  AllocZero(N,T)		(T *) Pcalloc(N, sizeof(T/
+Append	implicitatt.c	/^void Append(char c)$/
+AsciiOut	modelfiles.c	/^void AsciiOut(String Pre, String S)$/
+Atom	implicitatt.c	/^Boolean Atom(void)$/
+Attribute	defns.i	/^		Attribute;	\/* attribute number, 1..MaxAtt *\/$/
+AttributeUsage	construct.c	/^void AttributeUsage(void)$/
+AverageDev	stats.c	/^double AverageDev(float Mean, CaseNo Fp, CaseNo Lp/
+AverageErr	stats.c	/^double AverageErr(DataRec *D, CaseNo Fp, CaseNo Lp/
+AverageNeighbors	instance.c	/^float AverageNeighbors(RRuleSet *Cttee, DataRec Ca/
+Before	defns.i	/^#define Before(n1,n2)  (n1->Tested < n2->Tested ||/
+Bit	defns.i	/^#define	 Bit(b)			(1 << (b))$/
+BuildIndex	instance.c	/^Index BuildIndex(CaseNo Fp, CaseNo Lp)$/
+BuildTables	regress.c	/^void BuildTables(CaseNo Fp, CaseNo Lp)$/
+C1	implicitatt.c	/^#define	C1(x)	(CUNA(XSN-1) ? _UNK.cval : (x))$/
+C2	implicitatt.c	/^#define	C2(x)	(CUNA(XSN-1) || CUNA(XSN-2) ? _UNK.c/
+CD2	implicitatt.c	/^#define	CD2(x)	(CUNA(XSN-1) || CUNA(XSN-2) ? 0 : (/
+CRule	defns.i	/^	 RuleRec, *CRule;$/
+CUNA	implicitatt.c	/^#define CUNA(a)	(CUnknownVal(XStack[a]) || NotAppl/
+CUnknownVal	implicitatt.c	/^#define	CUnknownVal(AV)		(AV.cval==_UNK.cval)$/
+CVDiff	instance.c	/^#define	 CVDiff(c,cv,a)		(fabs(CVal(c,a)-(cv))\/(5/
+CVal	defns.i	/^#define  CVal(Case,Attribute)   Case[Attribute]._c/
+CValToStr	utility.c	/^void CValToStr(ContValue CV, Attribute Att, String/
+CWeight	defns.i	/^#define	 CWeight(Case)		( CWtAtt ? CVal(Case,CWtAt/
+Cachesort	sort.c	/^void Cachesort(CaseNo Fp, CaseNo Lp)$/
+CaseLabel	utility.c	/^String CaseLabel(CaseNo N)$/
+CharWidth	text.i	/^#define	 CharWidth(S)		UTF8CharWidth(S)$/
+Check	utility.c	/^void Check(float Val, float Low, float High)$/
+CheckClose	defns.i	/^#define  CheckClose(f)		if(f) {fclose(f); f=Nil;}$/
+CheckDistance	instance.c	/^void CheckDistance(DataRec Case, CaseNo Saved)$/
+CheckFile	modelfiles.c	/^void CheckFile(String Extension, Boolean Write)$/
+CheckForms	instance.c	/^void CheckForms(RRuleSet *Cttee)$/
+CheckValue	getdata.c	/^void CheckValue(DataRec DVec, Attribute Att)$/
+Class	defns.i	/^#define  Class(Case)		(*Case)._cont_val$/
+Cleanup	utility.c	/^void Cleanup(void)$/
+ClearBits	defns.i	/^#define	 ClearBits(n,s)		memset(s,0,n)$/
+ComputeGain	stats.c	/^double ComputeGain(Tree Node)$/
+Condition	defns.i	/^	 CondRec, *Condition;$/
+Conjunct	implicitatt.c	/^Boolean Conjunct(void)$/
+ConstructCttee	construct.c	/^void ConstructCttee(void)$/
+ConstructRuleSet	construct.c	/^RRuleSet ConstructRuleSet(int ModelNo)$/
+ContValue	defns.i	/^typedef	 double	ContValue;	\/* continuous attribut/
+ContinTest	contin.c	/^void ContinTest(Tree Node, Attribute Att, float Cu/
+Continuous	defns.i	/^#define  Continuous(a)		(! MaxAttVal[a] && ! StatB/
+CopyBits	defns.i	/^#define	 CopyBits(n,f,t)	memcpy(t,f,n)$/
+CopyInstances	instance.c	/^void CopyInstances(void)$/
+CountCoeffs	regress.c	/^int CountCoeffs(double *Model)$/
+CountData	getdata.c	/^CaseNo CountData(FILE *Df)$/
+CrossVal	xval.c	/^void CrossVal(void)$/
+D2	implicitatt.c	/^#define	D2(x)	(DUNA(XSN-1) || DUNA(XSN-2) ? 0 : (x/
+DRef1	defns.i	/^#define  DRef1(Case)		Case[MaxAtt+1]._cont_val$/
+DRef2	defns.i	/^#define  DRef2(Case)		Case[MaxAtt+2]._cont_val$/
+DUNA	implicitatt.c	/^#define DUNA(a)	(DUnknownVal(XStack[a]) || NotAppl/
+DUnknownVal	implicitatt.c	/^#define	DUnknownVal(AV)		(! AV.dval)$/
+DVal	defns.i	/^#define  DVal(Case,Attribute)   Case[Attribute]._d/
+DataBlock	utility.c	/^typedef struct _datablockrec	*DataBlock;$/
+DataBlockRec	utility.c	/^	DataBlockRec;$/
+DataRec	defns.i	/^	 AttValue, *DataRec;$/
+DateToDay	utility.c	/^int DateToDay(String DS)	\/*  Day 1 is 0000\/03\/0/
+DateVal	defns.i	/^#define	 DateVal(a)		StatBit(a,DATEVAL)$/
+DayToDate	utility.c	/^void DayToDate(int Day, String Date)$/
+DefNVal	defns.i	/^#define	 DefNVal(DE)	DE._operand._n_val$/
+DefOp	defns.i	/^#define	 DefOp(DE)	DE._op_code$/
+DefSVal	defns.i	/^#define	 DefSVal(DE)	DE._operand._s_val$/
+DefSemanticsError	implicitatt.c	/^void DefSemanticsError(int Fi, String Msg, int OpC/
+DefSyntaxError	implicitatt.c	/^void DefSyntaxError(String Msg)$/
+DefVal	defns.i	/^	 DefVal;$/
+Definition	defns.i	/^	 DefElt, *Definition;$/
+DeleteFromList	formrules.c	/^void DeleteFromList(CaseNo *Before, CaseNo N)$/
+Denominator	utility.c	/^int Denominator(ContValue Val)$/
+Discrete	defns.i	/^#define  Discrete(a)		(MaxAttVal[a] || StatBit(a,D/
+DiscreteTest	discr.c	/^void DiscreteTest(Tree Node, Attribute Att, Set *S/
+Distance	instance.c	/^float Distance(DataRec Case1, DataRec Case2, float/
+Divide	formtree.c	/^void Divide(Tree Node, CaseNo Fp, CaseNo Lp, int L/
+Dump	implicitatt.c	/^void Dump(char OpCode, ContValue F, String S, int /
+DumpOp	implicitatt.c	/^void DumpOp(char OpCode, int Fi)$/
+EX_MODELFILE	text.i	/^#define	 EX_MODELFILE(f)	"file %s incompatible wit/
+E_BADATTVAL	text.i	/^#define	 E_BADATTVAL(v,a)	"bad value of `%s' for a/
+E_BADDATE	text.i	/^#define	 E_BADDATE(d,a)		"bad date `%s' for attrib/
+E_BADDEF1	text.i	/^#define	 E_BADDEF1(a,s,x)	"in definition of attrib/
+E_BADDEF2	text.i	/^#define	 E_BADDEF2(a,s,x)	"in definition of attrib/
+E_BADNUMBER	text.i	/^#define	 E_BADNUMBER(a)		"value of `%s' changed to/
+E_BADTIME	text.i	/^#define	 E_BADTIME(d,a)		"bad time `%s' for attrib/
+E_BADTSTMP	text.i	/^#define	 E_BADTSTMP(d,a)	"bad timestamp `%s' for a/
+E_NOFILE	text.i	/^#define	 E_NOFILE(f,e)		"cannot open file %s%s\\n"/
+E_SAMEATT	text.i	/^#define	 E_SAMEATT(a,b)		"[warning] attribute `%s'/
+E_SINGLEATTVAL	text.i	/^#define	 E_SINGLEATTVAL(a,v)	"attribute `%s' has o/
+E_TOOMANYVALS	text.i	/^#define	 E_TOOMANYVALS(a,n)	"too many values for a/
+EltRec	defns.i	/^	 EltRec;$/
+Env	defns.i	/^	 EnvRec, *Env;$/
+ErrVariance	prunetree.c	/^double ErrVariance(double *Model, CaseNo Fp, CaseN/
+Error	utility.c	/^void Error(int ErrNo, String S1, String S2)$/
+EstimateErr	stats.c	/^double EstimateErr(double Val, double NData, float/
+EvalBinarySplit	discr.c	/^void EvalBinarySplit(Tree Node, Attribute Att, Cas/
+EvalContinuousAtt	contin.c	/^void EvalContinuousAtt(Tree Node, Attribute Att, C/
+EvalDiscreteAtt	discr.c	/^void EvalDiscreteAtt(Tree Node, Attribute Att, Cas/
+EvalSubsetSplit	discr.c	/^void EvalSubsetSplit(Tree Node, Attribute Att, Cas/
+EvaluateCttee	construct.c	/^void EvaluateCttee(RRuleSet *Cttee, Boolean Detail/
+EvaluateDef	implicitatt.c	/^AttValue EvaluateDef(Definition D, DataRec Case)$/
+ExchangeRow	regress.c	/^void ExchangeRow(double *Model, short From, short /
+Exclude	defns.i	/^#define	 Exclude(a)		StatBit(a,EXCLUDE)$/
+ExecTime	utility.c	/^double  ExecTime(void)$/
+ExplicitAtt	getnames.c	/^void ExplicitAtt(FILE *Nf)$/
+Expression	implicitatt.c	/^Boolean Expression(void)$/
+Factor	implicitatt.c	/^Boolean Factor(void)$/
+FailSem	implicitatt.c	/^#define FailSem(Msg)	 {DefSemanticsError(Fi, Msg, /
+FailSyn	implicitatt.c	/^#define FailSyn(Msg)	 {DefSyntaxError(Msg); return/
+Find	implicitatt.c	/^Boolean Find(String S)$/
+FindActiveAtts	regress.c	/^void FindActiveAtts(void)$/
+FindAttName	implicitatt.c	/^Attribute FindAttName(void)$/
+FindDepth	trees.c	/^void FindDepth(Tree T)$/
+FindErrors	prunetree.c	/^void FindErrors(Tree T, CaseNo Fp, CaseNo Lp)$/
+FindGlobalProperties	formtree.c	/^void FindGlobalProperties(void)$/
+FindLimits	getdata.c	/^void FindLimits(Attribute Att, ContValue *Min, Con/
+FindModelAtts	formtree.c	/^void FindModelAtts(double *Model)$/
+FindNearestNeighbors	instance.c	/^void FindNearestNeighbors(DataRec Case)$/
+FindOne	implicitatt.c	/^int FindOne(String *Alt)$/
+FindPredictedValues	predict.c	/^void FindPredictedValues(RRuleSet *Cttee, CaseNo F/
+FindWeakestSubtree	prunetree.c	/^Boolean FindWeakestSubtree(Tree T)$/
+ForEach	defns.i	/^#define	 ForEach(v,f,l)		for(v=f ; v<=l ; ++v) $/
+FormRules	formrules.c	/^RRuleSet FormRules(Tree T)$/
+FormTree	formtree.c	/^void FormTree(CaseNo Fp, CaseNo Lp, int Level, Tre/
+FracBase	utility.c	/^int FracBase(Attribute Att)$/
+Free	defns.i	/^#define	Free(x)			{free(x); x=0;}$/
+FreeCases	utility.c	/^void FreeCases(void)$/
+FreeCttee	rules.c	/^void FreeCttee(RRuleSet *Cttee)$/
+FreeData	getdata.c	/^void FreeData(DataRec *Case)$/
+FreeEnvData	formtree.c	/^void FreeEnvData(void)$/
+FreeFormRuleData	formrules.c	/^void FreeFormRuleData(void)$/
+FreeIndex	instance.c	/^void FreeIndex(Index Node)$/
+FreeInstances	instance.c	/^void FreeInstances(void)$/
+FreeLastCase	utility.c	/^void FreeLastCase(DataRec Case)$/
+FreeNamesData	getnames.c	/^void FreeNamesData(void)$/
+FreeTree	trees.c	/^void FreeTree(Tree T)$/
+FreeUnlessNil	defns.i	/^#define  FreeUnlessNil(p)	if((p)!=Nil) Free(p)$/
+FreeVector	utility.c	/^void FreeVector(void **V, int First, int Last)$/
+GetCommittee	modelfiles.c	/^RRuleSet *GetCommittee(String Extension)$/
+GetData	getdata.c	/^void GetData(FILE *Df, Boolean Train, Boolean Allo/
+GetDataRec	getdata.c	/^DataRec GetDataRec(FILE *Df, Boolean Train)$/
+GetFile	utility.c	/^FILE *GetFile(String Extension, String RW)$/
+GetInt	utility.c	/^int GetInt(String S, int N)$/
+GetNames	getnames.c	/^void GetNames(FILE *Nf)$/
+Goodbye	defns.i	/^#define Goodbye(x)		{Cleanup(); exit(x);}$/
+GreatestValueBelow	contin.c	/^ContValue GreatestValueBelow(ContValue Th)$/
+Group	formtree.c	/^CaseNo Group(DiscrValue V, CaseNo Fp, CaseNo Lp, T/
+ImplicitAtt	implicitatt.c	/^void ImplicitAtt(FILE *Nf)$/
+In	defns.i	/^#define	 In(b,s)		((s[(b) >> 3]) & Bit((b) & 07))$/
+InChar	getnames.c	/^int InChar(FILE *f)$/
+InCondition	modelfiles.c	/^Condition InCondition(void)$/
+InRule	modelfiles.c	/^CRule InRule(void)$/
+InRules	modelfiles.c	/^RRuleSet InRules(void)$/
+Indent	trees.c	/^void Indent(int Sh, int BrNo)$/
+Index	defns.i	/^typedef	 struct _indexrec	*Index;$/
+IndexRec	defns.i	/^	 IndexRec;$/
+InitialiseEnvData	formtree.c	/^void InitialiseEnvData(void)$/
+InitialiseInstances	instance.c	/^void InitialiseInstances(RRuleSet *Cttee)$/
+KRandom	utility.c	/^double KRandom(void)$/
+Leaf	trees.c	/^Tree Leaf(CaseCount Cases, double Mean, double SD)/
+LinModel	predict.c	/^float LinModel(double *Model, DataRec Case)$/
+ListAttsUsed	getnames.c	/^void ListAttsUsed(void)$/
+Log	defns.i	/^#define	 Log(x)			((x) <= 0 ? 0.0 : log((double)x)/
+MSwap	prunetree.c	/^#define	 MSwap(a,b)	{Hold = GEnv.Resid[a];\\$/
+MakeSubset	modelfiles.c	/^Set MakeSubset(Attribute Att)$/
+Matches	predict.c	/^Boolean Matches(CRule R, DataRec Case)$/
+Max	defns.i	/^#define	 Max(a,b)               ((a)>(b) ? a : b) /
+MaxLine	trees.c	/^int MaxLine(Tree T)$/
+MedianResid	prunetree.c	/^float MedianResid(CaseNo Fp, CaseNo Lp, double Wan/
+Min	defns.i	/^#define	 Min(a,b)               ((a)<(b) ? a : b) /
+MinAttCoeff	defns.i	/^#define	 MinAttCoeff(a)	(0.01 * GlobalSD \/ AttSD[/
+Modify	utility.c	/^#define	Modify(F,S)	if ( (F -= S) < 0 ) F += 1.0$/
+NNEnvRec	defns.i	/^	 NNEnvRec;$/
+NNEstimate	instance.c	/^float NNEstimate(RRuleSet *Cttee, DataRec Case)$/
+NewCase	utility.c	/^DataRec NewCase(void)$/
+NewRule	rules.c	/^Boolean NewRule(Condition Cond[], int NCond, Boole/
+NotApplic	defns.i	/^#define  NotApplic(c,a)		(DVal(c,a)==NA)$/
+NotApplicVal	defns.i	/^#define	 NotApplicVal(AV)	(AV._discr_val==NA)$/
+NoteUsed	construct.c	/^void NoteUsed(Attribute Att)$/
+NotifyStage	update.c	/^void NotifyStage(int S)$/
+OldRuleRec	defns.i	/^	 OldRuleRec;$/
+OrderRules	formrules.c	/^void OrderRules(void)$/
+Ordered	defns.i	/^#define	 Ordered(a)		StatBit(a,ORDERED)$/
+P1	defns.i	/^#define	 P1(x)		(rint((x)*10) \/ 10)$/
+Parent	defns.i	/^#define	 Parent(T)	T->Branch[0]$/
+Pcalloc	utility.c	/^void *Pcalloc(size_t Number, unsigned int Size)$/
+Plural	defns.i	/^#define  Plural(n)		((n) != 1 ? "s" : "")$/
+Pmalloc	utility.c	/^void *Pmalloc(size_t Bytes)$/
+PopCondition	formrules.c	/^void PopCondition()$/
+Prealloc	utility.c	/^void *Prealloc(void *Present, size_t Bytes)$/
+PredCount	defns.i	/^#define  PredCount(Case)	Case[MaxAtt+2]._discr_val/
+PredSum	defns.i	/^#define	 PredSum(Case)		Case[MaxAtt+1]._cont_val$/
+PredVal	defns.i	/^#define	 PredVal(Case)		Case[MaxAtt+1]._cont_val$/
+PredictValue	predict.c	/^float PredictValue(RRuleSet *Cttee, DataRec CaseDe/
+Prepare	xval.c	/^void Prepare(void)$/
+Primary	implicitatt.c	/^Boolean Primary(void)$/
+PrintCondition	rules.c	/^void PrintCondition(Condition C)$/
+PrintHeader	utility.c	/^void PrintHeader(String Title)$/
+PrintRule	rules.c	/^void PrintRule(CRule R)$/
+PrintRules	rules.c	/^void PrintRules(RRuleSet RS, String Msg)$/
+PrintTree	trees.c	/^void PrintTree(Tree T, String Title)$/
+ProcessLists	formrules.c	/^void ProcessLists()$/
+ProcessOption	utility.c	/^char ProcessOption(int Argc, char *Argv[], char *O/
+Progress	update.c	/^void Progress(float Delta)$/
+Prune	prunetree.c	/^void Prune(Tree T)$/
+PruneRule	formrules.c	/^void PruneRule(Condition Cond[], float InitCoeffs)/
+PushCondition	formrules.c	/^void PushCondition()$/
+RRuleSet	defns.i	/^	 RuleSetRec, *RRuleSet;$/
+RawLinModel	predict.c	/^float RawLinModel(double *Model, DataRec Case)$/
+ReadDefinition	implicitatt.c	/^void ReadDefinition(FILE *f)$/
+ReadFilePrefix	modelfiles.c	/^void ReadFilePrefix(String Extension)$/
+ReadHeader	modelfiles.c	/^void ReadHeader(void)$/
+ReadName	getnames.c	/^Boolean ReadName(FILE *f, String s, int n, char Co/
+ReadProp	modelfiles.c	/^int ReadProp(char *Delim)$/
+Realloc	defns.i	/^#define  Realloc(V,N,T)		V = (T *) Prealloc(V, (N)/
+Regress	regress.c	/^void Regress(CaseNo Fp, CaseNo Lp, double *Model)$/
+ReleaseRule	rules.c	/^void ReleaseRule(CRule R)$/
+RemoveBias	formrules.c	/^void RemoveBias(CRule R, int Coeffs)$/
+RemoveQuotes	modelfiles.c	/^String RemoveQuotes(String S)$/
+ReplaceUnknowns	getdata.c	/^Boolean ReplaceUnknowns(DataRec Case, Boolean *Att/
+ResetKR	utility.c	/^void ResetKR(int KRInit)$/
+Resid	defns.i	/^#define  Resid(Case)		Case[MaxAtt+1]._cont_val$/
+RuleNo	defns.i	/^typedef  int	RuleNo;			\/* rule number *\/$/
+RuleSetPrediction	predict.c	/^float RuleSetPrediction(RRuleSet RS, DataRec CaseD/
+SD	stats.c	/^double SD(double N, double Sum, double SumSq)$/
+SExpression	implicitatt.c	/^Boolean SExpression(void)$/
+SVal	defns.i	/^#define  SVal(Case,Attribute)   Case[Attribute]._d/
+SameRule	rules.c	/^Boolean SameRule(RuleNo r, Condition Cond[], int N/
+SampleTrainingCases	construct.c	/^void SampleTrainingCases(void)$/
+Satisfies	rules.c	/^Boolean Satisfies(DataRec CaseDesc, Condition OneC/
+SaveCommittee	modelfiles.c	/^void SaveCommittee(RRuleSet *Cttee, String Extensi/
+SaveDiscreteNames	modelfiles.c	/^void SaveDiscreteNames(void)$/
+SaveRules	modelfiles.c	/^void SaveRules(RRuleSet RS)$/
+Scan	formrules.c	/^void Scan(Tree T)$/
+ScanIndex	instance.c	/^void ScanIndex(DataRec Case, Index Node, float Min/
+SecsToTime	utility.c	/^void SecsToTime(int Secs, String Time)$/
+Select	instance.c	/^#define	 Select(t)		(UseAll? (t) :\\$/
+Set	defns.i	/^typedef  unsigned char	Boolean, BranchType, *Set;$/
+SetBit	defns.i	/^#define	 SetBit(b,s)		(s[(b) >> 3] |= Bit((b) & 07/
+SetIOpt	cubist.c	/^#define SetIOpt(V)	V = strtol(OptArg, &EndPtr, 10)/
+SetOpt	cubist.c	/^#define SetOpt(V)	V = strtod(OptArg, &EndPtr);\\$/
+SetParameters	instance.c	/^void SetParameters(RRuleSet *Cttee)$/
+SetProperties	prunetree.c	/^void SetProperties(Tree T, Tree Parent)$/
+SetTSBase	utility.c	/^void SetTSBase(int y)$/
+Show	trees.c	/^void Show(Tree T, int Sh)$/
+ShowBranch	trees.c	/^void ShowBranch(int Sh, Tree T, DiscrValue v, Disc/
+Shuffle	xval.c	/^void Shuffle(int *Vec)$/
+SimplifyModel	regress.c	/^void SimplifyModel(DataRec *D, CaseNo Fp, CaseNo L/
+SingleCttee	construct.c	/^void SingleCttee(void)$/
+SingleFail	formrules.c	/^int SingleFail(CaseNo i)$/
+Skip	defns.i	/^#define	 Skip(a)		StatBit(a,EXCLUDE|SKIP)$/
+SmoothModels	prunetree.c	/^void SmoothModels(Tree T, Tree Parent, CaseNo Fp, /
+Solve	regress.c	/^void Solve(double *Model)$/
+SortRec	defns.i	/^         SortRec;$/
+Space	defns.i	/^#define  Space(s)		(s==' ' || s=='\\n' || s=='\\r'/
+Sprout	trees.c	/^void Sprout(Tree T, DiscrValue Branches)$/
+StatBit	defns.i	/^#define	 StatBit(a,b)		(SpecialStatus[a]&(b))$/
+StoreIVal	getdata.c	/^int StoreIVal(String S)$/
+String	defns.i	/^typedef	 char		*String;$/
+Swap	defns.i	/^#define	 Swap(a,b)	{xab = Case[a]; Case[a] = Case[/
+SwapInstance	instance.c	/^void SwapInstance(CaseNo A, CaseNo B)$/
+SwapSRec	sort.c	/^#define SwapSRec(a,b)	{Xab=SRec[a]; SRec[a]=SRec[b/
+TStampToMins	utility.c	/^int TStampToMins(String TS)$/
+TStampVal	defns.i	/^#define	 TStampVal(a)		StatBit(a,TSTMPVAL)$/
+TX_IllegalValue	text.i	/^#define	 TX_IllegalValue(v,l,h)	"\\t** illegal val/
+TX_Line	text.i	/^#define	 TX_Line(l,f)		"*** line %d of `%s':\\n   /
+TX_NNeighbors	text.i	/^#define	 TX_NNeighbors(n)	"\\tUse %d nearest neigh/
+TX_RInfo	text.i	/^#define	 TX_RInfo(c,p,m,l,h,e)	": [%d cases, mean /
+TX_ReadData	text.i	/^#define	 TX_ReadData(c,a,f)	"\\nRead %d cases (%d /
+TX_ReadTest	text.i	/^#define	 TX_ReadTest(c,f)	"Read %d cases from %s.t/
+TX_Release	text.i	/^#define	 TX_Release(n)		"Release " n$/
+Term	implicitatt.c	/^Boolean Term(void)$/
+TimeToSecs	utility.c	/^int TimeToSecs(String TS)$/
+TimeVal	defns.i	/^#define	 TimeVal(a)		StatBit(a,STIMEVAL)$/
+Tree	defns.i	/^typedef  struct _treerec	*Tree;$/
+TreeLeaves	trees.c	/^int TreeLeaves(Tree T)$/
+TreeParameters	formrules.c	/^void TreeParameters(Tree T, int D)$/
+TreeRec	defns.i	/^	 TreeRec;$/
+TreeSize	trees.c	/^int TreeSize(Tree T)$/
+TreeValue	prunetree.c	/^float TreeValue(Tree T, DataRec Case)$/
+UTF8CharWidth	utility.c	/^int UTF8CharWidth(unsigned char *U)$/
+Unknown	implicitatt.c	/^#define	Unknown(c,a)	(! DVal(c,a))$/
+Unsprout	prunetree.c	/^void Unsprout(Tree T)$/
+UnsproutAndUpdate	prunetree.c	/^void UnsproutAndUpdate(Tree Pruned, double ExtraEr/
+UpdateCount	formrules.c	/^void UpdateCount(int d, CaseNo i, double *Total, d/
+UpdateTStack	implicitatt.c	/^Boolean UpdateTStack(char OpCode, ContValue F, Str/
+UpdateUsage	construct.c	/^void UpdateUsage(CRule R)$/
+Verbosity	defns.i	/^#define Verbosity(d,s)		if(VERBOSITY >= d) {s;}$/
+Which	getnames.c	/^int Which(String Val, String *List, int First, int/
+WriteFilePrefix	modelfiles.c	/^void WriteFilePrefix(String Extension)$/
+XDVal	defns.i	/^#define  XDVal(Case,Attribute)  (Case[Attribute]._/
+XError	getdata.c	/^#define XError(a,b,c)   if (! SuppressErrorMessage/
+XStackElt	implicitatt.c	/^	 XStackElt;$/
+Xmain	cubist.c	/^int Xmain(int Argc, char *Argv[])$/
+assert	defns.i	/^#define	assert(x)$/
+initglobals	rulebasedmodels.c	/^void initglobals(void)$/
+interval	utility.c	/^  static const struct interval {$/
+setglobals	rulebasedmodels.c	/^void setglobals(int unbiased, int composite, int n/
+wcswidth	utility.c	/^int wcswidth(const wchar_t *pwcs, size_t n)$/
+wcwidth	utility.c	/^int wcwidth(wchar_t ucs)$/
