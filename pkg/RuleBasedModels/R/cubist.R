@@ -106,3 +106,60 @@ cubistControl <- function(unbiased = FALSE,
          label = label,
          seed = seed %% 4096L)
   }
+
+
+print.cubist <- function(x, ...)
+  {
+    cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
+
+
+    cat("Number of samples:", x$dims[1],
+        "\nNumber of predictors:", x$dims[2],
+        "\n\n")
+    
+    if(x$control$composite == "yes") cat("Rule and Instance-Based Model\n") else cat("Rule-Based Model\n") 
+    
+    cat("Number of Rules:", 0, "\n")
+    cat("Number of Committees:", x$control$committees, "\n")
+    if(x$control$composite == "yes") cat("Number of Instances:", x$control$neighbors, "\n")
+    otherOptions <- NULL
+    if(x$control$unbiased) otherOptions <- c(otherOptions, "unbiased rules")
+    if(x$control$extrapolation < 100) otherOptions <- c(otherOptions,
+                                                        paste(x$control$extrapolation, "% extrapolation", sep = ""))
+    if(x$control$sample < 99.9) otherOptions <- c(otherOptions,
+                                                        paste(x$control$sample, "% sub-sampling", sep = ""))
+    if(!is.null(otherOptions))
+      {
+        cat("Other options:", paste(otherOptions, collapse = ", "))
+      }
+    
+
+  }
+
+
+
+truncateText <- function(x)
+  {
+    if(length(x) > 1) x <- paste(x, collapse = "")
+    w <- options("width")$width
+    if(nchar(x) <= w) return(x)
+
+    cont <- TRUE
+    out <- x
+    while(cont)
+      {
+        
+        tmp <- out[length(out)]
+        tmp2 <- substring(tmp, 1, w)
+        
+        spaceIndex <- gregexpr("[[:space:]]", tmp2)[[1]]
+        stopIndex <- spaceIndex[length(spaceIndex) - 1] - 1
+        tmp <- c(substring(tmp2, 1, stopIndex),
+               substring(tmp, stopIndex + 1))
+        out <- if(length(out) == 1) tmp else c(out[1:(length(x)-1)], tmp)
+        if(all(nchar(out) <= w)) cont <- FALSE
+      }
+
+    paste(out, collapse = "\n")
+  }
+
