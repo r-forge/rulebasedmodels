@@ -5,6 +5,10 @@ export(makeNamesFile, makeDataFile,
        cubist, testcubist)
 
 S3method(cubist, default)
+S3method(C5.0, default)
+
+S3method(print, C5.0)
+S3method(print, cubist)
 
 S3method(QuinlanAttributes, numeric)
 S3method(QuinlanAttributes, factor)
