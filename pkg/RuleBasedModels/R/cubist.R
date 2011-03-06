@@ -36,7 +36,7 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
   if(!is.numeric(y)) stop("cubist models require a numeric outcome")
 
   ## TODO: check for missing outcome data
-
+  
   namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
   dataString <- makeDataFile(x, y)
 
@@ -58,8 +58,16 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
           PACKAGE="RuleBasedModels"
           )
   cat(Z$model)
-  invisible(NULL)
+  
+  out <- list(data = dataString,
+              names = namesString,
+              control = control,
+              dims = dim(x),
+              call = funcCall)
+  class(out) <- "cubist"
+  out
 }
+ 
 
 testcubist <- function()
   {
