@@ -57,7 +57,7 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
           model=character(1),               # pass back .model file as a string
           PACKAGE="RuleBasedModels"
           )
-  cat(Z$model)
+  cat(Z$model, '\n')
   
   out <- list(data = dataString,
               names = namesString,
