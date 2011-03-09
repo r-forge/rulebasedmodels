@@ -82,7 +82,7 @@ static void cubist(char **namesv,
 }
 
 // Declare the type of each of the arguments to the cubist function
-static const R_NativePrimitiveArgType cubist_t[] = {
+static R_NativePrimitiveArgType cubist_t[] = {
     STRSXP,   // namesv
     STRSXP,   // datav
     LGLSXP,   // unbiased
