@@ -11,10 +11,10 @@ cubistControl(unbiased = FALSE,
               composite = "auto", 
               neighbors = 3,
               committees = 1, 
-              rules = NA, 
+              rules = 100, 
               extrapolation = 100,
               sample = 99.9, 
-              seed = 1,
+              seed = sample.int(4096, size = 1) - 1L,
               label = "outcome")
 }
 \arguments{
