@@ -35,6 +35,8 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
 
 int	Stage=0;		/* Current stage number  */
 FILE	*Uf=0;			/* File to which update info written  */

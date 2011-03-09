@@ -38,6 +38,9 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "transform.h"
+#include "redefine.h"
+
 #define SetOpt(V)	V = strtod(OptArg, &EndPtr);\
 			if ( ! EndPtr || *EndPtr != '\00' ) break;\
 			ArgOK = true

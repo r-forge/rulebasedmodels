@@ -27,6 +27,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 double AverageDev(float Mean, CaseNo Fp, CaseNo Lp)
 /*     ----------  */
 {

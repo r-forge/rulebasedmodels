@@ -48,6 +48,8 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
 
 void EvalContinuousAtt(Tree Node, Attribute Att, CaseNo Fp, CaseNo Lp)
 /*   -----------------  */ 

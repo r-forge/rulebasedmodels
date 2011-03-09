@@ -33,6 +33,8 @@
 
 #include "defns.i"
 
+#include "transform.h"
+#include "redefine.h"
 
 Attribute
 	ClassAtt=0,		/* attribute to use as class */

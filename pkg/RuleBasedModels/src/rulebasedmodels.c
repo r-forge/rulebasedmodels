@@ -1,6 +1,8 @@
 #include "defns.i"
 #include "extern.i"
 #include "rulebasedmodels.h"
+#include "redefine.h"
+#include "strbuf.h"
 
 /*
  * Reset all global variables to their initial value
@@ -168,24 +170,16 @@ void setglobals(int unbiased, char *composite, int neighbors, int committees,
 
 void setOf()
 {
-    // XXX This should use a different name everytime it's called
-    Of = fopen("rulebasedmodels.tmp", "w");
+    // XXX Experimental
+    Of = rbm_fopen("rulebasedmodels.tmp", "w");
 }
 
 void closeOf()
 {
-    if (Of)
-        fclose(Of);
-}
-
-void RBM_GetNames(char *names)
-{
-    // XXX TODO
-}
-
-void RBM_GetData(char *data)
-{
-    // XXX TODO
+    if (Of) {
+        rbm_fclose(Of);  /* Does nothing */
+        puts(strbuf_getall((STRBUF *) Of));
+    }
 }
 
 void rulebasedmodels()
@@ -198,8 +192,8 @@ void rulebasedmodels()
     InitialiseEnvData();
 
     // XXX We don't support XVAL yet
-    Rprintf("Skipping call to SingleCttee\n");
-    // SingleCttee();
+    Rprintf("Calling SingleCttee\n");
+    SingleCttee();
 
     Rprintf("rulebasedmodels finished\n");
 }

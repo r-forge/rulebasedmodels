@@ -3,8 +3,24 @@
 #include <R_ext/Rdynload.h>
 
 #include "rulebasedmodels.h"
+#include "strbuf.h"
 
-/* XXX Fake version for testing */
+///////////////////////////////////////////////////////////
+//
+// Can't include defns.i because it conflicts with R.h.
+// The following subset are necessary.  I'll decide how
+// to resolve this later.
+
+extern void GetNames(FILE *Nf);
+extern void GetData(FILE *Df, unsigned char Train, unsigned char AllowUnknownTarget);
+extern void NotifyStage(int);
+extern void Progress(float);
+
+#define READDATA 1
+
+///////////////////////////////////////////////////////////
+
+// XXX Slightly working now
 static void cubist(char **namesv,
                    char **datav,
                    int *unbiased,
@@ -30,14 +46,22 @@ static void cubist(char **namesv,
     // XXX Should this be controlled via an option?
     Rprintf("Calling setOf\n");
     setOf();
-    Rprintf("Calling RBM_GetNames\n");
-    RBM_GetNames(*namesv);
-    Rprintf("Calling RBM_GetData\n");
-    RBM_GetData(*datav);
+    Rprintf("Calling GetNames\n");
+    STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
+    GetNames((FILE *) sb_names);
+
+    NotifyStage(READDATA);  /* This initializes global variable Uf */
+    Progress(-1.0);
+
+    Rprintf("Calling GetData\n");
+    STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
+    GetData((FILE *) sb_datav, 1, 0);
 
     // Real work is done here
     Rprintf("Calling rulebasedmodels\n");
     rulebasedmodels();
+
+    Rprintf("rulebasedmodels finished\n");
 
     // Get namesString out of the char **
     char *namesString = *namesv;

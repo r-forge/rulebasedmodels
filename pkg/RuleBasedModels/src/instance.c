@@ -27,6 +27,8 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
 
 #define	 DPREC	       16	/* distance precision */
 

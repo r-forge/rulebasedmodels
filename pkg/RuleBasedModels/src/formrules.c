@@ -42,6 +42,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 double		*Total=Nil,		/* [Condition] */
 		*PredErr=Nil,		/* [Condition] */
 		*Model;

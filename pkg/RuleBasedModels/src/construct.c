@@ -36,6 +36,8 @@
 #include "extern.i"
 #include <time.h>
 
+#include "transform.h"
+#include "redefine.h"
 
 /*************************************************************************/
 /*                                                                       */

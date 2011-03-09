@@ -35,6 +35,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 int	Entry;
 
 char*	Prop[]={"null",

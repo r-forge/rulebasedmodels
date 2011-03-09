@@ -34,6 +34,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 #define	 Reasonable ((GEnv.BrFreq[1]>=MINSPLIT) + (GEnv.BrFreq[2]>=MINSPLIT) +\
 		     (GEnv.BrFreq[3]>=MINSPLIT) >= 2)
 

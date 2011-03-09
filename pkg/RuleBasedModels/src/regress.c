@@ -37,6 +37,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 		/* x[i][v] = data (in Case) */
 		/* y[i]    = dependent var (in Class) */
 		/* least-squares solution given by xTx.Model = xTy  */

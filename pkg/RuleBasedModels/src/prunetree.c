@@ -27,6 +27,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 double	TotalErr, ExtraErr, TotalParams, ExtraParams, AdjErrLim, NewAdjErr;
 
 Tree	Weakest;

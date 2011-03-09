@@ -36,6 +36,8 @@
 #include "extern.i"
 #include <ctype.h>
 
+#include "transform.h"
+#include "redefine.h"
 
 char	*Buff;			/* buffer for input characters */
 int	BuffSize, BN;		/* size and index of next character */

@@ -35,6 +35,9 @@
 #include "defns.i"
 #include "extern.i"
 
+#include "transform.h"
+#include "redefine.h"
+
 #define Inc 2048
 
 /*  Alternative random number generator  */
