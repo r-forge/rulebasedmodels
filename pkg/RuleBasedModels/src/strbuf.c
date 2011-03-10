@@ -151,6 +151,10 @@ int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
 {
     int s;
     int size = sb->len - sb->i;  /* Remaining space left */
+    va_list ap2;
+
+    /* Copy ap to ap2 in case we need to call vsnprintf a second time */
+    va_copy(ap2, ap);
 
     /*
      * Attempt to write to "sb".  The return value "s" is the number of
@@ -173,9 +177,12 @@ int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
             return -1;
 
         size = sb->len - sb->i;  /* Recompute remaining space left */
-        s = vsnprintf(sb->buf + sb->i, size, format, ap);
+        s = vsnprintf(sb->buf + sb->i, size, format, ap2);
         assert(s < size);
     }
+
+    /* This corresponds to the va_copy */
+    va_end(ap2);
 
     /*
      * Bump the STRBUF's position by s, since
