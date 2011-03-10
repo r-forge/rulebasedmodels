@@ -1,3 +1,6 @@
+/* I'll get rid of this when I get rid of vasprintf */
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
