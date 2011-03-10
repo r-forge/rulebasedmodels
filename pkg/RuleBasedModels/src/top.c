@@ -4,6 +4,7 @@
 
 #include "rulebasedmodels.h"
 #include "strbuf.h"
+#include "redefine.h"
 
 ///////////////////////////////////////////////////////////
 //
@@ -33,6 +34,8 @@ static void cubist(char **namesv,
                    double *extrapolation,
                    char **modelv)
 {
+    int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
+
     // Announce ourselves for testing
     Rprintf("cubist called\n");
 
@@ -46,36 +49,45 @@ static void cubist(char **namesv,
     // XXX Should this be controlled via an option?
     Rprintf("Calling setOf\n");
     setOf();
-    Rprintf("Calling GetNames\n");
-    STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
-    GetNames((FILE *) sb_names);
 
-    NotifyStage(READDATA);  /* This initializes global variable Uf */
-    Progress(-1.0);
+    /*
+     * We need to initialize rbm_buf before calling any code that
+     * might call exit/rbm_exit.
+     */
+    if ((val = setjmp(rbm_buf)) == 0) {
+        Rprintf("Calling GetNames\n");
+        STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
+        GetNames((FILE *) sb_names);
 
-    Rprintf("Calling GetData\n");
-    STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
-    GetData((FILE *) sb_datav, 1, 0);
+        NotifyStage(READDATA);  /* This initializes global variable Uf */
+        Progress(-1.0);
 
-    // Real work is done here
-    Rprintf("Calling rulebasedmodels\n");
-    rulebasedmodels();
+        Rprintf("Calling GetData\n");
+        STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
+        GetData((FILE *) sb_datav, 1, 0);
 
-    Rprintf("rulebasedmodels finished\n");
+        // Real work is done here
+        Rprintf("Calling rulebasedmodels\n");
+        rulebasedmodels();
 
-    // Get namesString out of the char **
-    char *namesString = *namesv;
+        Rprintf("rulebasedmodels finished\n");
 
-    // Copy namesString into allocated memory.
-    // This memory will be deallocated by ".C" when it returns.
-    char *model = R_alloc(strlen(namesString) + 1, 1);
-    strcpy(model, namesString);
+        // Get namesString out of the char **
+        char *namesString = *namesv;
 
-    // I think the previous value of *modelv will be garbage collected
-    *modelv = model;
+        // Copy namesString into allocated memory.
+        // This memory will be deallocated by ".C" when it returns.
+        char *model = R_alloc(strlen(namesString) + 1, 1);
+        strcpy(model, namesString);
 
-    // Close file object "Of"
-    closeOf();
+        // I think the previous value of *modelv will be garbage collected
+        *modelv = model;
+
+        // Close file object "Of"
+        closeOf();
+    } else {
+        Rprintf("cubist code called exit with value %d\n", val - JMP_OFFSET);
+    }
 
     // We reinitialize the globals on exit out of general paranoia
     initglobals();
