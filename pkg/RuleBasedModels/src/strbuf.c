@@ -1,10 +1,8 @@
-/* I'll get rid of this when I get rid of vasprintf */
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include "strbuf.h"
 
@@ -90,6 +88,8 @@ int strbuf_truncate(STRBUF *sb)
     /* Set the current data size to the current position */
     sb->n = sb->i;
 
+    assert(sb->n <= sb->len);
+
     return 0;
 }
 
@@ -117,7 +117,7 @@ void strbuf_destroy(STRBUF *sb)
  */
 int strbuf_write(STRBUF *sb, const unsigned char *data, unsigned int n)
 {
-    unsigned int nlen = sb->i + n;
+    unsigned int nlen = sb->i + n;  /* Minimum length needed */
 
     /* If the new string won't fit, extend sb */
     if (nlen > sb->len)
@@ -129,6 +129,8 @@ int strbuf_write(STRBUF *sb, const unsigned char *data, unsigned int n)
     sb->i += n;
     if (sb->i > sb->n)
         sb->n = sb->i;
+
+    assert(sb->n <= sb->len);
 
     return 0;
 }
@@ -147,72 +149,44 @@ int strbuf_printf(STRBUF *sb, const unsigned char *format, ...)
 
 int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
 {
-    int status;
-    char *ret;
-
-    /* Let vasprintf format the arguments to a dynamically allocated string */
-    status = vasprintf(&ret, format, ap);
+    int s;
+    int size = sb->len - sb->i;  /* Remaining space left */
 
     /*
-     * If vasprintf succeeded, write the result to the STRBUF,
-     * and then deallocate the memory allocated by vasprintf.
+     * Attempt to write to "sb".  The return value "s" is the number of
+     * characters (not including the trailing '\0') which would have
+     * been written to the string if enough space had been available.
+     * That tells us how much we need to extend "sb" by if the first
+     * attempt fails.
      */
-    if (status != -1) {
-        strbuf_puts(sb, ret);
-        free(ret);
+    if ((s = vsnprintf(sb->buf + sb->i, size, format, ap)) >= size) {
+        /*
+         * We didn't have enough space, but now we know how
+         * much we need, so extend the STRBUF and do it again.
+         * We'll ask for twice as much as we need, which is
+         * our simple-minded strategy for reducing the number
+         * of times that we allocate memory.
+         */
+        unsigned int nlen = sb->n + s + 1;  /* Minimum length needed */
+
+        if (extend(sb, 2 * nlen) != 0)
+            return -1;
+
+        size = sb->len - sb->i;  /* Recompute remaining space left */
+        s = vsnprintf(sb->buf + sb->i, size, format, ap);
+        assert(s < size);
     }
 
-    return status;
-}
+    /*
+     * Bump the STRBUF's position by s, since
+     * s doesn't include the trailing '\0'
+     */
+    sb->i += s;
+    if (sb->i > sb->n)
+        sb->n = sb->i;
 
-/* Saving this in case vasprintf doesn't work out */
-int strbuf_printf_SAVE(STRBUF *sb, unsigned char *format, ...)
-{
-    unsigned char buffer[128];  /* Used for converting numbers to strings */
-    unsigned char *p;
-    va_list ap;
-    va_start(ap, format);
+    assert(sb->n <= sb->len);
 
-    for (p = format; *p != '\0'; p++) {
-        if (*p == '%') {
-            switch (*(p + 1)) {
-            case '%':
-                strbuf_putc(sb, (int) '%');
-                p++;
-                break;
-            case 'c':
-                strbuf_putc(sb, va_arg(ap, int));
-                p++;
-                break;
-            case 'd':
-                sprintf(buffer, "%d", va_arg(ap, int));
-                strbuf_puts(sb, buffer);
-                p++;
-                break;
-            case 'f':
-                sprintf(buffer, "%f", va_arg(ap, double));
-                strbuf_puts(sb, buffer);
-                p++;
-                break;
-            case 'g':
-                sprintf(buffer, "%g", va_arg(ap, double));
-                strbuf_puts(sb, buffer);
-                p++;
-                break;
-            case 's':
-                strbuf_puts(sb, va_arg(ap, char *));
-                p++;
-                break;
-            default:
-                strbuf_putc(sb, (int) '%');
-                break;
-            }
-        } else {
-            strbuf_putc(sb, (int) *p);
-        }
-    }
-
-    va_end(ap);
     return 0;
 }
 
@@ -229,7 +203,7 @@ int strbuf_puts(STRBUF *sb, const unsigned char *s)
  */
 int strbuf_putc(STRBUF *sb, int c)
 {
-    unsigned int nlen = sb->i + 1;
+    unsigned int nlen = sb->i + 1;  /* Minimum length needed */
 
     /* If the new character won't fit, extend sb */
     if (nlen > sb->len)
@@ -240,6 +214,8 @@ int strbuf_putc(STRBUF *sb, int c)
     sb->buf[sb->i++] = (unsigned char) c;
     if (sb->i > sb->n)
         sb->n = sb->i;
+
+    assert(sb->n <= sb->len);
 
     return 0;
 }
@@ -253,7 +229,7 @@ unsigned char *strbuf_gets(STRBUF *sb, unsigned char *s, unsigned int n)
     int i, j;
 
     for (i = 0, j = sb->i; i < n - 1 && j < sb->n && c != '\n'; i++, j++) {
-        /* XXX Does this need to be case to a char? */
+        /* XXX Does this need to be cast to a char? */
         s[i] = sb->buf[j];
         c = sb->buf[j];
     }
@@ -286,10 +262,14 @@ int strbuf_getc(STRBUF *sb)
  */
 unsigned char *strbuf_getall(STRBUF *sb)
 {
-    /* Make sure there is enough memory to null-terminate the data
-    if (sb->n == sb->len)
+    /* Make sure there is enough memory to null-terminate the data */
+    if (sb->n >= sb->len) {
+        /* sb->n should never actually be larger than sb->len */
+        assert(sb->n == sb->len);
         if (extend(sb, 2 * sb->n) != 0)
             return NULL;
+    }
+
     /*
      * Write an EOS immediately after the data.  This allows the caller
      * to treat the data as a standard null-terminated string.
