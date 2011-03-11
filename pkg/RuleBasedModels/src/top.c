@@ -57,6 +57,7 @@ static void cubist(char **namesv,
     if ((val = setjmp(rbm_buf)) == 0) {
         Rprintf("Calling GetNames\n");
         STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
+        // rbm_register(sb_names, "undefined.names", 1);
         GetNames((FILE *) sb_names);
 
         NotifyStage(READDATA);  /* This initializes global variable Uf */
@@ -64,6 +65,8 @@ static void cubist(char **namesv,
 
         Rprintf("Calling GetData\n");
         STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
+        // XXX Registering the data file causes an error
+        // rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
         GetData((FILE *) sb_datav, 1, 0);
 
         // Real work is done here
@@ -82,12 +85,12 @@ static void cubist(char **namesv,
 
         // I think the previous value of *modelv will be garbage collected
         *modelv = model;
-
-        // Close file object "Of"
-        closeOf();
     } else {
         Rprintf("cubist code called exit with value %d\n", val - JMP_OFFSET);
     }
+
+    // Close file object "Of"
+    closeOf();
 
     // We reinitialize the globals on exit out of general paranoia
     initglobals();
