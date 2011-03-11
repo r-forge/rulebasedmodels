@@ -174,13 +174,13 @@ void setglobals(int unbiased, char *composite, int neighbors, int committees,
 void setOf()
 {
     // XXX Experimental
-    Of = rbm_fopen("rulebasedmodels.tmp", "w");
+    Of = rbm_fopen("rulebasedmodels.stdout", "w");
 }
 
 void closeOf()
 {
     if (Of) {
-        rbm_fclose(Of);  /* Does nothing */
+        rbm_fclose(Of);
         puts(strbuf_getall((STRBUF *) Of));
     }
 }
