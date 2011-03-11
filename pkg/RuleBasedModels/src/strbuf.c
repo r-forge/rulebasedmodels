@@ -31,13 +31,16 @@ STRBUF *strbuf_create_empty(unsigned int len)
 
     /* Allocate memory for the buffer */
     sb->buf = (unsigned char *) malloc(len);
-    if (sb->buf == NULL)
+    if (sb->buf == NULL) {
+        free(sb);
         return NULL;
+    }
 
     /* Finish initializing the STRBUF */
     sb->i = 0;
     sb->n = 0;
     sb->len = len;
+    sb->open = TRUE;
     sb->own = TRUE;
 
     /* Return a pointer to the STRBUF */
@@ -63,10 +66,53 @@ STRBUF *strbuf_create_full(unsigned char *data, unsigned int len)
     sb->i = 0;
     sb->n = len;
     sb->len = len;
+    sb->open = FALSE;
     sb->own = FALSE;
 
     /* Return a pointer to the STRBUF */
     return sb;
+}
+
+STRBUF *strbuf_copy(STRBUF *sb)
+{
+    STRBUF *nsb;
+
+    /* Allocate memory for the STRBUF */
+    nsb = (STRBUF *) malloc(sizeof(STRBUF));
+    if (nsb == NULL)
+        return NULL;
+
+    /* Allocate memory for the buffer */
+    nsb->buf = (unsigned char *) malloc(sb->len);
+    if (nsb->buf == NULL) {
+        free(nsb);
+        return NULL;
+    }
+
+    /* Finish initializing the STRBUF */
+    memcpy(nsb->buf, sb->buf, sb->n);  /* Only copy n, not len */
+    nsb->i = 0;
+    nsb->n = sb->n;
+    nsb->len = sb->len;
+    nsb->open = FALSE;
+    nsb->own = TRUE;
+
+    /* Return a pointer to the STRBUF */
+    return nsb;
+}
+
+int strbuf_open(STRBUF *sb)
+{
+    sb->open = TRUE;
+
+    return 0;
+}
+
+int strbuf_close(STRBUF *sb)
+{
+    sb->open = FALSE;
+
+    return 0;
 }
 
 /*
