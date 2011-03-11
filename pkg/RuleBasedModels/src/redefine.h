@@ -4,9 +4,14 @@
 #include <stdio.h>
 #include <setjmp.h>
 
+#include "strbuf.h"
+
 #define JMP_OFFSET 100
 extern jmp_buf rbm_buf;
 
+int rbm_register(STRBUF *sb, const char *filename, int force);
+int rbm_deregister(const char *filename);
+STRBUF *rbm_lookup(const char *filename);
 FILE *rbm_fopen(const char *filename, const char *mode);
 int rbm_fclose(FILE *stream);
 int rbm_fflush(FILE *stream);
@@ -19,7 +24,8 @@ int rbm_fputc(int c, FILE *stream);
 int rbm_putc(int c, FILE *stream);
 int rbm_fputs(const char *s, FILE *stream);
 size_t rbm_fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
-void rbm_remove(const char *fname);
+int rbm_remove(const char *fname);
+void rbm_removeall();
 void rbm_exit(int status);
 
 #endif
