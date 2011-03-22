@@ -42,18 +42,17 @@ void *ht_new(int size)
         return NULL;
     }
 
-    table = (ht_table *) malloc(sizeof(ht_table *));
+    table = malloc(sizeof(ht_table));
 
     if (table != NULL) {
-        ht_entryptr *entries =
-                (ht_entryptr *) malloc(sizeof(ht_entryptr) * size);
+        ht_entryptr *entries = malloc(sizeof(ht_entryptr) * size);
 
         if (entries != NULL) {
             /* Initialize entries to NULL */
             int i;
 
             for (i = 0; i < size; i++) {
-                entries[i] = (ht_entryptr) NULL;
+                entries[i] = NULL;
             }
 
             /* Initialize table */
@@ -73,7 +72,7 @@ void *ht_new(int size)
 /* This is used to iterate through all of the hash entries */
 void *ht_next(void *ht)
 {
-    ht_table *table = (ht_table *) ht;
+    ht_table *table = ht;
     ht_entryptr e = table->eptr;
 
     while (e == NULL && table->eindex < (int) table->size - 1) {
@@ -90,14 +89,14 @@ void *ht_next(void *ht)
 /* This allows you to reset, or rewind, the iteration */
 void ht_reset(void *ht)
 {
-    ht_table *table = (ht_table *) ht;
+    ht_table *table = ht;
     table->eindex = -1;
     table->eptr = NULL;
 }
 
 void ht_destroy(void *ht)
 {
-    ht_table *table = (ht_table *) ht;
+    ht_table *table = ht;
 
     free(table->entries);
     table->entries = NULL;
@@ -113,12 +112,12 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
         return -1;
     }
 
-    entry = (ht_entryptr) ht_lookup(ht, key);
+    entry = ht_lookup(ht, key);
 
     if (entry == NULL) {
-        ht_table *table = (ht_table *) ht;
+        ht_table *table = ht;
         unsigned int i = hashCode(key) % table->size;
-        entry = (ht_entryptr) malloc(sizeof(ht_entry));
+        entry = malloc(sizeof(ht_entry));
 
         if (entry == NULL) {
             return -1;
@@ -138,7 +137,7 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 
 int ht_delete(void *ht, const char *key)
 {
-    ht_table *table = (ht_table *) ht;
+    ht_table *table = ht;
     unsigned int i = hashCode(key) % table->size;
     ht_entryptr *p;
 
@@ -156,7 +155,7 @@ int ht_delete(void *ht, const char *key)
 
 void *ht_lookup(void *ht, const char *key)
 {
-    ht_table *table = (ht_table *) ht;
+    ht_table *table = ht;
     unsigned int i = hashCode(key) % table->size;
     ht_entryptr entry;
 
@@ -196,7 +195,7 @@ int ht_setstr(void *ht, const char *key, char *value)
 
 void *ht_getvoid(void *ht, const char *key, void *defval, void *errval)
 {
-    ht_entryptr entry = (ht_entryptr) ht_lookup(ht, key);
+    ht_entryptr entry = ht_lookup(ht, key);
     if (entry == NULL) {
         return defval;
     }
@@ -210,7 +209,7 @@ void *ht_getvoid(void *ht, const char *key, void *defval, void *errval)
 
 int ht_getint(void *ht, const char *key, int defval, int errval)
 {
-    ht_entryptr entry = (ht_entryptr) ht_lookup(ht, key);
+    ht_entryptr entry = ht_lookup(ht, key);
     if (entry == NULL) {
         return defval;
     }
@@ -224,7 +223,7 @@ int ht_getint(void *ht, const char *key, int defval, int errval)
 
 char *ht_getstr(void *ht, const char *key, char *defval, char *errval)
 {
-    ht_entryptr entry = (ht_entryptr) ht_lookup(ht, key);
+    ht_entryptr entry = ht_lookup(ht, key);
     if (entry == NULL) {
         return defval;
     }
