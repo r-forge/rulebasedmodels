@@ -2,6 +2,7 @@
 #define _HASH_H_
 
 /* Core functions */
+extern unsigned int hashCode(const char *key);
 extern void *ht_new(int size);
 extern void ht_destroy();
 extern void *ht_next(void *ht);

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "hash.h"
 
@@ -17,18 +18,18 @@ typedef struct _ht_entry {
 
 typedef struct _ht_table {
     ht_entryptr *entries;
-    unsigned int size;
+    int size;
     int eindex;        /* Used for iteration */
     ht_entryptr eptr;  /* Used for iteration */
 } ht_table;
 
-static unsigned int hashCode(const char *key)
+unsigned int hashCode(const char *key)
 {
-    unsigned int result = 17;
     unsigned char *ukey = (unsigned char *) key;
+    unsigned int result = 17;
 
-    for ( ; *key != '\0'; key++) {
-        result = 31 * result + *ukey;
+    while (*ukey != '\0') {
+        result = 31 * result + *ukey++;
     }
 
     return result;
@@ -63,6 +64,7 @@ void *ht_new(int size)
         } else {
             /* Don't leak memory if the second malloc fails */
             free(table);
+            table = NULL;
         }
     }
 
@@ -96,7 +98,17 @@ void ht_reset(void *ht)
 
 void ht_destroy(void *ht)
 {
+    int i;
     ht_table *table = ht;
+    ht_entryptr e, n;
+
+    /* XXX What if the entry values were dynamically allocated? */
+    for (i = 0; i < table->size; i++) {
+        for (e = table->entries[i]; e != NULL; e = n) {
+            n = e->next;
+            free(e);
+        }
+    }
 
     free(table->entries);
     table->entries = NULL;
@@ -116,7 +128,7 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 
     if (entry == NULL) {
         ht_table *table = ht;
-        unsigned int i = hashCode(key) % table->size;
+        int i = hashCode(key) % table->size;
         entry = malloc(sizeof(ht_entry));
 
         if (entry == NULL) {
@@ -125,6 +137,7 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 
         memset(entry->key, 0, sizeof(entry->key));
         strncpy(entry->key, key, sizeof(entry->key));
+        assert(i >= 0 && i < table->size);
         entry->next = table->entries[i];
         table->entries[i] = entry;
     }
@@ -138,8 +151,10 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 int ht_delete(void *ht, const char *key)
 {
     ht_table *table = ht;
-    unsigned int i = hashCode(key) % table->size;
+    int i = hashCode(key) % table->size;
     ht_entryptr *p;
+
+    assert(i >= 0 && i < table->size);
 
     for (p = &(table->entries[i]); *p != NULL; p = &((*p)->next)) {
         if (strcmp((*p)->key, key) == 0) {
@@ -156,8 +171,10 @@ int ht_delete(void *ht, const char *key)
 void *ht_lookup(void *ht, const char *key)
 {
     ht_table *table = ht;
-    unsigned int i = hashCode(key) % table->size;
+    int i = hashCode(key) % table->size;
     ht_entryptr entry;
+
+    assert(i >= 0 && i < table->size);
 
     for (entry = table->entries[i]; entry != NULL; entry = entry->next) {
         if (strcmp(entry->key, key) == 0) {
