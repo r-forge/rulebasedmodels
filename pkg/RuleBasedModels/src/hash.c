@@ -4,14 +4,10 @@
 
 #include "hash.h"
 
-#define MAXKEY 2048
-
-enum valuetype { VOIDTYPE, STRTYPE, INTTYPE };
-
 typedef struct _ht_entry *ht_entryptr;
 
 typedef struct _ht_entry {
-    char key[MAXKEY];      /* Key of entry */
+    char key[HT_MAXKEY];   /* Key of entry */
     void *value;           /* Value of entry */
     ht_entryptr next;      /* Pointer to next entry in linked list */
     enum valuetype type;   /* Type of value */
@@ -25,7 +21,7 @@ typedef struct _ht_table {
 } ht_table;
 
 /* Compute the hash value of the specified key */
-unsigned int hashCode(const char *key)
+unsigned int ht_hashcode(const char *key)
 {
     unsigned char *ukey = (unsigned char *) key;
     unsigned int result = 17;
@@ -125,13 +121,13 @@ void ht_reset(void *ht)
 }
 
 /* Set the value and type of an entry in a hash table */
-static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
+int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 {
     ht_table *table = ht;
     ht_entryptr entry;
 
-    /* Sanity check the key name */
-    if (strlen(key) >= MAXKEY) {
+    if (strlen(key) >= HT_MAXKEY) {
+        /* The key is too long */
         return -1;
     }
 
@@ -140,7 +136,8 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 
     if (entry == NULL) {
         /* Compute the index of the linked list to add this entry to */
-        int i = hashCode(key) % table->size;
+        int i = ht_hashcode(key) % table->size;
+        assert(i >= 0 && i < table->size);
 
         /* Allocate memory for this new entry */
         entry = malloc(sizeof(ht_entry));
@@ -153,7 +150,6 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
         strncpy(entry->key, key, sizeof(entry->key));
 
         /* Add this new entry to the head of the appropriate list */
-        assert(i >= 0 && i < table->size);
         entry->next = table->entries[i];
         table->entries[i] = entry;
     }
@@ -172,9 +168,14 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 int ht_delete(void *ht, const char *key)
 {
     ht_table *table = ht;
-    int i = hashCode(key) % table->size;
     ht_entryptr *p;
+    int i;
 
+    if (strlen(key) >= HT_MAXKEY) {
+        return -1;
+    }
+
+    i = ht_hashcode(key) % table->size;
     assert(i >= 0 && i < table->size);
 
     /* Search for the key such that we can delete the entry */
@@ -199,11 +200,18 @@ int ht_delete(void *ht, const char *key)
 void *ht_lookup(void *ht, const char *key)
 {
     ht_table *table = ht;
-    int i = hashCode(key) % table->size;
     ht_entryptr entry;
+    int i;
 
+    if (strlen(key) >= HT_MAXKEY) {
+        /* The key is too long */
+        return NULL;
+    }
+
+    i = ht_hashcode(key) % table->size;
     assert(i >= 0 && i < table->size);
 
+    /* Search the appropriate linked list for the key */
     for (entry = table->entries[i]; entry != NULL; entry = entry->next) {
         if (strcmp(entry->key, key) == 0) {
             return entry;
@@ -228,30 +236,39 @@ void *ht_value(void *entry)
 /* Set the value of an entry to a void pointer */
 int ht_setvoid(void *ht, const char *key, void *value)
 {
-    return ht_set(ht, key, value, VOIDTYPE);
+    return ht_set(ht, key, value, HT_VOIDTYPE);
 }
 
 /* Set the value of an entry to an integer value */
 int ht_setint(void *ht, const char *key, int value)
 {
-    return ht_set(ht, key, (void *) value, INTTYPE);
+    return ht_set(ht, key, (void *) value, HT_INTTYPE);
 }
 
 /* Set the value of an entry to a string */
 int ht_setstr(void *ht, const char *key, char *value)
 {
-    return ht_set(ht, key, (void *) value, STRTYPE);
+    return ht_set(ht, key, (void *) value, HT_STRTYPE);
 }
 
 /* Get the "void *" value of an entry in the hash table */
 void *ht_getvoid(void *ht, const char *key, void *defval, void *errval)
 {
-    ht_entryptr entry = ht_lookup(ht, key);
+    ht_entryptr entry;
+
+    if (strlen(key) >= HT_MAXKEY) {
+        /* The key is too long */
+        return errval;
+    }
+
+    entry = ht_lookup(ht, key);
     if (entry == NULL) {
+        /* The key wasn't found */
         return defval;
     }
 
-    if (entry->type != VOIDTYPE) {
+    if (entry->type != HT_VOIDTYPE) {
+        /* The value is the wrong type */
         return errval;
     }
 
@@ -261,12 +278,21 @@ void *ht_getvoid(void *ht, const char *key, void *defval, void *errval)
 /* Get the "int" value of an entry in the hash table */
 int ht_getint(void *ht, const char *key, int defval, int errval)
 {
-    ht_entryptr entry = ht_lookup(ht, key);
+    ht_entryptr entry;
+
+    if (strlen(key) >= HT_MAXKEY) {
+        /* The key is too long */
+        return errval;
+    }
+
+    entry = ht_lookup(ht, key);
     if (entry == NULL) {
+        /* The key wasn't found */
         return defval;
     }
 
-    if (entry->type != INTTYPE) {
+    if (entry->type != HT_INTTYPE) {
+        /* The value is the wrong type */
         return errval;
     }
 
@@ -276,12 +302,21 @@ int ht_getint(void *ht, const char *key, int defval, int errval)
 /* Get the "char *" value of an entry in the hash table */
 char *ht_getstr(void *ht, const char *key, char *defval, char *errval)
 {
-    ht_entryptr entry = ht_lookup(ht, key);
+    ht_entryptr entry;
+
+    if (strlen(key) >= HT_MAXKEY) {
+        /* The key is too long */
+        return errval;
+    }
+
+    entry = ht_lookup(ht, key);
     if (entry == NULL) {
+        /* The key wasn't found */
         return defval;
     }
 
-    if (entry->type != STRTYPE) {
+    if (entry->type != HT_STRTYPE) {
+        /* The value is the wrong type */
         return errval;
     }
 
