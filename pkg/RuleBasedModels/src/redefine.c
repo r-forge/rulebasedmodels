@@ -5,6 +5,7 @@
 
 #include "redefine.h"
 #include "strbuf.h"
+#include "hash.h"
 
 /* Don't want to include R.h which has conflicts */
 extern void Rprintf(const char *, ...);
@@ -15,63 +16,31 @@ extern void Rprintf(const char *, ...);
  */
 #define STRBUF_LEN 100
 
-/* Used by rbm_initexit and rbm_exit */
-jmp_buf rbm_buf;
+#define HASH_LEN 100
 
-/* Need to keep this in sync with strbufv and exts */
-#define STRBUFV_LEN 7
+/* Used to implement rbm_exit */
+jmp_buf rbm_buf;
 
 /*
  * This is used to save the contents of files that have been
- * created and written.  We only use the file extension to do
- * this, since all files created by cubist on a given run
- * use the same "file stem".
+ * created and written.
  */
-static STRBUF *strbufv[STRBUFV_LEN] = { NULL };
+static void *strbufv;
 
-static char *exts[STRBUFV_LEN] = {
-    ".pred", ".model", ".names", ".data", ".tmp", ".test", ".stdout"
-};
-
-static char *id2ext(int id)
+int rbm_init()
 {
-    if (id < 0 || id >= STRBUFV_LEN)
-        return NULL;
-
-    return exts[id];
-}
-
-/* Used to determine index into strbufv */
-static int ext2id(const char *ext)
-{
-    int i;
-    int id = -1;
-
-    if (ext != NULL) {
-        for (i = 0; i < STRBUFV_LEN; i++) {
-            if (strcmp(ext, exts[i]) == 0) {
-                id = i;
-                break;
-            }
-        }
+    if (strbufv == NULL) {
+        strbufv = ht_new(HASH_LEN);
     }
-
-    return id;
+    return strbufv == NULL ? -1 : 0;
 }
 
 /* This is similar to rbm_fopen */
 int rbm_register(STRBUF *sb, const char *filename, int force)
 {
-    int id = ext2id(strrchr(filename, '.'));
-
     Rprintf("rbm_register: registering file: %s\n", filename);
 
-    if (id == -1) {
-        Rprintf("rbm_register: error: bad file extension: %s\n", filename);
-        return -1;
-    }
-
-    if (strbufv[id] != NULL) {
+    if (ht_lookup(strbufv, filename) != NULL) {
         if (force) {
             Rprintf("rbm_register: warning: file already registered: %s\n",
                     filename);
@@ -89,7 +58,7 @@ int rbm_register(STRBUF *sb, const char *filename, int force)
         return -1;
     }
 
-    strbufv[id] = sb;
+    ht_setvoid(strbufv, filename, sb);
 
     return 0;
 }
@@ -97,77 +66,54 @@ int rbm_register(STRBUF *sb, const char *filename, int force)
 /* This is similar to rbm_remove, but doesn't destroy the STRBUF */
 int rbm_deregister(const char *filename)
 {
-    int id = ext2id(strrchr(filename, '.'));
-
     Rprintf("rbm_deregister: deregistering file: %s\n", filename);
 
-    if (id == -1) {
-        Rprintf("rbm_deregister: error: bad file extension: %s\n", filename);
-        return -1;
-    }
-
-    if (strbufv[id] == NULL) {
+    if (ht_delete(strbufv, filename) != 0) {
         Rprintf("rbm_deregister: error: file not registered: %s\n", filename);
         return -1;
     }
-
-    /* Remove the reference to the STRBUF */
-    strbufv[id] = NULL;
 
     return 0;
 }
 
 STRBUF *rbm_lookup(const char *filename)
 {
-    int id;
-
-    Rprintf("rbm_lookup: looking up file: %s\n", filename);
-
-    id = ext2id(strrchr(filename, '.'));
-    if (id == -1) {
+    STRBUF *sb = (STRBUF *) ht_getvoid(strbufv, filename, NULL, NULL);
+    if (sb == NULL) {
         Rprintf("rbm_lookup: error: no file registered: %s\n", filename);
         return NULL;
     }
 
-    return strbufv[id];
+    return sb;
 }
 
 FILE *rbm_fopen(const char *filename, const char *mode)
 {
     STRBUF *sb;
-    int id = ext2id(strrchr(filename, '.'));
+    STRBUF *id = (STRBUF *) ht_getvoid(strbufv, filename, NULL, NULL);
 
     /* Only the "w" mode is currently supported */
     if (strcmp(mode, "w") == 0) {
         Rprintf("rbm_fopen: opening file to write: %s\n", filename);
         sb = strbuf_create_empty(STRBUF_LEN);
-        if (id == -1) {
-            Rprintf("rbm_fopen: warning: unable to register bad file extension: %s\n", filename);
-        } else {
-            if (strbufv[id] != NULL) {
-                Rprintf("rbm_fopen: warning: destroying previous STRBUF: %s\n", filename);
-                strbuf_destroy(strbufv[id]);
-            }
-            strbufv[id] = sb;
+        if (id != NULL) {
+            Rprintf("rbm_fopen: warning: destroying previous STRBUF: %s\n", filename);
+            strbuf_destroy(id);
         }
+        ht_setvoid(strbufv, filename, sb);
     } else {
         Rprintf("rbm_fopen: opening file to read: %s\n", filename);
-        if (id == -1) {
-            Rprintf("rbm_fopen: error: bad file extension: %s\n", filename);
-            sb = NULL;
-        } else {
-            sb = strbufv[id];
-            if (sb != NULL) {
-                if (sb->open) {
-                    Rprintf("rbm_fopen: error: file already open: %s\n", filename);
-                    sb = NULL;
-                } else {
-                    strbuf_open(sb);
-                    strbuf_rewind(sb);
-                }
+        sb = id;
+        if (sb != NULL) {
+            if (sb->open) {
+                Rprintf("rbm_fopen: error: file already open: %s\n", filename);
+                sb = NULL;
             } else {
-                Rprintf("rbm_fopen: error: no such file: %s\n", filename);
+                strbuf_open(sb);
+                strbuf_rewind(sb);
             }
+        } else {
+            Rprintf("rbm_fopen: error: no such file: %s\n", filename);
         }
     }
 
@@ -257,15 +203,18 @@ int rbm_remove(const char *path)
  */
 void rbm_removeall()
 {
-    int id;
-    STRBUF *sb;
-
-    for (id = 0; id < STRBUFV_LEN ; id++) {
-        sb = strbufv[id];
-        if (sb != NULL)
-            strbuf_destroy(sb);
-        strbufv[id] = NULL;
+    /* Destroy all STRBUF's by iterating through strbufv */
+    ht_reset(strbufv);  /* just in case */
+    while (1) {
+        void *e = ht_next(strbufv);
+        if (e == NULL)
+            break;
+        strbuf_destroy((STRBUF *) ht_value(e));
     }
+
+    /* Destroy and recreate strbufv itself */
+    ht_destroy(strbufv);
+    strbufv = ht_new(HASH_LEN);
 }
 
 /*
