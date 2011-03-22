@@ -46,6 +46,10 @@ static void cubist(char **namesv,
     setglobals(*unbiased, *compositev, *neighbors, *committees,
                *sample, *seed, *rules, *extrapolation);
 
+    // Initializes the "redefine" code, but can be called
+    // multiple times without problems
+    rbm_init();
+
     // XXX Should this be controlled via an option?
     Rprintf("Calling setOf\n");
     setOf();
