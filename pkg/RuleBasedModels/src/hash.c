@@ -6,7 +6,7 @@
 
 #define MAXKEY 2048
 
-enum valuetype { VOIDTYPE, STRTYPE, INTTYPE, DOUBLETYPE, FLOATTYPE };
+enum valuetype { VOIDTYPE, STRTYPE, INTTYPE };
 
 typedef struct _ht_entry *ht_entryptr;
 typedef struct _ht_entry {
@@ -75,17 +75,17 @@ void *ht_new(int size)
 void *ht_next(void *ht)
 {
     ht_table *table = ht;
-    ht_entryptr e = table->eptr;
+    ht_entryptr entry = table->eptr;
 
-    while (e == NULL && table->eindex < (int) table->size - 1) {
-        e = table->entries[++table->eindex];
+    while (entry == NULL && table->eindex < table->size - 1) {
+        entry = table->entries[++table->eindex];
     }
 
-    if (e != NULL) {
-        table->eptr = e->next;
+    if (entry != NULL) {
+        table->eptr = entry->next;
     }
 
-    return e;
+    return entry;
 }
 
 /* This allows you to reset, or rewind, the iteration */
@@ -100,14 +100,16 @@ void ht_destroy(void *ht)
 {
     int i;
     ht_table *table = ht;
-    ht_entryptr e, n;
+    ht_entryptr entry, next;
 
     /* XXX What if the entry values were dynamically allocated? */
     for (i = 0; i < table->size; i++) {
-        for (e = table->entries[i]; e != NULL; e = n) {
-            n = e->next;
-            free(e);
+        for (entry = table->entries[i]; entry != NULL; entry = next) {
+            next = entry->next;
+            entry->next = NULL;  /* in case anyone has a pointer to this */
+            free(entry);
         }
+        table->entries[i] = NULL;  /* more paranoia */
     }
 
     free(table->entries);
@@ -118,6 +120,7 @@ void ht_destroy(void *ht)
 
 static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 {
+    ht_table *table = ht;
     ht_entryptr entry;
 
     if (strlen(key) >= MAXKEY) {
@@ -127,7 +130,6 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
     entry = ht_lookup(ht, key);
 
     if (entry == NULL) {
-        ht_table *table = ht;
         int i = hashCode(key) % table->size;
         entry = malloc(sizeof(ht_entry));
 
@@ -144,6 +146,7 @@ static int ht_set(void *ht, const char *key, void *value, enum valuetype type)
 
     entry->value = value;
     entry->type = type;
+    ht_reset(table);
 
     return 0;
 }
@@ -156,14 +159,20 @@ int ht_delete(void *ht, const char *key)
 
     assert(i >= 0 && i < table->size);
 
+    /* Search for the key such that we can delete the entry */
     for (p = &(table->entries[i]); *p != NULL; p = &((*p)->next)) {
         if (strcmp((*p)->key, key) == 0) {
             ht_entryptr entry = *p;
             *p = entry->next;
+            entry->next = NULL;  /* in case anyone has a pointer to this */
             free(entry);
+            ht_reset(table);
             return 0;
         }
     }
+
+    /* Reset iteration even if delete was unsuccessful */
+    ht_reset(table);
 
     return -1;
 }
