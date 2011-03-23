@@ -5,7 +5,7 @@ void initglobals(void);
 void setglobals(int unbiased, char *composite, int neighbors, int committees,
                 double sample, int seed, int rules, double extrapolation);
 void setOf(void);
-void closeOf(void);
+char *closeOf(void);
 void rulebasedmodels(void);
 
 #endif

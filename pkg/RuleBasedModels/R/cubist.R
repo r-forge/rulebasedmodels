@@ -55,9 +55,11 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
           as.integer(control$rules),        # -r: set the maximum number of rules
           as.double(control$extrapolation), # -e : set the extrapolation limit
           model=character(1),               # pass back .model file as a string
+          output=character(1),              # pass back cubist output as a string
           PACKAGE="RuleBasedModels"
           )
   cat(Z$model, '\n')
+  cat(Z$output, '\n')
   
   out <- list(data = dataString,
               names = namesString,

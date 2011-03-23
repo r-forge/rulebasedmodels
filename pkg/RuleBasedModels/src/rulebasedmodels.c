@@ -177,11 +177,13 @@ void setOf()
     Of = rbm_fopen("rulebasedmodels.stdout", "w");
 }
 
-void closeOf()
+char *closeOf()
 {
     if (Of) {
         rbm_fclose(Of);
-        puts(strbuf_getall((STRBUF *) Of));
+        return strbuf_getall((STRBUF *) Of);
+    } else {
+        return "";
     }
 }
 

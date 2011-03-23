@@ -32,7 +32,8 @@ static void cubist(char **namesv,
                    int *seed,
                    int *rules,
                    double *extrapolation,
-                   char **modelv)
+                   char **modelv,
+                   char **outputv)
 {
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
 
@@ -89,9 +90,11 @@ static void cubist(char **namesv,
         Rprintf("cubist code called exit with value %d\n", val - JMP_OFFSET);
     }
 
-    // Close file object "Of"
-    closeOf();
-
+    // Close file object "Of", and return its contents via argument outputv
+    char *outputString = closeOf();
+    char *output = R_alloc(strlen(outputString) + 1, 1);
+    strcpy(output, outputString);
+    *outputv = output;
 
     // We reinitialize the globals on exit out of general paranoia
     initglobals();
@@ -109,12 +112,13 @@ static R_NativePrimitiveArgType cubist_t[] = {
     INTSXP,   // seed
     INTSXP,   // rules
     REALSXP,  // extrapolation
-    STRSXP    // modelv
+    STRSXP,   // modelv
+    STRSXP    // outputv
 };
 
 // Declare the cubist function
 static const R_CMethodDef cEntries[] = {
-    {"cubist", (DL_FUNC) &cubist, 11, cubist_t},
+    {"cubist", (DL_FUNC) &cubist, 12, cubist_t},
     {NULL, NULL, 0}
 };
 
