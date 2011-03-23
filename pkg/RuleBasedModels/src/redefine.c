@@ -1,3 +1,17 @@
+/*
+ * This file contains replacements for file and directory
+ * operations from the standard I/O library (stdio).
+ * Basically, it replaces file operations with string buffer
+ * operations (using functions declared in strbuf.h),
+ * and it replaces directory operations with a single
+ * hash table/associative array (using functions declared in
+ * hash.h).
+ *
+ * Note that currently the purpose of this is to work
+ * well enough for use in the RuleBasedModels package.
+ * Thus, it is not completely general, since that would
+ * make the code far more complex than it already is.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,7 +92,7 @@ int rbm_deregister(const char *filename)
 
 STRBUF *rbm_lookup(const char *filename)
 {
-    STRBUF *sb = (STRBUF *) ht_getvoid(strbufv, filename, NULL, NULL);
+    STRBUF *sb = ht_getvoid(strbufv, filename, NULL, NULL);
     if (sb == NULL) {
         Rprintf("rbm_lookup: error: no file registered: %s\n", filename);
         return NULL;
@@ -90,7 +104,7 @@ STRBUF *rbm_lookup(const char *filename)
 FILE *rbm_fopen(const char *filename, const char *mode)
 {
     STRBUF *sb;
-    STRBUF *id = (STRBUF *) ht_getvoid(strbufv, filename, NULL, NULL);
+    STRBUF *id = ht_getvoid(strbufv, filename, NULL, NULL);
 
     /* Only the "w" mode is currently supported */
     if (strcmp(mode, "w") == 0) {
@@ -203,8 +217,14 @@ int rbm_remove(const char *path)
  */
 void rbm_removeall()
 {
+    /* Check if there actually is anything to remove */
     if (strbufv != NULL) {
-        /* Destroy all STRBUF's by iterating through strbufv */
+        /*
+         * Destroy all STRBUF's in the hash table.
+         * Note that this loop leaves the hash table full of
+         * pointers to deallocated STRBUF's until ht_destroy
+         * is called below.
+         */
         ht_reset(strbufv);  /* just in case */
         while (1) {
             void *e = ht_next(strbufv);
@@ -213,10 +233,11 @@ void rbm_removeall()
             strbuf_destroy((STRBUF *) ht_value(e));
         }
 
-        /* Destroy and recreate strbufv itself */
+        /* Destroy the hash table itself */
         ht_destroy(strbufv);
     }
 
+    /* Create/recreate the hash table for subsequent use */
     strbufv = ht_new(HASH_LEN);
 }
 
