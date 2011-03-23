@@ -46,9 +46,8 @@ static void cubist(char **namesv,
     setglobals(*unbiased, *compositev, *neighbors, *committees,
                *sample, *seed, *rules, *extrapolation);
 
-    // Initializes the "redefine" code, but can be called
-    // multiple times without problems
-    rbm_init();
+    // Handles the strbufv data structure
+    rbm_removeall();
 
     // XXX Should this be controlled via an option?
     Rprintf("Calling setOf\n");
@@ -79,13 +78,10 @@ static void cubist(char **namesv,
 
         Rprintf("rulebasedmodels finished\n");
 
-        // Get namesString out of the char **
-        char *namesString = *namesv;
-
-        // Copy namesString into allocated memory.
-        // This memory will be deallocated by ".C" when it returns.
-        char *model = R_alloc(strlen(namesString) + 1, 1);
-        strcpy(model, namesString);
+        // Get the contents of the the model file
+        char *modelString = strbuf_getall(rbm_lookup("undefined.model"));
+        char *model = R_alloc(strlen(modelString) + 1, 1);
+        strcpy(model, modelString);
 
         // I think the previous value of *modelv will be garbage collected
         *modelv = model;
@@ -95,6 +91,7 @@ static void cubist(char **namesv,
 
     // Close file object "Of"
     closeOf();
+
 
     // We reinitialize the globals on exit out of general paranoia
     initglobals();
