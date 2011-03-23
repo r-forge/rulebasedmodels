@@ -203,17 +203,20 @@ int rbm_remove(const char *path)
  */
 void rbm_removeall()
 {
-    /* Destroy all STRBUF's by iterating through strbufv */
-    ht_reset(strbufv);  /* just in case */
-    while (1) {
-        void *e = ht_next(strbufv);
-        if (e == NULL)
-            break;
-        strbuf_destroy((STRBUF *) ht_value(e));
+    if (strbufv != NULL) {
+        /* Destroy all STRBUF's by iterating through strbufv */
+        ht_reset(strbufv);  /* just in case */
+        while (1) {
+            void *e = ht_next(strbufv);
+            if (e == NULL)
+                break;
+            strbuf_destroy((STRBUF *) ht_value(e));
+        }
+
+        /* Destroy and recreate strbufv itself */
+        ht_destroy(strbufv);
     }
 
-    /* Destroy and recreate strbufv itself */
-    ht_destroy(strbufv);
     strbufv = ht_new(HASH_LEN);
 }
 
