@@ -215,9 +215,11 @@ type2 <- function(x, dig = 3)
          text = paste(var, rslt, val))
   }
 
-eqn <- function(x, dig = 10, text = TRUE)
+
+eqn <- function(x, dig = 10, text = TRUE, varNames = NULL)
   {
-    out <- if(text) rep("", length(x)) else vector(mode = "list", length = length(x))
+    x <- gsub("\"", "", x)
+    out <- vector(mode = "list", length = length(x))
 
     for(j in seq(along = x))
       {
@@ -262,14 +264,28 @@ eqn <- function(x, dig = 10, text = TRUE)
               }        
             out[j] <- txt
           } else {
-            out[[j]] <- data.frame(Variable = c("Int", nms), Coef = vals)
+            
+            nms <- c("(Intercept)", nms)
+            names(vals) <- nms
+            if(!is.null(varNames))
+              {
+
+                vars2 <- varNames[!(varNames %in% nms)]
+                #cat("j", j, "\tcoefs:", length(vals), "\tother:", length(vars2))
+                vals2 <- rep(NA, length(vars2))
+                names(vals2) <- vars2
+                vals <- c(vals, vals2)               
+                newNames <- c("(Intercept)", varNames)
+                vals <- vals[newNames]
+              }
+            #cat("\tfinal:", length(vals), "\n")
+            out[[j]] <- vals
 
           }
         
       }
     out
   }
-
 
 parser <- function(x)
   {
@@ -286,6 +302,48 @@ parser <- function(x)
     if(length(x) == 1) x <- x[[1]]
     x
   }
+
+
+coef.cubist <- function(object, varNames = NULL, ...)
+  {
+
+    
+    x <- object$model
+    x <- strsplit(x, "\n")[[1]]
+    comNum <- ruleNum <- condNum <- rep(NA, length(x))
+    comIdx <- rIdx <- 0
+    for(i in seq(along = x))
+      {
+        tt <- RuleBasedModels:::parser(x[i])
+        if(names(tt)[1] == "rules")
+          {
+            comIdx <- comIdx + 1
+            rIdx <- 0
+          }
+        comNum[i] <-comIdx
+        if(names(tt)[1] == "conds")
+          {
+            rIdx <- rIdx + 1
+            cIdx <- 0
+          }
+        ruleNum[i] <-rIdx
+        if(names(tt)[1] == "type")
+          {
+            cIdx <- cIdx + 1
+            condNum[i] <- cIdx
+          }
+      }
+
+    isEqn <- ifelse(grepl("^coeff=", x), TRUE, FALSE) 
+
+    isEqn <- grepl("^coeff=", x)
+    coefs <- eqn(x[isEqn], dig = 0, text = FALSE, varNames = varNames)
+    coefs <- do.call("rbind", coefs)
+    coefs <- cbind(committee = comNum[isEqn], rule = ruleNum[isEqn], coefs)
+    as.data.frame(coefs)
+
+  }
+
 
 
 
