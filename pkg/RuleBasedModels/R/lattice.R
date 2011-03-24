@@ -1,5 +1,6 @@
 dotplot.cubist <- function(x, data = NULL, what = "splits", committee = NULL, rule = NULL, ...)
   {
+    library(reshape2)
     splits <- x$splits
     if(is.null(splits)) stop("No splits were used in this model")
 
@@ -59,6 +60,23 @@ dotplot.cubist <- function(x, data = NULL, what = "splits", committee = NULL, ru
                        xlab = "Training Data Coverage",
                        ylab = lab,
                        ...)
+      }
+    if(what == "coefs")
+      {
+        coefVals <- x$coefficients
+        coefVals <- melt(coefVals, id.vars = c("committee", "rule"))
+        coefVals <- coefVals[complete.cases(coefVals),]
+        if(max(coefVals$committee) == 1)
+          {
+            lab <- "Rule"
+            coefVals$label <-gsub(" ", "0", format(as.character(coefVals$rule), justify = "right"))
+          } else {
+            coefVals$label <- paste(gsub(" ", "0", format(as.character(coefVals$committe), justify = "right")),
+                                    gsub(" ", "0", as.character(format(coefVals$rule), justify = "right")),
+                                    sep = "/")
+            lab <- "Committe/Rule"
+          }
+        out <- dotplot(label ~ value|variable, data = coefVals, ...)
       }
     out
   }
