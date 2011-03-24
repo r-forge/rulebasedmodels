@@ -1,3 +1,7 @@
+## TODO:
+##     fix call printing
+
+
 makeNamesFile <-
 function(x, y, label = "outcome", comments = TRUE)
   {
@@ -10,9 +14,21 @@ function(x, y, label = "outcome", comments = TRUE)
                      sep = "")
       } else out <- ""
 
+    if(is.numeric(y))
+      {
+        outcomeInfo <- ": continuous."
+      } else {
+        lvls <- levels(y)
+        prefix <- if(is.ordered(y)) "[ordered] " else ""
+        outcomeInfo <- paste(": ",
+                             prefix,
+                             paste(lvls, collapse = ","),
+                             ".", sep = "")
+      }
+
     out <- paste(out,
                  "\n", label, ".\n",
-                 "\n", label, ": continuous.",
+                 "\n", label, outcomeInfo,
                  sep = "")
     varData <- QuinlanAttributes(x)
     varData <- paste(names(varData), ": ", varData, sep = "", collapse = "\n")
