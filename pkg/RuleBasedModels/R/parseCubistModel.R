@@ -2,8 +2,104 @@
 ## 3) R function to write R prediciton function
 
 
+countRules <- function(x)
+  {
+    x <- strsplit(x, "\n")[[1]]
+    comNum <- ruleNum <- condNum <- rep(NA, length(x))
+    comIdx <- rIdx <- 0
+    for(i in seq(along = x))
+      {
+        tt <- RuleBasedModels:::parser(x[i])
+        if(names(tt)[1] == "rules")
+          {
+            comIdx <- comIdx + 1
+            rIdx <- 0
+          }
+        comNum[i] <-comIdx
+        if(names(tt)[1] == "conds")
+          {
+            rIdx <- rIdx + 1
+            cIdx <- 0
+          }
+        ruleNum[i] <-rIdx
+        if(names(tt)[1] == "type")
+          {
+            cIdx <- cIdx + 1
+            condNum[i] <- cIdx
+          }
+      }
+    numCom <- sum(grepl("^rules=", x))
+    rulesPerCom <- unlist(lapply(split(ruleNum, as.factor(comNum)), max))
+    rulesPerCom <- rulesPerCom[rulesPerCom > 0]
+    rulesPerCom
+
+  }
+
+
+
+getSplits <- function(x)
+  {
+    x <- strsplit(x, "\n")[[1]]
+    comNum <- ruleNum <- condNum <- rep(NA, length(x))
+    comIdx <- rIdx <- 0
+    for(i in seq(along = x))
+      {
+        tt <- RuleBasedModels:::parser(x[i])
+        if(names(tt)[1] == "rules")
+          {
+            comIdx <- comIdx + 1
+            rIdx <- 0
+          }
+        comNum[i] <-comIdx
+        if(names(tt)[1] == "conds")
+          {
+            rIdx <- rIdx + 1
+            cIdx <- 0
+          }
+        ruleNum[i] <-rIdx
+        if(names(tt)[1] == "type")
+          {
+            cIdx <- cIdx + 1
+            condNum[i] <- cIdx
+          }
+      }
+    
+    numCom <- sum(grepl("^rules=", x))
+    rulesPerCom <- unlist(lapply(split(ruleNum, as.factor(comNum)), max))
+    rulesPerCom <- rulesPerCom[rulesPerCom > 0]
+    names(rulesPerCom) <- paste("Com", 1:numCom)
+
+    isNewRule <- ifelse(grepl("^conds=", x), TRUE, FALSE)   
+    splitVar <- rep("", length(x))
+    splitVal <- rep(NA, length(x))
+    splitDir <- rep("", length(x))
+    isType2 <- grepl("^type=\"2\"", x)
+    if(any(isType2))
+      {
+        splitVar[isType2] <- RuleBasedModels:::type2(x[isType2])$var
+        splitVar[isType2] <- gsub("\"", "", splitVar[isType2])
+        splitDir[isType2] <- RuleBasedModels:::type2(x[isType2])$rslt
+        splitVal[isType2] <- RuleBasedModels:::type2(x[isType2])$val
+      }
+    isType3 <- grepl("^type=\"3\"", x)
+    if(any(isType3))
+      {
+        splitVar[isType3] <- RuleBasedModels:::type3(x[isType3])$var
+        splitVal[isType3] <- RuleBasedModels:::type3(x[isType3])$val
+      }
+    if(!any(isType2) & !any(isType3)) return(NULL)
+    splitData <- data.frame(committee = comNum,
+                            rule = ruleNum,
+                            variable = splitVar,
+                            dir = splitDir,
+                            value = as.numeric(splitVal))
+    splitData <- splitData[!is.na(splitData$value),]
+    splitData
+  }
+
 printCubistRules <- function(x, dig = max(3, getOption("digits") - 5))
   {
+    
     comNum <- ruleNum <- condNum <- rep(NA, length(x))
     comIdx <- rIdx <- 0
     for(i in seq(along = x))
@@ -40,9 +136,9 @@ printCubistRules <- function(x, dig = max(3, getOption("digits") - 5))
     isEqn <- ifelse(grepl("^coeff=", x), TRUE, FALSE) 
     
     cond <- rep("", length(x))
-    isType2 <- grepl("^type=2", x)
+    isType2 <- grepl("^type=\"2\"", x)
     if(any(isType2)) cond[isType2] <- type2(x[isType2], dig = dig)$text
-    isType3 <- grepl("^type=3", x)
+    isType3 <- grepl("^type=\"3\"", x)
     if(any(isType3)) cond[isType3] <- type3(x[isType3])$text
 
     isEqn <- grepl("^coeff=", x)
@@ -91,6 +187,7 @@ type3 <- function(x)
 
 type2 <- function(x, dig = 3)
   {
+    x <- gsub("\"", "", x)
     aInd <- regexpr("att=", x)
     cInd <- regexpr("cut=", x)
     rInd <- regexpr("result=", x)
@@ -114,13 +211,13 @@ type2 <- function(x, dig = 3)
         rslt[!missingRule] <- substring(x[!missingRule], rInd[!missingRule] + 7)
       }
 
-    list(var = var, val = val, rslt = rslt,
+    list(var = var, val = as.numeric(val), rslt = rslt,
          text = paste(var, rslt, val))
   }
 
-eqn <- function(x, dig)
+eqn <- function(x, dig = 10, text = TRUE)
   {
-    out <- rep("", length(x))
+    out <- if(text) rep("", length(x)) else vector(mode = "list", length = length(x))
 
     for(j in seq(along = x))
       {
@@ -141,26 +238,33 @@ eqn <- function(x, dig)
 
         valSeq <- seq(1, length(tmp), by = 2)
         vals <- as.double(tmp[valSeq])
-        signs <- sign(vals)
-        vals <- abs(vals)
 
         nms <- tmp[-valSeq]
 
-        for(i in seq(along = vals))
+        if(text)
           {
-            if(i == 1)
+            signs <- sign(vals)
+            vals <- abs(vals)
+
+            for(i in seq(along = vals))
               {
-                txt <- ifelse(signs[1] == -1,
-                              format(-vals[1], digits = dig),
-                              format(vals[1], digits = dig))
-              } else {
-                tmp2 <- ifelse(signs[i] == -1,
-                               paste("-", format(vals[i], digits = dig)),
-                               paste("+", format(vals[i], digits = dig)))
-                txt <- paste(txt, tmp2, nms[i-1])
-              }
-          }        
-        out[j] <- txt
+                if(i == 1)
+                  {
+                    txt <- ifelse(signs[1] == -1,
+                                  format(-vals[1], digits = dig),
+                                  format(vals[1], digits = dig))
+                  } else {
+                    tmp2 <- ifelse(signs[i] == -1,
+                                   paste("-", format(vals[i], digits = dig)),
+                                   paste("+", format(vals[i], digits = dig)))
+                    txt <- paste(txt, tmp2, nms[i-1])
+                  }
+              }        
+            out[j] <- txt
+          } else {
+            out[[j]] <- data.frame(Variable = c("Int", nms), Coef = vals)
+
+          }
         
       }
     out
