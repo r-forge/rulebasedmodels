@@ -62,12 +62,18 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
   cat(Z$output, '\n')
 
   splits <- getSplits(Z$model)
-  splits$percentile <- NA
-  for(i in 1:nrow(splits))
+  if(!is.null(splits))
     {
-      splits$percentile[i] <- sum(x[,as.character(splits$variable[i])] <= splits$value[i])/nrow(x)
+      splits$percentile <- NA
+      for(i in 1:nrow(splits))
+        {
+          splits$percentile[i] <- sum(x[,as.character(splits$variable[i])] <= splits$value[i])/nrow(x)
+        }
     }
- 
+
+## todo get mean and std of numeric data for scaling later
+
+  
   out <- list(data = dataString,
               names = namesString,
               model = Z$model,
@@ -76,6 +82,16 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
               dims = dim(x),
               splits = splits,
               call = funcCall)
+  coefs <- coef.cubist(out, varNames = colnames(x))
+  out$coefficients <- coefs
+
+  tmp <- apply(coefs[, -(1:3)],2, function(x) any(!is.na(x)))
+  tmp <- names(tmp)[tmp]
+  xInfo <- list(all = colnames(x),
+                used = union(as.character(splits$variable), tmp))
+                
+
+  out$vars <- xInfo
   class(out) <- "cubist"
   out
 }
