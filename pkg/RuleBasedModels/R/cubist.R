@@ -54,17 +54,27 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
           as.integer(control$seed),         # -I : set the sampling seed value
           as.integer(control$rules),        # -r: set the maximum number of rules
           as.double(control$extrapolation), # -e : set the extrapolation limit
-          model=character(1),               # pass back .model file as a string
-          output=character(1),              # pass back cubist output as a string
-          PACKAGE="RuleBasedModels"
+          model = character(1),               # pass back .model file as a string
+          output = character(1),              # pass back cubist output as a string
+          PACKAGE = "RuleBasedModels"
           )
   cat(Z$model, '\n')
   cat(Z$output, '\n')
-  
+
+  splits <- getSplits(Z$model)
+  splits$percentile <- NA
+  for(i in 1:nrow(splits))
+    {
+      splits$percentile[i] <- sum(x[,as.character(splits$variable[i])] <= splits$value[i])/nrow(x)
+    }
+ 
   out <- list(data = dataString,
               names = namesString,
+              model = Z$model,
+              output = Z$output,
               control = control,
               dims = dim(x),
+              splits = splits,
               call = funcCall)
   class(out) <- "cubist"
   out
@@ -115,30 +125,51 @@ print.cubist <- function(x, ...)
     cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
 
 
+    nRules <- countRules(x$model)
+    
     cat("Number of samples:", x$dims[1],
         "\nNumber of predictors:", x$dims[2],
         "\n\n")
     
     if(x$control$composite == "yes") cat("Rule and Instance-Based Model\n") else cat("Rule-Based Model\n") 
     
-    cat("Number of Rules:", 0, "\n")
-    cat("Number of Committees:", x$control$committees, "\n")
-    if(x$control$composite == "yes") cat("Number of Instances:", x$control$neighbors, "\n")
+    cat("Number of committees:", length(nRules), "\n")
+    if(length(nRules) > 1)
+      {
+        ruleText <- if(length(nRules) > 20) paste(paste(nRules[1:20], collapse = ", "), "...") else paste(nRules, collapse = ", ")
+        cat("Number of rules per committee:", ruleText, "\n")
+      } else cat("Number of rules:", nRules, "\n")
+    if(x$control$composite == "yes") cat("Number of instances:", x$control$neighbors, "\n")
     otherOptions <- NULL
     if(x$control$unbiased) otherOptions <- c(otherOptions, "unbiased rules")
     if(x$control$extrapolation < 100) otherOptions <- c(otherOptions,
                                                         paste(x$control$extrapolation, "% extrapolation", sep = ""))
     if(x$control$sample < 99.9) otherOptions <- c(otherOptions,
-                                                        paste(x$control$sample, "% sub-sampling", sep = ""))
+                                                        paste(100*x$control$sample, "% sub-sampling", sep = ""))
     if(!is.null(otherOptions))
       {
         cat("Other options:", paste(otherOptions, collapse = ", "))
       }
+    cat("\n")
     
 
   }
 
 
+summary.cubist <- function(object, ...)
+  {
+    out <- list(output = object$output, call = object$call)
+    class(out) <- "summary.cubist"
+    out
+  }
+
+print.summary.cubist <- function(x, ...)
+  {
+    cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
+    cat(x$output)
+    cat("\n")
+    invisible(x) 
+  }
 
 truncateText <- function(x)
   {
@@ -165,3 +196,17 @@ truncateText <- function(x)
     paste(out, collapse = "\n")
   }
 
+
+if(FALSE)
+  {
+    library(caret)
+    library(RuleBasedModels)
+    data(BloodBrain)
+    test1 <- cubist(bbbDescr, logBBB, control = cubistControl(committees = 10, sample = 50))
+    test2 <- cubist(bbbDescr, logBBB, control = cubistControl(committees = 1, sample = 50, neighbors = 2, composite = "yes"))
+    test3 <- cubist(bbbDescr, logBBB, control = cubistControl(committees = 1, sample = 10, neighbors = 2, composite = "yes"))
+    test4 <- cubist(bbbDescr, logBBB, control = cubistControl(committees = 10))
+    test5 <- cubist(bbbDescr, logBBB, control = cubistControl(committees = 50))
+    test6 <- cubist(bbbDescr, logBBB)
+
+  }
