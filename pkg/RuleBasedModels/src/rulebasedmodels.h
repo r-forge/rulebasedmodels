@@ -7,6 +7,5 @@ extern void setglobals(int unbiased, char *composite, int neighbors,
         double extrapolation);
 extern void setOf(void);
 extern char *closeOf(void);
-extern void rulebasedmodels(void);
 
 #endif

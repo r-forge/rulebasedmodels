@@ -186,19 +186,3 @@ char *closeOf()
         return "";
     }
 }
-
-void rulebasedmodels()
-{
-    // XXX Should check value of CWtAtt
-    AvCWt = 1;
-
-    // Build and evaluate cubist model
-    Rprintf("Calling InitialiseEnvData\n");
-    InitialiseEnvData();
-
-    // XXX We don't support XVAL yet
-    Rprintf("Calling SingleCttee\n");
-    SingleCttee();
-
-    Rprintf("rulebasedmodels finished\n");
-}

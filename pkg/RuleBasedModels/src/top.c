@@ -6,22 +6,8 @@
 #include "strbuf.h"
 #include "redefine.h"
 
-///////////////////////////////////////////////////////////
-//
-// Can't include defns.i because it conflicts with R.h.
-// The following subset are necessary.  I'll decide how
-// to resolve this later.
+extern void cubistmain();
 
-extern void GetNames(FILE *Nf);
-extern void GetData(FILE *Df, unsigned char Train, unsigned char AllowUnknownTarget);
-extern void NotifyStage(int);
-extern void Progress(float);
-
-#define READDATA 1
-
-///////////////////////////////////////////////////////////
-
-// XXX Slightly working now
 static void cubist(char **namesv,
                    char **datav,
                    int *unbiased,
@@ -54,30 +40,25 @@ static void cubist(char **namesv,
     Rprintf("Calling setOf\n");
     setOf();
 
+    STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
+    rbm_register(sb_names, "undefined.names", 1);
+
+    // XXX Debugging
+    Rprintf("data has %d newlines\n", charcount(*datav, '\n'));
+
+    STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
+    rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
+
     /*
      * We need to initialize rbm_buf before calling any code that
      * might call exit/rbm_exit.
      */
     if ((val = setjmp(rbm_buf)) == 0) {
-        Rprintf("Calling GetNames\n");
-        STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
-        // rbm_register(sb_names, "undefined.names", 1);
-        GetNames((FILE *) sb_names);
-
-        NotifyStage(READDATA);  /* This initializes global variable Uf */
-        Progress(-1.0);
-
-        Rprintf("Calling GetData\n");
-        STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
-        // XXX Registering the data file causes an error
-        // rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
-        GetData((FILE *) sb_datav, 1, 0);
-
         // Real work is done here
-        Rprintf("Calling rulebasedmodels\n");
-        rulebasedmodels();
+        Rprintf("Calling cubistmain\n");
+        cubistmain();
 
-        Rprintf("rulebasedmodels finished\n");
+        Rprintf("cubistmain finished\n");
 
         // Get the contents of the the model file
         char *modelString = strbuf_getall(rbm_lookup("undefined.model"));
