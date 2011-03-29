@@ -32,7 +32,7 @@ function(x, y, label = "outcome", comments = TRUE)
                  sep = "")
     varData <- QuinlanAttributes(x)
     varData <- paste(names(varData), ": ", varData, sep = "", collapse = "\n")
-    out <- paste(out, "\n", varData, sep = "")
+    out <- paste(out, "\n", varData, "\n", sep = "")
     out
 
 
