@@ -109,7 +109,7 @@ cubistControl <- function(unbiased = FALSE,
                           committees = 1,
                           rules = 100,
                           extrapolation = 100,
-                          sample = 99.9,
+                          sample = 0.0,
                           seed = sample.int(4096, size=1) - 1L,
                           label = "outcome")
   {
@@ -119,8 +119,8 @@ cubistControl <- function(unbiased = FALSE,
       stop("percent extrapolation must between 0 and 100")
     if(neighbors < 1 | neighbors > 9)
       stop("number of neighbors must be between 1 and 9")
-    if(sample < 0.1 | sample > 99.9)
-      stop("sampling percentage must be between 0.1 and 99.9")
+    if(sample < 0.0 | sample > 99.9)
+      stop("sampling percentage must be between 0.0 and 99.9")
     if(committees < 1 | committees > 100)
       stop("number of committees must be between 1 and 100")
 
