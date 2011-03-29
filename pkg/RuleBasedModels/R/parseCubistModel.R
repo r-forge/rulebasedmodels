@@ -67,7 +67,8 @@ getSplits <- function(x)
     numCom <- sum(grepl("^rules=", x))
     rulesPerCom <- unlist(lapply(split(ruleNum, as.factor(comNum)), max))
     rulesPerCom <- rulesPerCom[rulesPerCom > 0]
-    names(rulesPerCom) <- paste("Com", 1:numCom)
+    if (! is.null(rulesPerCom) && numCom > 0)
+      names(rulesPerCom) <- paste("Com", 1:numCom)
 
     isNewRule <- ifelse(grepl("^conds=", x), TRUE, FALSE)   
     splitVar <- rep("", length(x))
