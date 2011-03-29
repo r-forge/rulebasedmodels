@@ -11,6 +11,6 @@ function(x, y)
                                       quote = FALSE,
                                       row.names = FALSE,
                                       col.names = FALSE))
-    paste(out, collapse = "\n")
+    paste(paste(out, collapse = "\n"), "\n", sep="")
   }
 
