@@ -101,10 +101,10 @@ static const R_CMethodDef cEntries[] = {
 };
 
 // Initialization function for this shared object
-void R_init_RuleBasedModels(DllInfo *dll)
+void R_init_Cubist(DllInfo *dll)
 {
     // Announce ourselves for testing
-    Rprintf("R_init_RuleBasedModels called\n");
+    Rprintf("R_init_Cubist called\n");
 
     // Register the function "cubist"
     R_registerRoutines(dll, cEntries, NULL, NULL, NULL);

@@ -8,7 +8,7 @@
  * hash.h).
  *
  * Note that currently the purpose of this is to work
- * well enough for use in the RuleBasedModels package.
+ * well enough for use in the Cubist package.
  * Thus, it is not completely general, since that would
  * make the code far more complex than it already is.
  */
