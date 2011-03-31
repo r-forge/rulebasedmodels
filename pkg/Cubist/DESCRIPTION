@@ -1,0 +1,11 @@
+Package: Cubist
+Type: Package
+Title: Rule- and Instance-Based Regression Modeling
+Version: 0.02
+Date: 2011-03-24
+Author: Max Kuhn, Steve Weston, Chris Keefer. C code for Cubist by R. Quinlan 
+Maintainer: Max Kuhn <mxkuhn@gmail.com>
+Description: Regression modeling using rules with added instance-based corrections
+Depends: lattice, reshape2
+License: GPL-2
+LazyLoad: yes
