@@ -43,9 +43,6 @@ static void cubist(char **namesv,
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
     rbm_register(sb_names, "undefined.names", 1);
 
-    // XXX Debugging
-    Rprintf("data has %d newlines\n", charcount(*datav, '\n'));
-
     STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
     rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
 
