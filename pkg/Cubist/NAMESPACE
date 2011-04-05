@@ -16,6 +16,8 @@ S3method(coef, cubist)
 
 S3method(print, cubist)
 
+S3method(predict, cubist)
+
 S3method(QuinlanAttributes, numeric)
 S3method(QuinlanAttributes, factor)
 S3method(QuinlanAttributes, character)
