@@ -101,7 +101,15 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
 testcubist <- function()
   {
     ## testing example
-    cubist(iris[,-1], iris[,1])
+    m <- cubist(iris[,-1], iris[,1])
+    cat("Model:\n")
+    print(m)
+    r <- predict(m, iris[,-1])
+    err <- abs((r - iris[,1]) / iris[,1])
+    cat("Predictions:\n")
+    print(r)
+    cat("Relative error:\n")
+    print(err)
   }
 
 cubistControl <- function(unbiased = FALSE,

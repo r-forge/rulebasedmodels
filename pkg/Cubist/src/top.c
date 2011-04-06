@@ -7,6 +7,7 @@
 #include "redefine.h"
 
 extern void cubistmain();
+extern void samplemain(double *outputv);
 
 static void cubist(char **namesv,
                    char **datav,
@@ -44,6 +45,7 @@ static void cubist(char **namesv,
     rbm_register(sb_names, "undefined.names", 1);
 
     STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
+    /* XXX why is sb_datav copied? what that part of my debugging? */
     rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
 
     /*
@@ -78,6 +80,66 @@ static void cubist(char **namesv,
     initglobals();
 }
 
+static void predictions(char **casev,
+                        char **namesv,
+                        char **datav,
+                        char **modelv,
+                        double *predv,
+                        char **outputv)
+{
+    int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
+
+    // Announce ourselves for testing
+    Rprintf("predictions called\n");
+
+    // Initialize the globals
+    initglobals();
+
+    // Handles the strbufv data structure
+    rbm_removeall();
+
+    // XXX Should this be controlled via an option?
+    Rprintf("Calling setOf\n");
+    setOf();
+
+    STRBUF *sb_cases = strbuf_create_full(*casev, strlen(*casev));
+    rbm_register(sb_cases, "undefined.cases", 1);
+
+    STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
+    rbm_register(sb_names, "undefined.names", 1);
+
+    STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
+    /* XXX why is sb_datav copied? */
+    rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
+
+    STRBUF *sb_modelv = strbuf_create_full(*modelv, strlen(*modelv));
+    /* XXX should sb_modelv be copied? */
+    rbm_register(sb_modelv, "undefined.model", 1);
+
+    /*
+     * We need to initialize rbm_buf before calling any code that
+     * might call exit/rbm_exit.
+     */
+    if ((val = setjmp(rbm_buf)) == 0) {
+        // Real work is done here
+        Rprintf("Calling samplemain\n");
+        samplemain(predv);
+
+        Rprintf("samplemain finished\n");
+    } else {
+        Rprintf("sample code called exit with value %d\n", val - JMP_OFFSET);
+    }
+
+    // Close file object "Of", and return its contents via argument outputv
+    char *outputString = closeOf();
+    char *output = R_alloc(strlen(outputString) + 1, 1);
+    strcpy(output, outputString);
+    *outputv = output;
+
+    // We reinitialize the globals on exit out of general paranoia
+    initglobals();
+}
+
 // Declare the type of each of the arguments to the cubist function
 static R_NativePrimitiveArgType cubist_t[] = {
     STRSXP,   // namesv
@@ -94,9 +156,20 @@ static R_NativePrimitiveArgType cubist_t[] = {
     STRSXP    // outputv
 };
 
+// Declare the type of each of the arguments to the cubist function
+static R_NativePrimitiveArgType predictions_t[] = {
+    STRSXP,   // casev
+    STRSXP,   // namesv
+    STRSXP,   // datav
+    STRSXP,   // modelv
+    REALSXP,  // predv
+    STRSXP    // outputv
+};
+
 // Declare the cubist function
 static const R_CMethodDef cEntries[] = {
     {"cubist", (DL_FUNC) &cubist, 12, cubist_t},
+    {"predictions", (DL_FUNC) &predictions, 6, predictions_t},
     {NULL, NULL, 0}
 };
 
@@ -106,12 +179,13 @@ void R_init_Cubist(DllInfo *dll)
     // Announce ourselves for testing
     Rprintf("R_init_Cubist called\n");
 
-    // Register the function "cubist"
+    // Register the functions "cubist" and "predictions"
     R_registerRoutines(dll, cEntries, NULL, NULL, NULL);
 
     // This should help prevent people from accidentally accessing
     // any of our global variables, or any functions that are not
-    // intended to be called from R.  Only the function "cubist"
-    // can be accessed, since that's the only one we registered.
+    // intended to be called from R.  Only the functions "cubist"
+    // and predictions  can be accessed, since they're the only ones
+    // we registered.
     R_useDynamicSymbols(dll, FALSE);
 }

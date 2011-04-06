@@ -6,20 +6,21 @@ predict.cubist <- function (object, newdata, ...)
   ## TODO: check data types and order
 
   ## make cases file
-  caesString <- makeDataFile(x = newdata, y = NULL)
+  caseString <- makeDataFile(x = newdata, y = NULL)
 
-  if(FALSE)
-    {
-      Z <- .C("predictions",
-              as.character(caseString),
-              as.character(object$names),
-              as.character(object$data),
-              as.character(object$model),
-              ## flag for instances or not?
-              output = double(nrow(newdata)),    
-              PACKAGE = "Cubist"
-              )
-    }
-  
-  z$output
+  Z <- .C("predictions",
+          as.character(caseString),
+          as.character(object$names),
+          as.character(object$data),
+          as.character(object$model),
+          ## flag for instances or not?
+          pred = double(nrow(newdata)),    
+          output = character(1),
+          PACKAGE = "Cubist"
+          )
+
+  ## for testing
+  cat(Z$output, '\n')
+
+  Z$pred
 }
