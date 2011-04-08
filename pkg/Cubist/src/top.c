@@ -25,7 +25,7 @@ static void cubist(char **namesv,
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
 
     // Announce ourselves for testing
-    Rprintf("cubist called\n");
+    // Rprintf("cubist called\n");
 
     // Initialize the globals
     initglobals();
@@ -38,7 +38,7 @@ static void cubist(char **namesv,
     rbm_removeall();
 
     // XXX Should this be controlled via an option?
-    Rprintf("Calling setOf\n");
+    // Rprintf("Calling setOf\n");
     setOf();
 
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
@@ -54,10 +54,10 @@ static void cubist(char **namesv,
      */
     if ((val = setjmp(rbm_buf)) == 0) {
         // Real work is done here
-        Rprintf("Calling cubistmain\n");
+        // Rprintf("Calling cubistmain\n");
         cubistmain();
 
-        Rprintf("cubistmain finished\n");
+        // Rprintf("cubistmain finished\n");
 
         // Get the contents of the the model file
         char *modelString = strbuf_getall(rbm_lookup("undefined.model"));
@@ -90,7 +90,7 @@ static void predictions(char **casev,
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
 
     // Announce ourselves for testing
-    Rprintf("predictions called\n");
+    // Rprintf("predictions called\n");
 
     // Initialize the globals
     initglobals();
@@ -99,7 +99,7 @@ static void predictions(char **casev,
     rbm_removeall();
 
     // XXX Should this be controlled via an option?
-    Rprintf("Calling setOf\n");
+    // Rprintf("Calling setOf\n");
     setOf();
 
     STRBUF *sb_cases = strbuf_create_full(*casev, strlen(*casev));
@@ -122,12 +122,12 @@ static void predictions(char **casev,
      */
     if ((val = setjmp(rbm_buf)) == 0) {
         // Real work is done here
-        Rprintf("Calling samplemain\n");
+        // Rprintf("Calling samplemain\n");
         samplemain(predv);
 
-        Rprintf("samplemain finished\n");
+        // Rprintf("samplemain finished\n");
     } else {
-        Rprintf("sample code called exit with value %d\n", val - JMP_OFFSET);
+        // Rprintf("sample code called exit with value %d\n", val - JMP_OFFSET);
     }
 
     // Close file object "Of", and return its contents via argument outputv
@@ -177,7 +177,7 @@ static const R_CMethodDef cEntries[] = {
 void R_init_Cubist(DllInfo *dll)
 {
     // Announce ourselves for testing
-    Rprintf("R_init_Cubist called\n");
+    // Rprintf("R_init_Cubist called\n");
 
     // Register the functions "cubist" and "predictions"
     R_registerRoutines(dll, cEntries, NULL, NULL, NULL);
