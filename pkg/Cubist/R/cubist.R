@@ -1,5 +1,7 @@
 cubist <-  function(x, ...) UseMethod("cubist")
 
+## TODO: move committees and neighbors and/or composite to cubist.default.
+
 ## About the Cubist C code and our approach here...
 
 ## 1) The cubist code is written to take specific data files from the file system,
@@ -39,8 +41,6 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
   
   namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
   dataString <- makeDataFile(x, y)
-
-  ## TODO: figure out how to combine the combinations of -i and -a
 
   Z <- .C("cubist",
           as.character(namesString),
@@ -89,7 +89,8 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
   xInfo <- list(all = colnames(x),
                 used = union(as.character(splits$variable), tmp))
                 
-
+## todo: predict training set and add to fitted object
+  
   out$vars <- xInfo
   class(out) <- "cubist"
   out
@@ -111,8 +112,8 @@ testcubist <- function()
   }
 
 cubistControl <- function(unbiased = FALSE,
-                          composite = "auto",
-                          neighbors = 3,
+                          composite = "no",
+                          neighbors = 0,
                           committees = 1,
                           rules = 100,
                           extrapolation = 100,
@@ -133,6 +134,19 @@ cubistControl <- function(unbiased = FALSE,
     if(committees < 1 | committees > 100)
       stop("number of committees must be between 1 and 100")
 
+    if(neighbors > 0 & composite == "no")
+      {
+        warning(paste("There were conflicting settings for 'neighbors' and 'composite'."
+                      "Switching 'composite' to 'yes'."))
+        composite <- "yes"
+      }
+    if(neighbors == 0 & composite != "no")
+      {
+        warning(paste("There were conflicting settings for 'neighbors' and 'composite'."
+                      "Switching 'composite' to 'no'."))
+        composite <- "no"
+      }
+    
     list(unbiased = unbiased,
          composite = composite,
          neighbors = neighbors,
@@ -167,10 +181,10 @@ print.cubist <- function(x, ...)
     if(x$control$composite == "yes") cat("Number of instances:", x$control$neighbors, "\n")
     otherOptions <- NULL
     if(x$control$unbiased) otherOptions <- c(otherOptions, "unbiased rules")
-    if(x$control$extrapolation < 100) otherOptions <- c(otherOptions,
-                                                        paste(x$control$extrapolation, "% extrapolation", sep = ""))
-    if(x$control$sample < 99.9) otherOptions <- c(otherOptions,
-                                                        paste(100*x$control$sample, "% sub-sampling", sep = ""))
+    if(x$control$extrapolation < 1) otherOptions <- c(otherOptions,
+                                                        paste(round(x$control$extrapolation*100, 1), "% extrapolation", sep = ""))
+    if(x$control$sample < .999) otherOptions <- c(otherOptions,
+                                                        paste(round(100*x$control$sample, 1), "% sub-sampling", sep = ""))
     if(!is.null(otherOptions))
       {
         cat("Other options:", paste(otherOptions, collapse = ", "))
