@@ -58,8 +58,6 @@ cubist.default <- function(x, y, control = cubistControl(), ...)
           output = character(1),              # pass back cubist output as a string
           PACKAGE = "Cubist"
           )
-  cat(Z$model, '\n')
-  cat(Z$output, '\n')
 
   splits <- getSplits(Z$model)
   if(!is.null(splits))
@@ -122,12 +120,14 @@ cubistControl <- function(unbiased = FALSE,
                           seed = sample.int(4096, size=1) - 1L,
                           label = "outcome")
   {
+    if(length(composite) != 1 | !any(composite == c('yes', 'no', 'auto')))
+      stop("composite must be 'yes', 'no', or 'auto'")
     if(!is.na(rules) & (rules < 1 | rules > 1000000))
       stop("number of rules must be between 1 and 1000000")
     if(extrapolation < 0 | extrapolation > 100)
       stop("percent extrapolation must between 0 and 100")
-    if(neighbors < 1 | neighbors > 9)
-      stop("number of neighbors must be between 1 and 9")
+    if(neighbors < 0 | neighbors > 9)
+      stop("number of neighbors must be between 0 and 9")
     if(sample < 0.0 | sample > 99.9)
       stop("sampling percentage must be between 0.0 and 99.9")
     if(committees < 1 | committees > 100)
