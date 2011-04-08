@@ -39,11 +39,13 @@ int samplemain(double *outputv)
 	/*  Reorder instances to improve caching  */
 
 	CopyInstances();
-	ForEach(i, 0, MaxCase)
-	{
-	    Free(Case[i]);
-	}
-	Free(Case);
+
+        // XXX This causes seg faults - fix it
+	// ForEach(i, 0, MaxCase)
+	// {
+	//     Free(Case[i]);
+	// }
+	// Free(Case);
     }
 
     if ( ! (F = GetFile(".cases", "r")) ) Error(0, Fn, "");
@@ -64,12 +66,13 @@ int samplemain(double *outputv)
 
     if ( USEINSTANCES )
     {
-	FreeInstances();
-	FreeUnlessNil(RSPredVal);
+        // XXX Getting doubly freed errors when USEINSTANCES is true
+	// FreeInstances();
+	// FreeUnlessNil(RSPredVal);
     }
 
-    FreeNamesData();
-    FreeUnlessNil(IgnoredVals);
+    // FreeNamesData();
+    // FreeUnlessNil(IgnoredVals);
 
     return 0;
 }
