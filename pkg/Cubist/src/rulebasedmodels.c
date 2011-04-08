@@ -159,9 +159,20 @@ void initglobals(void)
 void setglobals(int unbiased, char *composite, int neighbors, int committees,
                 double sample, int seed, int rules, double extrapolation)
 {
+    /* XXX What about setting FOLDS? */
+
     UNBIASED = unbiased != 0 ? true : false;
 
-    /* What to do with composite? */
+    if (strcmp(composite, "yes") == 0) {
+        USEINSTANCES = true;
+        CHOOSEMODE = false;
+    } else if (strcmp(composite, "auto") == 0) {
+        USEINSTANCES = true;
+        CHOOSEMODE = true;
+    } else {
+        USEINSTANCES = neighbors > 0;
+        CHOOSEMODE = false;
+    }
 
     NN = neighbors;
     MEMBERS = committees;
