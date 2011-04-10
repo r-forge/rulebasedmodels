@@ -18,6 +18,9 @@ void initglobals(void)
 /*              General data for Cubist                                  */
 /*              -----------------------                                  */
 /*                                                                       */
+/* These variables are all defined in global.c.  Many aren't explicitly  */
+/* initialized there, but are here, just in case.                        */
+/*                                                                       */
 /*************************************************************************/
 
 
@@ -29,9 +32,9 @@ void initglobals(void)
     IValsSize = 0;
     IValsOffset = 0;
 
-    MaxAtt;
+    MaxAtt = 0;
     MaxDiscrVal = 3;
-    Precision;
+    Precision = 0;
     MaxLabel = 0;
     LineNo = 0;
     ErrMsgs = 0;
@@ -40,11 +43,11 @@ void initglobals(void)
 
     MaxCase = -1;
 
-    Case;
+    Case = Nil;
 
     SaveCase = Nil;
     Blocked = Nil;
-    SaveMaxCase;
+    SaveMaxCase = 0;
 
     MaxAttVal = Nil;
     Modal = Nil;
@@ -65,9 +68,9 @@ void initglobals(void)
     AttMaxVal = Nil;
     AttMinVal = Nil;
     AttPref = Nil;
-    Ceiling;
-    Floor;
-    AvCWt;
+    Ceiling = 0.0;
+    Floor = 0.0;
+    AvCWt = 0.0;
 
     ErrReduction = 1;
 
@@ -76,11 +79,12 @@ void initglobals(void)
     AttPrec = Nil;
 
     Instance = Nil;
-    Ref;
+    Ref[0] = Nil;
+    Ref[1] = Nil;
     MaxInstance = -1;
     KDTree = Nil;
 
-    GNNEnv;
+    GNNEnv;  /* This is a struct, which I'm not going to initialize */
     RSPredVal = Nil;
 
 
@@ -92,17 +96,17 @@ void initglobals(void)
 /*************************************************************************/
 
 
-    GEnv;
+    GEnv;  /* This is a struct, which I'm not going to initialize */
 
     TempMT = Nil;
 
     SRec = Nil;
 
-    GlobalMean;
-    GlobalSD;
-    GlobalErr;
+    GlobalMean = 0.0;
+    GlobalSD = 0.0;
+    GlobalErr = 0.0;
 
-    Fn;
+    Fn[0] = '\0';
 
     Mf = 0;
     Pf = 0;
@@ -117,8 +121,8 @@ void initglobals(void)
 
 
     Rule = Nil;
-    NRules;
-    RuleSpace;
+    NRules = 0;
+    RuleSpace = 0;
 
     Cttee = Nil;
 
@@ -136,7 +140,7 @@ void initglobals(void)
     NN = 0;
     MEMBERS = 1;
 
-    MAXD;
+    MAXD = 0.0;
 
     XVAL = 0;
     CHOOSEMODE = 0;
@@ -147,7 +151,7 @@ void initglobals(void)
     KRInit = 0;
     LOCK = false;
 
-    MINITEMS;
+    MINITEMS = 0;
     MAXRULES = 100;
 
     EXTRAP = 0.1;
