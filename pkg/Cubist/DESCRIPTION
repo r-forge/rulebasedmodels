@@ -7,5 +7,6 @@ Author: Max Kuhn, Steve Weston, Chris Keefer. C code for Cubist by R. Quinlan
 Maintainer: Max Kuhn <mxkuhn@gmail.com>
 Description: Regression modeling using rules with added instance-based corrections
 Depends: lattice, reshape2
+Suggests: mlbench
 License: GPL-2
 LazyLoad: yes
