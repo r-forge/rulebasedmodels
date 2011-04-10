@@ -1,7 +1,8 @@
 useDynLib(Cubist)
 
-export(makeNamesFile, makeDataFile,
-       cubistControl,
+import(lattice)
+
+export(cubistControl,
        cubist, testcubist,
        exportCubistFiles,
        cubist.default)
