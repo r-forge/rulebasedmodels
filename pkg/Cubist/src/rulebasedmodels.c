@@ -4,6 +4,10 @@
 #include "redefine.h"
 #include "strbuf.h"
 
+/* Global variables defined in update.d */
+extern int Stage;
+extern FILE *Uf;
+
 /* Don't want to include R.h, which has conflicts with cubist headers */
 extern void Rprintf(const char *, ...);
 
@@ -155,6 +159,15 @@ void initglobals(void)
     MAXRULES = 100;
 
     EXTRAP = 0.1;
+
+/**********************************************/
+/*                                            */
+/* Reinitialize variables defined in update.c */
+/*                                            */
+/**********************************************/
+
+    Stage = 0;
+    Uf = 0;
 }
 
 /*
