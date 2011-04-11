@@ -22,6 +22,13 @@ int samplemain(double *outputv)
     if ( ! (F = GetFile(".names", "r")) ) Error(0, Fn, "");
     GetNames(F);  /* GetNames closes the file */
 
+    /*
+     * Calling NotifyStage with READDATA initializes the Uf variable.
+     * Otherwise, calling InitialiseInstances will seg fault.
+     */
+    NotifyStage(READDATA);
+    Progress(-1.0);
+
     /*  Read the model file that defines the ruleset and sets values
 	for various global variables such as USEINSTANCES  */
 
@@ -32,20 +39,15 @@ int samplemain(double *outputv)
 	if ( ! (F = GetFile(".data", "r")) ) Error(0, Fn, "");
 	GetData(F, true, false);  /* GetData closes the file */
 
-	/*  Prepare the file of instances and the kd-tree index  */
-
+	/* Prepare the file of instances and the kd-tree index  */
 	InitialiseInstances(CubistModel);
 
-	/*  Reorder instances to improve caching  */
-
+	/* Reorder instances to improve caching  */
 	CopyInstances();
 
-        // XXX This causes seg faults - fix it
-	// ForEach(i, 0, MaxCase)
-	// {
-	//     Free(Case[i]);
-	// }
-	// Free(Case);
+        /* Free memory allocated by GetData */
+        FreeData(Case);
+        Case = Nil;
     }
 
     if ( ! (F = GetFile(".cases", "r")) ) Error(0, Fn, "");
@@ -60,19 +62,22 @@ int samplemain(double *outputv)
         outputv[i] = PredVal(Case[i]);
     }
 
-    /*  Free allocated memory  */
-
+    /* Free memory allocated by GetCommittee */
     FreeCttee(CubistModel);
+    CubistModel = Nil;
+
+    /* Free memory allocated by GetData */
+    FreeData(Case);
+    Case = Nil;
 
     if ( USEINSTANCES )
     {
-        // XXX Getting doubly freed errors when USEINSTANCES is true
-	// FreeInstances();
-	// FreeUnlessNil(RSPredVal);
+        /* Free memory allocated by InitialiseInstances and CopyInstances */
+	FreeInstances();
     }
 
-    // FreeNamesData();
-    // FreeUnlessNil(IgnoredVals);
+    /* Free memory allocated by GetNames */
+    FreeNamesData();
 
     return 0;
 }

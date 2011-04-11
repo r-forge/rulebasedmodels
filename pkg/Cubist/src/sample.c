@@ -8,8 +8,13 @@
 /*									 */
 /*************************************************************************/
 
+#ifdef MAIN_PROGRAM
+#define MAIN main
+#else
+#define MAIN Ymain
+#endif
 
-int Ymain(int Argc, char *Argv[])
+int MAIN(int Argc, char *Argv[])
 /*  ----------  */
 {
     RRuleSet            *CubistModel;
@@ -37,6 +42,13 @@ int Ymain(int Argc, char *Argv[])
     if ( ! (F = GetFile(".names", "r")) ) Error(0, Fn, "");
     GetNames(F);  /* GetNames closes the file */
 
+    /*
+     * Calling NotifyStage with READDATA initializes the Uf variable.
+     * Otherwise, calling InitialiseInstances will seg fault.
+     */
+    NotifyStage(READDATA);
+    Progress(-1.0);
+
     /*  Read the model file that defines the ruleset and sets values
 	for various global variables such as USEINSTANCES  */
 
@@ -47,18 +59,15 @@ int Ymain(int Argc, char *Argv[])
 	if ( ! (F = GetFile(".data", "r")) ) Error(0, Fn, "");
 	GetData(F, true, false);  /* GetData closes the file */
 
-	/*  Prepare the file of instances and the kd-tree index  */
-
+	/* Prepare the file of instances and the kd-tree index  */
 	InitialiseInstances(CubistModel);
 
-	/*  Reorder instances to improve caching  */
-
+	/* Reorder instances to improve caching  */
 	CopyInstances();
-	ForEach(i, 0, MaxCase)
-	{
-	    Free(Case[i]);
-	}
-	Free(Case);
+
+        /* Free memory allocated by GetData */
+        FreeData(Case);
+        Case = Nil;
     }
 
     if ( ! (F = GetFile(".cases", "r")) ) Error(0, Fn, "");
@@ -76,18 +85,22 @@ int Ymain(int Argc, char *Argv[])
         printf("%f\n", pval);
     }
 
-    /*  Free allocated memory  */
-    
+    /* Free memory allocated by GetCommittee */
     FreeCttee(CubistModel);
+    CubistModel = Nil;
+
+    /* Free memory allocated by GetData */
+    FreeData(Case);
+    Case = Nil;
 
     if ( USEINSTANCES )
     {
+        /* Free memory allocated by InitialiseInstances and CopyInstances */
 	FreeInstances();
-	FreeUnlessNil(RSPredVal);
     }
 
+    /* Free memory allocated by GetNames */
     FreeNamesData();
-    FreeUnlessNil(IgnoredVals);
 
     return 0;
 }
