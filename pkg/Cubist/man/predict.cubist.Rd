@@ -7,7 +7,7 @@ Predict method for cubist fits
 Predicted values based on a cubist object.
 }
 \usage{
-\method{predict}{cubist}(object, newdata = NULL, neighbors = object$neighbors, ...)
+\method{predict}{cubist}(object, newdata, ...)
 }
 \arguments{
   \item{object}{
@@ -15,9 +15,6 @@ an object of class \code{cubist}
 }
   \item{newdata}{
 a data frame of predictors (in the same order as the original training data)
-}
-  \item{neighbors}{
-the number of instances used to adjust the rule-based prediction. Note that, by default, it follows the value given in the call to \code{\link{cubist}}, but other values can be used as well (since the rules and instance adjustment are independent).
 }
   \item{\dots}{
 other options to pass through the function (not currently used)
