@@ -3,7 +3,7 @@ useDynLib(Cubist)
 import(lattice)
 
 export(cubistControl,
-       cubist, testcubist,
+       cubist,
        exportCubistFiles,
        cubist.default)
 
