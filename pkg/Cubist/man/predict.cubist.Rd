@@ -7,7 +7,7 @@ Predict method for cubist fits
 Predicted values based on a cubist object.
 }
 \usage{
-\method{predict}{cubist}(object, newdata, ...)
+\method{predict}{cubist}(object, newdata = NULL, neighbors = 0, ...)
 }
 \arguments{
   \item{object}{
@@ -16,14 +16,17 @@ an object of class \code{cubist}
   \item{newdata}{
 a data frame of predictors (in the same order as the original training data)
 }
+
+  \item{neighbors}{
+an integer from 0 to 8: how many instances to use to correct the rule-based prediction?
+}
+
   \item{\dots}{
 other options to pass through the function (not currently used)
 }
 }
 \details{
 Prediction using the parametric model are calculated using the method of Quinlan (1992). If \code{neighbors} is greater than zero, these predictions are adjusted by training set instances nearby using the approach of Qunilan (1993).
-
-When \code{newdata} is \code{NULL}, the predictions fro the training set are returned.
 
 }
 \value{
@@ -54,7 +57,9 @@ data(BostonHousing)
 ## 1 committee and no instance-based correction, so just an M5 fit:
 mod1 <- cubist(x = BostonHousing[, -14], y = BostonHousing$medv)
 predict(mod1, BostonHousing[1:4, -14])
-## predict(mod1, BostonHousing[1:4, -14], neighbors = 3)
+
+## now add instances
+predict(mod1, BostonHousing[1:4, -14], neighbors = 5)
 
 }
 

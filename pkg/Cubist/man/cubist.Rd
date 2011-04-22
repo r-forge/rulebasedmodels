@@ -12,8 +12,6 @@ This function fits the rule-based model described in Quinlan (1992) (aka M5) wit
 cubist(x, ...)
 
 \method{cubist}{default}(x, y, 
-       composite = "no",
-       neighbors = 0,
        committees = 1,
        control = cubistControl(), ...)
 }
@@ -23,12 +21,6 @@ a matrix or data frame of predictor variables. Missing data are allowed but (at 
 }
   \item{y}{
 a numeric vector of outcome
-}
-  \item{composite}{
-either "yes", "no" or "auto" to control whether Cubist should supplement the rule-based model predictions using additional data from the training set instances. See Quinlan (1993) for more details.
-}
-  \item{neighbors}{
-If instances are used, how many neighbors are evaluate to adjust the rule-based prediction? Values should be between 1 and 9
 }
   \item{committees}{
 an integer: how many committee models (e.g.. boosting iterations) should be used?
@@ -41,12 +33,17 @@ optional arguments to pass (not currently used)
 }
 }
 \details{
-outline the algorithm here
+Cubist is a prediction-oriented regression model that combines the ideas in Quinlan (1992) and Quinlan (1993). 
 
+Although it initially creates a tree structure, it collapses each path through the tree into a rule. A regression model is fit for each rule based on the data subset defined by the rules. The set of rules are pruned or possibly combined. and the candidate variables for the linear regression models are the predictors that were used in the parts of the rule that were pruned away. This part of the algorithm is consistent with the "M5" or Model Tree approach.
 
-The development of the rules are not affected by the choice of whether to use the instance adjustment. Cubist can use the argument \code{committees} to determine if it is empirically better to used instances or not and make it's own choice (when \code{committees = "auto"}). As such, even though there is an argument \code{neighbors} in \code{cubist}, the decision on instances is not needed until the time of prediction and can be over-ridden in \code{\link{predict.cubist}}.
+Cubist genralizes this model to add boosting (when \code{committees > 1}) and instance based corrections (see \code{\link{predict.cubist}}). The number of instances is set at prediciton time by the user and is not needed for model building.
 
-Note that if the options for \code{neighbors} and \code{committees} conflict, \code{committees} will be adjusted to be consistent with the values in \code{neighbors} (with a warning).
+This function links R to the GPL version of the C code given on the RuleQuest webiste.
+
+The RuleQuest code differentiates missing values from values that are not applicable. Currently, this packages does not make such a distinction (all values are treated as missing). This will produce slightly different results.
+
+To tune the cubist model over the number of committees and neighbors, the \code{\link[caret]{train}} function in the \pkg{caret} package has bindings to find appropriate settings of these parameters.
 
 }
 \value{
@@ -69,6 +66,8 @@ Quinlan. Combining instance-based and model-based learning. Proceedings of the T
 
 Quinlan. \strong{C4.5: Programs For Machine Learning} (1993) Morgan Kaufmann Publishers Inc. San Francisco, CA
 
+Wang and Witten. Inducing model trees for continuous classes. Proceedings of the Ninth European Conference on Machine Learning (1997) pp. 128-137
+
 \url{http://rulequest.com/cubist-info.html}
 
 }
@@ -77,13 +76,13 @@ R code by Max Kuhn, original C sources by R Quinlan and modifications be Steve W
 }
 
 \seealso{
-\code{\link{cubistControl}}, \code{\link{predict.cubist}}, \code{\link{summary.cubist}}, \code{\link{predict.cubist}}, \code{\link{dotplot.cubist}}
+\code{\link{cubistControl}}, \code{\link{predict.cubist}}, \code{\link{summary.cubist}}, \code{\link{predict.cubist}}, \code{\link{dotplot.cubist}}, \code{\link[caret]{train}}
 }
 \examples{
 library(mlbench)
 data(BostonHousing)
 
-## 1 committee and no instance-based correction, so just an M5 fit:
+## 1 committee, so just an M5 fit:
 mod1 <- cubist(x = BostonHousing[, -14], y = BostonHousing$medv)
 mod1
 
