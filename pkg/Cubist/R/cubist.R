@@ -33,8 +33,6 @@ cubist <-  function(x, ...) UseMethod("cubist")
 ## get really fancy.
 
 cubist.default <- function(x, y,
-                           composite = "no",
-                           neighbors = 0,
                            committees = 1,
                            control = cubistControl(), ...)
 {
@@ -42,25 +40,8 @@ cubist.default <- function(x, y,
   if(!is.numeric(y)) stop("cubist models require a numeric outcome")
 
 
-  if(length(composite) != 1 | !any(composite == c('yes', 'no', 'auto')))
-    stop("composite must be 'yes', 'no', or 'auto'")
-  if(neighbors < 0 | neighbors > 9)
-    stop("number of neighbors must be between 0 and 9")
-  if(committees < 1 | committees > 100)
+   if(committees < 1 | committees > 100)
     stop("number of committees must be between 1 and 100")
-
-  if(neighbors > 0 & composite == "no")
-    {
-      warning(paste("There were conflicting settings for 'neighbors' and 'composite'.",
-                    "Switching 'composite' to 'yes'."))
-      composite <- "yes"
-    }
-  if(neighbors == 0 & composite != "no")
-    {
-      warning(paste("There were conflicting settings for 'neighbors' and 'composite'.",
-                    "Switching 'composite' to 'no'."))
-      composite <- "no"
-    }
   
   namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
   dataString <- makeDataFile(x, y)
@@ -69,8 +50,8 @@ cubist.default <- function(x, y,
           as.character(namesString),
           as.character(dataString),
           as.logical(control$unbiased),     # -u : generate unbiased rules
-          as.character(composite),          # -i and -a : how to combine these?
-          as.integer(neighbors),            # -n : set the number of nearest neighbors (1 to 9)
+          "yes",          # -i and -a : how to combine these?
+          as.integer(1),            # -n : set the number of nearest neighbors (1 to 9)
           as.integer(committees),           # -c : construct a committee model
           as.double(control$sample),        # -S : use a sample of x% for training
                                             #      and a disjoint sample for testing
@@ -92,6 +73,12 @@ cubist.default <- function(x, y,
         }
     }
 
+  tmp <- strsplit(Z$model, "\\n")[[1]]
+  tmp <- tmp[grep("maxd", tmp)]
+  tmp <- strsplit(tmp, "\"")[[1]]
+  maxd <- tmp[grep("maxd", tmp) + 1]
+  Z$model <- gsub(paste("nn=\"1\" ", "maxd=\"", maxd, "\"", sep = ""), "insts=\"0\"", Z$model)
+  maxd <- as.double(maxd)
   
 ## todo get mean and std of numeric data for scaling later for plots
 
@@ -101,9 +88,8 @@ cubist.default <- function(x, y,
               model = Z$model,
               output = Z$output,
               control = control,
-              composite = composite,
-              neighbors = neighbors,
               committees = committees,
+              maxd = maxd,
               dims = dim(x),
               splits = splits,
               call = funcCall)  
@@ -117,8 +103,6 @@ cubist.default <- function(x, y,
                   
   out$vars <- xInfo
   class(out) <- "cubist"
-
-  out$fitted.values <- predict(out, x)  
   out
 }
  
@@ -156,16 +140,13 @@ print.cubist <- function(x, ...)
     cat("Number of samples:", x$dims[1],
         "\nNumber of predictors:", x$dims[2],
         "\n\n")
-    
-    if(x$composite == "yes") cat("Rule and Instance-Based Model\n") else cat("Rule-Based Model\n") 
-    
+        
     cat("Number of committees:", length(nRules), "\n")
     if(length(nRules) > 1)
       {
         ruleText <- if(length(nRules) > 20) paste(paste(nRules[1:20], collapse = ", "), "...") else paste(nRules, collapse = ", ")
         cat("Number of rules per committee:", ruleText, "\n")
       } else cat("Number of rules:", nRules, "\n")
-    if(x$composite == "yes") cat("Number of instances:", x$neighbors, "\n")
     otherOptions <- NULL
     if(x$control$unbiased) otherOptions <- c(otherOptions, "unbiased rules")
     if(x$control$extrapolation < 1) otherOptions <- c(otherOptions,
