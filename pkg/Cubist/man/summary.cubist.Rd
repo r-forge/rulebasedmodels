@@ -41,7 +41,7 @@ R code by Max Kuhn, original C sources by R Quinlan and modifications be Steve W
 }
 
 \seealso{
-\code{\link{cubist}}, \code{\link{cubistControl}}, \code{\link{predict.cubist}}, \code{\link{predict.cubist}}, \code{\link{dotplot.cubist}}
+\code{\link{cubist}}, \code{\link{cubistControl}}, \code{\link{predict.cubist}}, \code{\link{dotplot.cubist}}
 }
 \examples{
 library(mlbench)

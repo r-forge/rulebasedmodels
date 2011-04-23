@@ -5,7 +5,7 @@
 Fit a Cubist model
 }
 \description{
-This function fits the rule-based model described in Quinlan (1992) (aka M5) with additional corrections based on nearest neighbors in the training set,  as described in Quinlan (1993).
+This function fits the rule-based model described in Quinlan (1992) (aka M5) with additional corrections based on nearest neighbors in the training set,  as described in Quinlan (1993a).
 
 }
 \usage{
@@ -62,9 +62,9 @@ an object of class \code{cubist} with elements:
 \references{
 Quinlan. Learning with continuous classes. Proceedings of the 5th Australian Joint Conference On Artificial Intelligence (1992) pp. 343-348
 
-Quinlan. Combining instance-based and model-based learning. Proceedings of the Tenth International Conference on Machine Learning (1993) pp. 236-243
+Quinlan. Combining instance-based and model-based learning. Proceedings of the Tenth International Conference on Machine Learning (1993a) pp. 236-243
 
-Quinlan. \strong{C4.5: Programs For Machine Learning} (1993) Morgan Kaufmann Publishers Inc. San Francisco, CA
+Quinlan. \strong{C4.5: Programs For Machine Learning} (1993b) Morgan Kaufmann Publishers Inc. San Francisco, CA
 
 Wang and Witten. Inducing model trees for continuous classes. Proceedings of the Ninth European Conference on Machine Learning (1997) pp. 128-137
 
@@ -76,7 +76,7 @@ R code by Max Kuhn, original C sources by R Quinlan and modifications be Steve W
 }
 
 \seealso{
-\code{\link{cubistControl}}, \code{\link{predict.cubist}}, \code{\link{summary.cubist}}, \code{\link{predict.cubist}}, \code{\link{dotplot.cubist}}, \code{\link[caret]{train}}
+\code{\link{cubistControl}}, \code{\link{predict.cubist}}, \code{\link{summary.cubist}}, \code{\link{dotplot.cubist}}, \code{\link[caret]{train}}
 }
 \examples{
 library(mlbench)
