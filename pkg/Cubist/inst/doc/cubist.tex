@@ -71,7 +71,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \title{Cubist Models For Regression}
-\author{Max Kuhn (max.kuhn@pfizer.com) \\ Steve Weston, \\ Chris Keefer}
+\author{Max Kuhn (max.kuhn@pfizer.com) \\ Steve Weston \\ Chris Keefer}
 
 
 \begin{document}
@@ -130,7 +130,7 @@ Call:
 cubist.default(x = trainingPredictors, y = trainingOutcome)
 
 
-Cubist [Release 2.07 GPL Edition]  Fri Apr 22 22:27:36 2011
+Cubist [Release 2.07 GPL Edition]  Fri Apr 22 22:44:58 2011
 ---------------------------------
 
     Target attribute `outcome'
@@ -239,7 +239,7 @@ Call:
 cubist.default(x = trainingPredictors, y = trainingOutcome, committees = 5)
 
 
-Cubist [Release 2.07 GPL Edition]  Fri Apr 22 22:27:36 2011
+Cubist [Release 2.07 GPL Edition]  Fri Apr 22 22:44:58 2011
 ---------------------------------
 
     Target attribute `outcome'
@@ -575,10 +575,15 @@ We can add instances to the previously fit committee model:
 \end{Schunk}
 Note that the previous models used the implicit default of \code{neighbors = 0} for their predictions.
 
+To tune the model over different values of \code{neighbors} and
+\code{committees}, the \code{train} function in the
+\href{http://cran.r-project.org/web/packages/caret/index.html}{caret}
+package can be used to optimize these parameters. 
+
 
 \section{Exporting the Model}
 
-As previously mentioned, this code is a port of the command--line \pkg{C} code. To run the \pkg{C} code, the training set data must be converted to a specific file format as detailed on the RuleQuest website. Two files are created. The \texttt{file.data} file is a header--less, comma delimited version of the data (the \texttt{file} part is a name given by the user). The \texttt{file.names} file provides infomraiton about the columns (eg. levels for categorical data and so on). After running the \pkg{C} program, another text file called \texttt{file.models}, which contains the information needed for prediction. 
+As previously mentioned, this code is a port of the command--line \pkg{C} code. To run the \pkg{C} code, the training set data must be converted to a specific file format as detailed on the RuleQuest website. Two files are created. The \texttt{file.data} file is a header--less, comma delimited version of the data (the \texttt{file} part is a name given by the user). The \texttt{file.names} file provides information about the columns (eg. levels for categorical data and so on). After running the \pkg{C} program, another text file called \texttt{file.models}, which contains the information needed for prediction. 
 
 Once a model has been built with the \pkg{R} \pkg{cubist} package, the \code{exportCubistFiles} can be used to create the \texttt{.data}, \texttt{.names} and \texttt{.model} files so that the same model can be run at the command--line.
 
@@ -628,12 +633,10 @@ get really fancy.
 
 \begin{itemize}\raggedright
   \item R version 2.11.1 (2010-05-31), \verb|x86_64-apple-darwin9.8.0|
-  \item Locale: \verb|en_US/en_US/en_US/C/en_US/en_US|
-  \item Base packages: base, datasets, graphics, grDevices, grid, methods, splines, stats, stats4, utils
-  \item Other packages: caret~4.85, cluster~1.12.3, coin~1.0-17, colorspace~1.0-1, Cubist~0.02, lattice~0.18-8, MASS~7.3-6,
-    mlbench~2.1-0, modeltools~0.2-17, mvtnorm~0.9-95, party~0.9-99991, plyr~1.2.1, reshape~0.8.3, reshape2~1.1, RWeka~0.4-4,
-    sandwich~2.2-6, strucchange~1.4-2, survival~2.35-8, vcd~1.2-9, zoo~1.6-4
-  \item Loaded via a namespace (and not attached): rJava~0.8-7, RWekajars~3.7.2-1, stringr~0.4, tools~2.11.1
+  \item Locale: \verb|en_US.UTF-8/en_US.UTF-8/C/C/en_US.UTF-8/en_US.UTF-8|
+  \item Base packages: base, datasets, graphics, grDevices, methods, stats, utils
+  \item Other packages: Cubist~0.02, lattice~0.18-8, mlbench~2.1-0, reshape2~1.1
+  \item Loaded via a namespace (and not attached): grid~2.11.1, plyr~1.2.1, stringr~0.4, tools~2.11.1
 \end{itemize}
 \section{References}
 
@@ -646,8 +649,6 @@ get really fancy.
 
    \item Wang and Witten. Inducing model trees for continuous classes. Proceedings of the Ninth European Conference on Machine Learning (1997) pp. 128-137
 
-  
-     
    \item \href{http://rulequest.com/cubist-info.html}{http://rulequest.com/cubist-info.html}
 \end{description}
 

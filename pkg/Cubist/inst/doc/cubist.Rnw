@@ -156,7 +156,7 @@ cor(cmPred, testOutcome)^2
 
 \section{Instance--Based Corrections}
 
-Another innovation in Cubist is the use of a nearest--neighbor to adjust the predictions from the rule--based model. First, a model tree (with or without committees) is created. Once a sample is predicted by this model, Cubist can find it's nearest neighbors and determine the average of these training set points. See Quinlan (1993a) for the details of the adjustment.
+Another innovation in Cubist using nearest--neighbors to adjust the predictions from the rule--based model. First, a model tree (with or without committees) is created. Once a sample is predicted by this model, Cubist can find it's nearest neighbors and determine the average of these training set points. See Quinlan (1993a) for the details of the adjustment.
 
 The development of rules and committees is independent of the choice of using instances. The original \pkg{C} code allowed the program to choose whether to use instances, not use them or let the program decide. Our approach is to build a model with the \code{cubist} function that is ignorant to the decision about instances. When samples are predicted, the argument \code{neighbors} can be used to adjust the rule--based model predictions (or not). 
 
@@ -172,8 +172,8 @@ Note that the previous models used the implicit default of \code{neighbors = 0} 
 
 To tune the model over different values of \code{neighbors} and
 \code{committees}, the \code{train} function in the
-\href{caret}{http://cran.r-project.org/web/packages/caret/index.html}
-package can be used to optimize these parameters.
+\href{http://cran.r-project.org/web/packages/caret/index.html}{caret}
+package can be used to optimize these parameters. 
 
 
 \section{Exporting the Model}
@@ -191,7 +191,7 @@ There are a few features in the \pkg{C} code that are not yet operational in the
   \item variable usage/importance haven't been ported into R objects
   \item only continuous and categorical predictors can be used (the \pkg{C} allows for other data types)
   \item there is an option to let the \pkg{C} code decide on using instances or not. The choice is more explicit in this package
-  \item non--standard name are not currently checked
+  \item non--standard predictor names are not currently checked/fixed
   \item the \pkg{C} code supports binning of predictors
 \end{itemize}
 Many of these features will be implemented in the future.
