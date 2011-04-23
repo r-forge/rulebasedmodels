@@ -9,6 +9,7 @@ predict.cubist <- function (object, newdata = NULL, neighbors = 0, ...)
 
 
   if(length(neighbors) > 1) stop("only a single value of neighbors is allowed")
+  if(neighbors > 9) stop("'neighbors' must be less than 10")
   if(neighbors > 0)
     {
       object$model <- gsub("insts=\"0\"",

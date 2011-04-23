@@ -1,5 +1,16 @@
-exportCubistFiles <- function(x, path = getwd(), prefix = NULL)
+exportCubistFiles <- function(x, neighbors = 0, path = getwd(), prefix = NULL)
   {
+    if(neighbors > 0)
+      {
+        x$model <- gsub("insts=\"0\"",
+                        paste("insts=\"1\" nn=\"",
+                              neighbors,
+                              "\" maxd=\"",
+                              x$maxd,
+                              "\"",
+                              sep = ""),
+                        x$model)
+      }
     if(is.null(prefix)) prefix <- paste("model", format(Sys.time(), "%Y%m%d_%H%M"), sep = "")
     cat(x$model, file = file.path(path, paste(prefix, "model", sep = ".")))
     modelTest <- file.exists(file.path(path, paste(prefix, "model", sep = ".")))

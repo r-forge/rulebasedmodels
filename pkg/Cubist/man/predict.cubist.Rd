@@ -18,7 +18,7 @@ a data frame of predictors (in the same order as the original training data)
 }
 
   \item{neighbors}{
-an integer from 0 to 8: how many instances to use to correct the rule-based prediction?
+an integer from 0 to 9: how many instances to use to correct the rule-based prediction?
 }
 
   \item{\dots}{

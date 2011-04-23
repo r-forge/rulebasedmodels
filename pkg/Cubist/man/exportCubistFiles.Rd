@@ -7,12 +7,15 @@ Export Cubist Information To the File System
 For a fitted cubist object, text files consistent with teh RuleQuest command-line version can be exported.
 }
 \usage{
-exportCubistFiles(x, path = getwd(), prefix = NULL)
+exportCubistFiles(x, neighbors = 0, path = getwd(), prefix = NULL)
 }
 
 \arguments{
   \item{x}{
 a \code{\link{cubist}} object
+}
+  \item{neighbors}{
+how many, if any, neighbors should be used to correct the model predictions
 }
   \item{path}{
 the path to put the files
@@ -50,7 +53,7 @@ library(mlbench)
 data(BostonHousing)
 
 mod1 <- cubist(x = BostonHousing[, -14], y = BostonHousing$medv)
-exportCubistFiles(mod1, tempdir(), "BostonHousing")
+exportCubistFiles(mod1, neighbors = 8, tempdir(), "BostonHousing")
 
 }
 

@@ -53,7 +53,7 @@ summary(mod1)
 
 ## example output:
 
-## Cubist [Release 2.07 GPL Edition]  Sun May 10 17:36:56 2011
+## Cubist [Release 2.07 GPL Edition]  Sun Apr 10 17:36:56 2011
 ## ---------------------------------
 ## 
 ##     Target attribute `outcome'
