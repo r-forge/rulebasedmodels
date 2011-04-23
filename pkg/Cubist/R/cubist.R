@@ -77,7 +77,7 @@ cubist.default <- function(x, y,
   tmp <- tmp[grep("maxd", tmp)]
   tmp <- strsplit(tmp, "\"")[[1]]
   maxd <- tmp[grep("maxd", tmp) + 1]
-  Z$model <- gsub(paste("nn=\"1\" ", "maxd=\"", maxd, "\"", sep = ""), "insts=\"0\"", Z$model)
+  Z$model <- gsub(paste("insts=\"1\" nn=\"1\" ", "maxd=\"", maxd, "\"", sep = ""), "insts=\"0\"", Z$model)
   maxd <- as.double(maxd)
   
 ## todo get mean and std of numeric data for scaling later for plots
