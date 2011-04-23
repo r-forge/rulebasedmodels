@@ -53,7 +53,7 @@ library(mlbench)
 data(BostonHousing)
 
 mod1 <- cubist(x = BostonHousing[, -14], y = BostonHousing$medv)
-exportCubistFiles(mod1, neighbors = 8, tempdir(), "BostonHousing")
+exportCubistFiles(mod1, neighbors = 8, path = tempdir(), prefix = "BostonHousing")
 
 }
 
