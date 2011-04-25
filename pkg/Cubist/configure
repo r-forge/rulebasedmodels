@@ -1605,7 +1605,12 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-PKG_CFLAGS="-ffloat-store -g"
+GCC_COMPILER=`"${R_HOME}/bin/R" CMD config CC | grep "gcc"`
+if test -n "$GCC_COMPILER"; then
+  PKG_CFLAGS="-ffloat-store -g"
+else
+  PKG_CFLAGS="-g"
+fi
 
 ac_config_files="$ac_config_files src/Makevars"
 
