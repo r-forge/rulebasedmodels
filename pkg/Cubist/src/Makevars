@@ -1,5 +1,0 @@
-# The -ffloat-store option is gcc-specific, but it was used in
-# the original Makefile.
-# The "-g" option is used for debugging.  It may be
-# taken out later.
-PKG_CFLAGS = -ffloat-store -g
