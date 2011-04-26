@@ -45,7 +45,7 @@
 #include <limits.h>
 #include <float.h>
 
-#include "text.i"
+#include "text.h"
 
 
 

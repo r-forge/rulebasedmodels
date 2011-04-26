@@ -32,8 +32,8 @@
 /*************************************************************************/
 
 
-#include "defns.i"
-#include "extern.i"
+#include "defns.h"
+#include "extern.h"
 #include <time.h>
 
 #include "transform.h"

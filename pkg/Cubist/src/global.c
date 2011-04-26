@@ -31,7 +31,7 @@
 /*									 */
 /*************************************************************************/
 
-#include "defns.i"
+#include "defns.h"
 
 #include "transform.h"
 #include "redefine.h"
