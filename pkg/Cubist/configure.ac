@@ -8,8 +8,7 @@ if test "$ECHO" = :; then
   AC_MSG_ERROR([This package needs echo.])
 fi
 
-GCC_COMPILER=`$ECHO $CC | $GREP "gcc"`
-if test -n "$GCC_COMPILER"; then
+if test "$GCC" = "yes"; then
   PKG_CFLAGS="-ffloat-store -g"
 else
   PKG_CFLAGS="-g"

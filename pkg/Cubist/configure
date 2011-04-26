@@ -2603,8 +2603,7 @@ if test "$ECHO" = :; then
   as_fn_error $? "This package needs echo." "$LINENO" 5
 fi
 
-GCC_COMPILER=`$ECHO $CC | $GREP "gcc"`
-if test -n "$GCC_COMPILER"; then
+if test "$GCC" = "yes"; then
   PKG_CFLAGS="-ffloat-store -g"
 else
   PKG_CFLAGS="-g"
