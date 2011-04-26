@@ -1,7 +1,14 @@
 AC_INIT([Cubist], [0.03])
-AC_PROG_CC
 
-GCC_COMPILER=`echo $CC | grep "gcc"`
+AC_PROG_CC
+AC_PROG_GREP
+AC_CHECK_PROGS([ECHO], [echo], [:])
+
+if test "$ECHO" = :; then
+  AC_MSG_ERROR([This package needs echo.])
+fi
+
+GCC_COMPILER=`$ECHO $CC | $GREP "gcc"`
 if test -n "$GCC_COMPILER"; then
   PKG_CFLAGS="-ffloat-store -g"
 else
