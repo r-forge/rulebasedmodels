@@ -1,0 +1,146 @@
+The src directory of the Cubist package primarily contains code from the
+original open source cubist distribution.  This file documents some of
+the changes and additions to make that code work with the Cubist
+package.
+
+------------------------------------------------------------------------
+
+Makevars.in
+
+    Replaces the original Makefile from the open source cubist
+    distribution.  It is converted into Makevars by the configure
+    script, and then used by "R CMD INSTALL" to build the package.
+
+top.c
+
+    This file defines the top level functions that are called from R.
+
+    Defines:
+        cubist
+            -> initglobals
+                initializes global variables defined
+                in globals.c and declared in externals.h
+            -> setglobals
+            -> rbm_removeall
+            -> setOf
+            -> rbm_register
+            -> cubistmain
+            -> closeOf
+            -> strbuf_getall
+            -> rbm_lookup
+            -> R_alloc
+        predictions
+            -> initglobals
+            -> rbm_removeall
+            -> setOf
+            -> rbm_register
+            -> samplemain
+            -> closeOf
+            -> R_alloc
+        R_init_Cubist
+        misc R interface stuff
+
+rulebasedmodels.{c,h}
+
+    These files define miscellaneous utility functions that are used in
+    top.c, for example.  They call functions from other more well
+    defined "modules", such as strbuf.c and redefine.c.  I guess they
+    could have been defined in top.c, but I didn't for whatever reason.
+    It probably should use a prefix for the functions it defines, but it
+    doesn't.
+
+    Defines:
+        initglobals
+        setglobals
+        setOf
+            -> rbm_fopen
+        closeOf
+            -> rbm_fclose
+            -> strbuf_getall
+
+strbuf.{c,h}
+
+    These files implement "string buffers", which are basically lists of
+    strings.  In a strange way they are equivalent to reading or writing
+    a string to a file.  They aren't truly general, since they are only
+    really intended to be used by redefine.c.  However, they are
+    stand-alone so they can be independently tested.  All functions
+    defined use the prefix "strbuf_".
+
+hash.{c,h}
+
+    These files implement hash table functions that are used to emulate
+    directory operations in redefine.c.  Instead of mapping from a name
+    to a file, they map from a name to a strbuf structure.  However,
+    they don't have any dependence on strbuf or anything else, so they
+    can be independently tested.  All functions defined use the prefix
+    "ht_".
+
+redefine.{c,h}
+
+    These files implement functions that replace stdio functions using
+    the functions defined in strbuf.c and hash.c.  As such, it depends
+    on both strbuf.c and hash.c.  All functions defined use the prefix
+    "rbm_".
+
+transform.h
+
+    This file redefines stdio functions to functions defined in
+    redefine.c.  It is included in most of the cubist files, along
+    with redefine.h.
+
+rcubist.c
+
+    This file is a heavily modified version of the original cubist main
+    program.  Instead of defining "main", it defines "cubistmain" which
+    is called by the cubist function, defined in top.c.  A few other
+    things are changed, since some stuff wasn't needed for a library
+    function versus a standalong program, and because some stuff is done
+    in the cubist function rather than cubistmain.
+
+rsample.c
+
+    This file is a heavily modified version of the original sample main
+    program.  Instead of defining "main", it defines "samplemain" which
+    is called by the predictions function, defined in top.c.  A few other
+    things are changed, since some stuff wasn't needed for a library
+    function versus a standalong program, and because some stuff is done
+    in the predictions function rather than samplemain.
+
+sample.c
+
+    This file is another heavily modified version of the original sample
+    main program.  However, this can actually be used as a main program.
+    I think I kept it for testing purposes to see if it produced the
+    same output as the original sample.c program that used functions
+    that are similar to, but incompatible with, the newer functions
+    defined in the open source version of the cubist package.
+
+The following files were modified as little as possible from the open
+source cubist distribution.  The main difference is that they include
+transform.h and redefine.h to avoid writing to files, etc.
+
+    construct.c
+    contin.c
+    defns.h                   Renamed from defns.i
+    discr.c
+    extern.h                  Renamed from extern.i
+    formrules.c
+    formtree.c
+    getdata.c
+    getnames.c
+    global.c
+    implicitatt.c
+    instance.c
+    modelfiles.c
+    predict.c
+    prunetree.c
+    regress.c
+    rules.c
+    sort.c
+    stats.c
+    text.h                    Renamed from text.i
+    trees.c
+    update.c
+    utility.c
+    xval.c
