@@ -95,7 +95,7 @@ rcubist.c
     program.  Instead of defining "main", it defines "cubistmain" which
     is called by the cubist function, defined in top.c.  A few other
     things are changed, since some stuff wasn't needed for a library
-    function versus a standalong program, and because some stuff is done
+    function versus a standalone program, and because some stuff is done
     in the cubist function rather than cubistmain.
 
 rsample.c
