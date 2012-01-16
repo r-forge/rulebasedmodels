@@ -47,8 +47,13 @@
 			if ( ! EndPtr || *EndPtr != '\00' ) break;\
 			ArgOK = true
 
+#ifdef MAIN_PROGRAM
+#define MAIN main
+#else
+#define MAIN Ymain
+#endif
 
-int main(int Argc, char *Argv[])
+int MAIN(int Argc, char *Argv[])
 /*  ----  */
 {
     int			o;
