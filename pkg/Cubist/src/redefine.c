@@ -41,6 +41,10 @@ jmp_buf rbm_buf;
  */
 static void *strbufv;
 
+/*
+ * XXX Is this called anywhere in Cubist?  It looks like it's
+ * XXX been made obsolete by rbm_removeall.
+ */
 int rbm_init()
 {
     if (strbufv == NULL) {
@@ -213,8 +217,9 @@ int rbm_remove(const char *path)
 }
 
 /*
- * This is called at the beginning a cubist run to clear out all "files"
- * generated on the previous run.
+ * This is called at the beginning of a cubist run to clear out
+ * all "files" generated on the previous run and to prepare it
+ * for the next run.
  */
 void rbm_removeall()
 {
