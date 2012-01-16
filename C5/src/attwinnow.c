@@ -35,6 +35,9 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
+
 float		*AttImp=Nil;		/* att importance */
 Boolean		*Split=Nil,		/* atts used in unpruned tree */
 		*Used=Nil;		/* atts used in pruned tree */

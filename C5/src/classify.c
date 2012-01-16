@@ -34,6 +34,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 	/* Local data used by MarkActive and RuleClassify.
 	   Note: Active is never deallocated, just grows as required */

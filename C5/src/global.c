@@ -33,6 +33,9 @@
 
 #include "defns.h"
 
+#include "transform.h"
+#include "redefine.h"
+
 /*************************************************************************/
 /*									 */
 /*		Parameters etc						 */

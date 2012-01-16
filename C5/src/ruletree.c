@@ -39,6 +39,9 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
+
 Condition	*Test=Nil;	/* tests that appear in ruleset */
 int		NTest,		/* number of distinct tests */
 		TestSpace,	/* space allocated for tests */

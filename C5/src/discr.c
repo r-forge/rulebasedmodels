@@ -34,6 +34,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 /*************************************************************************/
 /*									 */

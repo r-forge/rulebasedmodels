@@ -38,6 +38,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "transform.h"
+#include "redefine.h"
+
 #define	MAXLINEBUFFER	10000
 int	Delimiter;
 char	LineBuffer[MAXLINEBUFFER], *LBp=LineBuffer;

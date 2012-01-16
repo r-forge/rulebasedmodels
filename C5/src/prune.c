@@ -35,6 +35,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 #define	  LocalVerbosity(x,s)	if (Sh >= 0) {Verbosity(x,s)}
 #define	  Intab(x)		Indent(x, 0)

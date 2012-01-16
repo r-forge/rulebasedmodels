@@ -35,6 +35,9 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
+
 #define SwapSRec(a,b)	{Xab=SRec[a]; SRec[a]=SRec[b]; SRec[b]=Xab;}
 
 

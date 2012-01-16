@@ -35,6 +35,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 #define	TabSize		4
 #define Utility		ClassDist[0]

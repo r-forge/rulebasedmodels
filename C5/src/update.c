@@ -35,6 +35,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 FILE	*Uf=0;			/* File to which update info written  */
 

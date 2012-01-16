@@ -35,6 +35,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 float	*DeltaErrs=Nil,	/* DeltaErrs[r]	 = change attributable to rule r or
 					   realisable if rule r included */

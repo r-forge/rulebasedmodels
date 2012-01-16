@@ -35,6 +35,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include "transform.h"
+#include "redefine.h"
 
 Boolean		MultiVal,	/* all atts have many values */
 		Subsample;	/* use subsampling */
