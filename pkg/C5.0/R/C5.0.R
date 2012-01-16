@@ -70,7 +70,7 @@ C5.0.default <- function(x, y,
 
           ## Also, for the number of minimum cases, I'm not sure what the
           ## default should be. The code looks like it dynamically sets the
-          ## value (as opposed to a static, universal integer
+          ## value (as opposed to a static, universal integer)
           as.integer(control$minCases),     # -m : "set the Minimum cases" var name: MINITEMS
 
           as.logical(control$fuzzyThreshold),
@@ -80,7 +80,7 @@ C5.0.default <- function(x, y,
           tree = character(1),             # pass back C5.0 tree as a string
           rules = character(1),            # pass back C5.0 rules as a string
           output = character(1)            # get output that normally goes to screen
-          PACKAGE = "C5.0"
+          PACKAGE = "C50"
           )
 
 
@@ -222,7 +222,7 @@ truncateText <- function(x)
 
 if(FALSE)
   {
-    library(C5.0)
+    library(C50)
 
     test <- matrix(0, 3, 3)
     test[1, 1] <- 10
