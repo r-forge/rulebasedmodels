@@ -1,9 +1,14 @@
+.POSIX:
+
 .PHONY: all stdioctcl cfive tclcfive
+
 .EXPORT_ALL_VARIABLES: 
 
 all: $(SHLIB)
 
 $(SHLIB): stdioctcl cfive tclcfive
+
+#on OS X, lzma is not available, we don't need it in any case
 
 stdioctcl:
 	cd stdioctcl ;\
@@ -11,8 +16,8 @@ stdioctcl:
 	cp -fp stdioctcl/stdioctcl/build/libstdioctcl.so $(PWD) 
 
 cfive: stdioctcl
-	CFLAGS="-I../../stdioctcl/include" ;\
-	export CFLAGS ;\
+	CPPFLAGS="-I../../cfive/cfive $$CPPFLAGS" ;\
+	export CPPFLAGS ;\
 	LDFLAGS="-L../../stdioctcl/stdioctcl/build -Wl,-rpath,\\\$$ORIGIN -Wl,-rpath,\\\$$ORIGIN/../libs" ;\
 	export LDFLAGS ;\
 	cd cfive ;\
@@ -20,11 +25,11 @@ cfive: stdioctcl
 	cp -fp cfive/cfive/build/libcfive.so $(PWD) 
 
 tclcfive: cfive
-	cd tclcfive ;\
-	CFLAGS="-I../../cfive/cfive" ;\
-	export CFLAGS ;\
+	CPPFLAGS="-I../../cfive/cfive $$CPPFLAGS" ;\
+	export CPPFLAGS ;\
 	LDFLAGS="-L../../cfive/cfive/build -Wl,-rpath,\\\$$ORIGIN -Wl,-rpath,\\\$$ORIGIN/../libs" ;\
 	export LDFLAGS ;\
+	cd tclcfive ;\
 	support/tmk/src/tmk
 	cp -fp tclcfive/tclcfive/build/libtclcfive.so $(PWD)/../inst/tclcfive
 	cp -fp tclcfive/tclcfive/cfive.tcl $(PWD)/../inst/tclcfive
