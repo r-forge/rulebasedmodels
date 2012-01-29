@@ -1,0 +1,2 @@
+# use the same settings as for mpi-sb.mpg.de
+source ${tmk::dir_site}/mpi-sb.mpg.de

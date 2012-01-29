@@ -1,7 +1,7 @@
 C5.0 <-  function(x, ...) UseMethod("C5.0")
 
 C5.0.default <- function(x, y,
-                         trials = 1,
+                         trials = 0,
                          weights = NULL,
                          control = C5.0Control(),
                          costs = NULL,
@@ -18,7 +18,7 @@ C5.0.default <- function(x, y,
   if(!is.null(costs))
     {
       if(!is.matrix(costs)) stop("'costs' should be a matrix")
-      if(ncol(costs) != nClass | nrow(costs) != nClass)
+      if(ncol(costs) != nClass || nrow(costs) != nClass)
         stop(paste("'cost should be a ", nClass, "x", nClass,
                    "matrix", sep = ""))
       if(is.null(dimnames(costs)))
@@ -32,9 +32,6 @@ C5.0.default <- function(x, y,
       costString <- makeCostFile(costs)
     } else costString <- ""
 
-  if(trials < 1 | trials > 1000)
-    stop("number of boosting iterations must be between 1 and 100")
-
   if(!is.data.frame(x) & !is.matrix(x)) stop("x must be a matrix or data frame")
 
   if(!is.null(weights) && !is.numeric(weights))
@@ -44,56 +41,101 @@ C5.0.default <- function(x, y,
   namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
   dataString <- makeDataFile(x, y)
 
-  Z <- .C("C5.0",
-          as.character(namesString),
-          as.character(dataString),
-          as.character(costString),
-          as.logical(control$subset),       # -s "use the Subset option" var name: SUBSET
-          as.logical(control$rules),        # -r "use the Ruleset option" var name: RULES
-          
-          ## for the bands option, I'm not sure what the default should be.
-          as.integer(control$bands),        # -u "sort rules by their utility into bands" var name: UTILITY
-          
-          ## The documentation has two options for boosting:
-          ## -b use the Boosting option with 10 trials
-          ## -t trials ditto with specified number of trial
-          ## I think we should use -t
-          as.integer(trials),               # -t : " ditto with specified number of trial", var name: TRIALS
+  tcl("file" ,"mkdir" ,"cfive://cfive")
 
-          as.logical(control$winnow),       # -w "winnow attributes before constructing a classifier" var name: WINNOW 
-          as.double(control$sample),        # -S : use a sample of x% for training
-                                            #      and a disjoint sample for testing var name: SAMPLE
-          as.integer(control$seed),         # -I : set the sampling seed value
-          as.integer(control$noGlobalPruning),
-                                            # -g: "turn off the global tree pruning stage" var name: GLOBAL
-          as.double(control$CF),            # -c: "set the Pruning CF value" var name: CF
+  if(any(nchar(namesString))) {
+    namesfile <- tcl("open" ,"cfive://cfive/cfive.names" ,"w")
+    tcl("puts" ,namesfile ,namesString)
+    tcl("close" ,namesfile)
+  }
 
-          ## Also, for the number of minimum cases, I'm not sure what the
-          ## default should be. The code looks like it dynamically sets the
-          ## value (as opposed to a static, universal integer)
-          as.integer(control$minCases),     # -m : "set the Minimum cases" var name: MINITEMS
+  if (any(nchar(dataString))) {
+    datafile <- tcl("open" ,"cfive://cfive/cfive.data" ,"w")
+    tcl("puts" ,datafile ,dataString)
+    tcl("close" ,datafile)
+  }
 
-          as.logical(control$fuzzyThreshold),
-                                            # -p "use the Fuzzy thresholds option" var name: PROBTHRESH     
-          
-          ## the model is returned in 2 files: .rules and .tree
-          tree = character(1),             # pass back C5.0 tree as a string
-          rules = character(1),            # pass back C5.0 rules as a string
-          output = character(1)            # get output that normally goes to screen
-          PACKAGE = "C50"
-          )
+  if (any(nchar(costString))) {
+    costfile <- tcl("open" ,"cfive://cfive/cfive.costs" ,"w")
+    tcl("puts" ,costfile ,costString)
+    tcl("close" ,costfile)
+  }
 
+  #because of limitations of the current tcl package used for in-memory files,
+  #this directory change should happen *after* at least one file is created
+  #in the directory
+  tcl("cd" ,"cfive://cfive")
 
-  
-  out <- list(data = dataString,
-              names = namesString,
-              cost = costString,
-              caseWeights = !is.null(weights),
-              control = control,
-              trials = trials,
-              costs = costs,
-              dims = dim(x),
-              call = funcCall)  
+  cfiveopts <- c("-f" ,"cfive")
+
+  outtype <- "tree"
+  if (control$rules) {
+    cfiveopts <- c(cfiveopts ,"-r")
+    outtype <- "rules"
+  }
+  if (control$subset) {
+    cfiveopts <- c(cfiveopts ,"-s")
+  }
+
+  if (control$bands) {
+    cfiveopts <- c(cfiveopts ,"-u" ,control$bands)
+  }
+
+  if (trials) {
+    cfiveopts <- c(cfiveopts ,"-t" ,trials)
+  }
+
+  if (control$winnow) {
+    cfiveopts <- c(cfiveopts ,"-w")
+  }
+
+  if (control$sample) {
+    cfiveopts <- c(cfiveopts ,"-S" ,control$sample)
+  }
+
+  if (control$seed) {
+    cfiveopts <- c(cfiveopts ,"-I" ,control$seed)
+  }
+
+  if (control$noGlobalPruning) {
+    cfiveopts <- c(cfiveopts ,"-g")
+  }
+
+  if (control$CF) {
+    cfiveopts <- c(cfiveopts ,"-c" ,control$CF)
+  }
+
+  if (control$minCases) {
+    cfiveopts <- c(cfiveopts ,"-c" ,control$minCases)
+  }
+
+  if (control$fuzzyThreshold) {
+    cfiveopts <- c(cfiveopts ,"-p")
+  }
+
+  cfiveopts <- as.list(cfiveopts)
+  Z <- tclArray()
+  cfivecmd <- c("Rcfive" ,list(Z) ,cfiveopts)
+  do.call("tcl" ,cfivecmd) 
+
+  out <- list(data = dataString
+              ,names = namesString
+              ,cost = costString
+              ,caseWeights = !is.null(weights)
+              ,control = control
+              ,trials = trials
+              ,costs = costs
+              ,dims = dim(x)
+              ,call = funcCall
+              ,options = cfiveopts 
+              ,outtype = outtype
+              ,stdout = tclvalue(Z$stdout)
+              ,stderr = tclvalue(Z$stderr)
+              ,tree = tclvalue(Z$tree)
+              ,rules = tclvalue(Z$rules)
+              ,out = tclvalue(Z$out)
+              ,set = tclvalue(Z$set)
+              )  
 
   class(out) <- "C5.0"
   out
@@ -133,7 +175,8 @@ C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset t
          CF = CF,
          minCases = minCases,
          fuzzyThreshold = fuzzyThreshold,
-         sample = sample / 100,
+         #sample = sample / 100,
+         sample = sample,
          label = label,
          seed = seed %% 4096L)
   }
@@ -143,9 +186,19 @@ print.C5.0 <- function(x, ...)
   {
     cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
 
-    cat("Number of samples:", x$dims[1],
-        "\nNumber of predictors:", x$dims[2],
-        "\n\n")
+    cat(
+        "Number of samples:" ,x$dims[1]
+        ,"\nNumber of predictors:" ,x$dims[2]
+        ,"\ncfive options:" ,as.character(x$options)
+        ,"\nouttype: " ,x$outtype
+        ,"\nstdout:\n" ,x$stdout
+        ,"\nstderr:\n" ,x$stderr
+        ,"\ntree:\n" ,x$tree
+        ,"\nrules:\n" ,x$rules
+        ,"\nout:\n" ,x$out
+        ,"\nset:\n" ,x$set
+        ,"\n\n"
+        )
 
     if(x$trials > 1) cat("Number of boosting iterations:", x$trials, "\n\n")
 
@@ -153,7 +206,7 @@ print.C5.0 <- function(x, ...)
     if(x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
     if(x$control$rules) otherOptions <- c(otherOptions, "rules")
     if(x$control$winnow) otherOptions <- c(otherOptions, "winnowing")
-    if(x$control$globalPruning) otherOptions <- c(otherOptions, "global pruning")
+    if(!(x$control$noGlobalPruning)) otherOptions <- c(otherOptions, "global pruning")
     if(x$control$CF != 0.25) otherOptions <- c(otherOptions,
                                                paste("confidence level: ", x$control$CF, sep = ""))
     if(x$control$minCases != 2) otherOptions <- c(otherOptions,
@@ -222,7 +275,7 @@ truncateText <- function(x)
 
 if(FALSE)
   {
-    library(C50)
+    library(C5.0)
 
     test <- matrix(0, 3, 3)
     test[1, 1] <- 10
@@ -234,8 +287,9 @@ if(FALSE)
          trials = 100,
          control=C5.0Control(
            CF = .1, winnow = TRUE,
-           globalPruning = TRUE, minCases = 10, rule = TRUE,
+           noGlobalPruning = FALSE, minCases = 10, rule = TRUE,
            sample = 10, bands = 10, fuzzyThreshold = TRUE))
 
 
   }
+
