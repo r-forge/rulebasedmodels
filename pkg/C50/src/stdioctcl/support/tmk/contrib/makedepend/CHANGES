@@ -1,5 +1,0 @@
-Modifications:
-
-- changed name main.c to mkdep.c (executable)
-- removed compiler-dependent defines (cross-includes to xc/)
-
