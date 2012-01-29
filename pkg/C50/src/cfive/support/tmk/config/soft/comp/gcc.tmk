@@ -1,0 +1,496 @@
+#
+# gcc.tmk 
+# $Id: gcc.tmk,v 1.36 2007/10/26 11:37:02 cfuchs_sf Exp $
+# configure EGCS / GNU C/C++ compilers : general setting.
+#
+
+#
+# try to find executables, so we don't need this in the site config
+# User can specify the gcc name like tmk -setrunmode gccexename=gcc-3.4
+#
+set gccname [::tmk::get_runmodestat "gccexename" ]
+if { $gccname == "default" } { set gccname "gcc" }
+
+# [regsub "^gcc" $gccname "g++"] is after tcl8.4 .
+# [regsub "^gcc" $gccname "g++" variable] is before tcl8.4. But the result is changed.
+switch $__module {
+    "cxx" { 
+	regsub "^gcc" $gccname "g++" tmpgccname
+	set gccname $tmpgccname
+    }
+    "c"   { 
+	# no need to change the gccname
+    }
+    "default" {log_msg "warning: gcc is not configured for module $__module" }
+}
+
+set EXECUTABLE "unknown"
+if { [catch {config set EXECUTABLE [exec which $gccname] }] } { 
+    exit_msg "Configuration failed.\n\
+              gcc.tmk can not find -setrunmode gccexename=\[$gccname\].\n\
+              Please make sure your gcc is on your path."
+} 
+
+
+# does this belong HERE?
+config variable ::${__module}::FLAGS 
+
+# we need 'ar' for linking static libs...
+catch {config set AR [exec which ar]}
+
+# check version ...
+config set VERSION "unknown"
+catch {
+    config set VERSION [string trim [exec $EXECUTABLE --version 2>@stdout]]
+}
+
+if [regexp pgcc $VERSION] {
+    config set BRANCH  "PGCC"
+} elseif [regexp egcs $VERSION] {
+    config set BRANCH  "EGCS"
+} else {
+    config set BRANCH  "GCC"
+}
+
+#
+# dumpversion
+#
+config set DUMPVERSION "unknown"
+catch {
+    config set DUMPVERSION [string trim [exec $EXECUTABLE -dumpversion 2>@stdout]]
+}
+
+set verlist [split $DUMPVERSION "."]
+config set GCCRELEASE      [lindex $verlist 0]
+config set GCCMINERVERSION [lindex $verlist 1]
+config set GCCPATCHLEVEL   [lindex $verlist 2]
+
+config set NEW_CPP_API 0
+if [expr $GCCRELEASE >= 3] {
+    if [expr $GCCMINERVERSION >= 1] {
+ 	lappend ::${__module}::FLAGS "-DHAVE_SSTREAM"
+	# after 3.1
+ 	config set NEW_CPP_API 1
+    }
+}
+
+# default flags for g++ as well as for gcc
+config set FLAGS_PRF "-fPIC -g3 -pg"
+config set FLAGS_DBG "-fPIC -g -Wno-uninitialized"
+config set FLAGS_STD "-fPIC -O"
+config set FLAGS_OPT "-fPIC -O2"
+switch $BRANCH {
+    "PGCC"  { config set FLAGS_MAX [list -O6] }
+    default { 
+	if [expr $GCCMINERVERSION >= 1] {
+	    config set FLAGS_MAX [list -O6 -DNDEBUG \
+		    -fomit-frame-pointer\
+		    -falign-functions=4\
+		    -fexpensive-optimizations\
+		    -fschedule-insns2\
+		    -finline-functions \
+		    -funroll-loops] 
+	} else {
+	    config set FLAGS_MAX [list -O6 -DNDEBUG \
+		    -fomit-frame-pointer\
+		    -malign-functions=4\
+		    -fexpensive-optimizations\
+		    -fschedule-insns2\
+		    -finline-functions \
+		    -funroll-loops] 
+	}
+    }
+}
+
+
+if { $GCCRELEASE == 2 } {
+    switch -regexp $GCCMINERVERSION {
+	# 2.95.x
+	95 {
+	    switch -regexp $CPU {
+		"pentium\[2-9\]" { append FLAGS_MAX " -mpentiumpro -DCPU=686 "}
+		"pentium"        { append FLAGS_MAX " -mpentium " }
+		default {}
+	    }
+	}
+	# else 
+	default {}	
+    }
+} elseif { $GCCRELEASE == 3 } {
+    switch -regexp $GCCMINERVERSION {
+	0 { 
+	    # 3.0
+	    switch -regexp $CPU {
+		"pentium\[2-9\]" { append FLAGS_MAX " -march=pentiumpro -mcpu=pentiumpro -DCPU=686 " }
+		"pentium"  { append FLAGS_MAX " -march=pentium -mcpu=pentium -DCPU=586 " }
+		"athlon"   { append FLAGS_MAX " -march=athlon -mcpu=athlon -DCPU=ATHLON " }
+		default {}
+	    }
+	}
+	
+	[1-3] {
+	    # 3.1, 3.2, 3.3
+	    switch -regexp $CPU {
+		"pentium4" { append FLAGS_MAX " -mfpmath=sse -march=pentium4 -mcpu=pentium4 -DCPU=686 " }
+		"pentium3" { append FLAGS_MAX " -mfpmath=sse -march=pentium3 -mcpu=pentium3 -DCPU=686 " }
+		"pentium2" { append FLAGS_MAX " -march=pentium2 -mcpu=pentium2 -DCPU=686 " }
+		"pentium"  { append FLAGS_MAX " -march=pentium -mcpu=pentium -DCPU=586 " }
+		"athlon"   { append FLAGS_MAX " -march=athlon -mcpu=athlon -DCPU=ATHLON " }
+		"sun4u"    { 
+		    append FLAGS_MAX " -fPIC -mcpu=ultrasparc  -mtune=ultrasparc -DCPU=ultrasparc " 
+		}
+		"Power Macintosh" { append FLAGS_MAX " -mcpu=powerpc -maltivec -DCPU=POWERPC " }
+		default {}
+	    }
+	}
+	
+	4 {
+	    # 3.4
+	    switch -regexp $CPU {
+		"pentium4" { append FLAGS_MAX " -mfpmath=sse -mtune=pentium4 -march=pentium4 -DCPU=686 " }
+		"pentium3" { append FLAGS_MAX " -mfpmath=sse -mtune=pentium3 -march=pentium3 -DCPU=686 " }
+		"pentium2" { append FLAGS_MAX " -mtune=pentium2 -march=pentium2 -DCPU=686 " }
+		"pentium"  { append FLAGS_MAX " -mtune=pentium  -march=pentium -DCPU=586 " }
+		"athlon"   { append FLAGS_MAX " -mtune=athlon -DCPU=ATHLON " }
+		"opteron"  { append FLAGS_MAX " -mtune=opteron -march=opteron -DCPU=ATHLON " }
+		"sun4u"    {
+		    append FLAGS_MAX " -fPIC -mtune=ultrasparc -march=ultrasparc -DCPU=ultrasparc " 
+		}
+		"Power Macintosh" { 
+		    append FLAGS_MAX " -mcpu=powerpc -mtune=powerpc -maltivec -DCPU=POWERPC " 
+		}
+		default {}
+	    }
+	}
+	
+	default {
+	    switch -regexp $CPU {
+		"pentium\[2-9\]" { append FLAGS_MAX " -march=pentiumpro -mcpu=pentiumpro -DCPU=686 " }
+		"pentium"  { append FLAGS_MAX " -march=pentium -mcpu=pentium -DCPU=586 " }
+		"athlon"   { append FLAGS_MAX " -march=athlon -mcpu=athlon -DCPU=ATHLON " }
+		default {}
+	    }
+	}
+    }
+} elseif { $GCCRELEASE == 4 } {
+	puts $CPU
+    switch -regexp $GCCMINERVERSION {
+	[0-9] { 
+	    switch -regexp $CPU {
+		"pentium4" { append FLAGS_MAX " -mfpmath=sse -mtune=pentium4 -march=pentium4 -DCPU=686 " }
+		"pentium3" { append FLAGS_MAX " -mfpmath=sse -mtune=pentium3 -march=pentium3 -DCPU=686 " }
+		"pentium2" { append FLAGS_MAX " -mtune=pentium2 -march=pentium2 -DCPU=686 " }
+		"pentium"  { append FLAGS_MAX " -mtune=pentium  -march=pentium -DCPU=586 " }
+		"athlon"   { append FLAGS_MAX " -fPIC -mtune=opteron -DCPU=ATHLON " }
+		"ix86"     { append FLAGS_MAX " -fPIC -mtune=opteron -DCPU=ATHLON " }
+		"opteron"  { append FLAGS_MAX " -fPIC -mtune=opteron -march=opteron -DCPU=ATHLON " }
+		"sun4u"    {
+		    append FLAGS_MAX " -fPIC -mtune=ultrasparc -march=ultrasparc -DCPU=ultrasparc " 
+		}
+		"Power Macintosh" { 
+		    append FLAGS_MAX " -mcpu=powerpc -mtune=powerpc -maltivec -DCPU=POWERPC " 
+		}
+		default {}
+	    }
+	}
+
+	default {
+	    switch -regexp $CPU {
+		"pentium\[2-9\]" { append FLAGS_MAX " -march=pentiumpro -mcpu=pentiumpro -DCPU=686 " }
+		"pentium"  { append FLAGS_MAX " -march=pentium -mcpu=pentium -DCPU=586 " }
+		"athlon"   { append FLAGS_MAX " -march=athlon -mcpu=athlon -DCPU=ATHLON " }
+		default {}
+	    }
+	}
+    }
+} else {
+    # 5?
+    puts "FLAGS_MAX has not yet supported for gcc $DUMPVERSION."
+}
+
+
+if { $CPU == "athlon" && $BRANCH != "PGCC" } {
+    if [regexp 2\.\(\[0-9\]+\) $VERSION dummyMatch minorVer] {
+	if [expr $minorVer > 95] {
+	    append FLAGS_MAX " -mcpu=opteron -march=opteron "
+	}
+    } 
+}
+
+# what the heck is INCTEMP?
+if {$__module == "cxx"} {
+    foreach x {FLAGS_PRF FLAGS_DBG FLAGS_STD FLAGS_OPT FLAGS_MAX} {
+	lappend $x "-D_INCTEMP"
+    }
+}
+
+#
+# 64bit option 
+#
+set addressmode [::tmk::get_runmodestat "addressmode" ]
+if { $addressmode == "64bit" } {
+    foreach x {FLAGS_PRF FLAGS_DBG FLAGS_STD FLAGS_OPT FLAGS_MAX} {
+	lappend $x "-m64" "-fPIC"
+    }
+}
+
+# default flags if this compiler is used as the linker 
+config set LDFLAGS_PRF "-pg"
+config set LDFLAGS_DBG ""
+config set LDFLAGS_STD ""
+config set LDFLAGS_OPT ""
+config set LDFLAGS_MAX ""
+if { $addressmode == "64bit" } {
+    foreach x { LDFLAGS_PRF LDFLAGS_DBG LDFLAGS_STD LDFLAGS_OPT LDFLAGS_MAX } { 
+	lappend $x "-m64" "-fPIC"
+    }
+}
+
+
+# flags for some of the meta compiler options
+config set METAOPT(nowarn)   "-wall"
+config set METAOPT(warn)     ""
+config set METAOPT(fullwarn) "-fullwarn"
+config set METAOPT(ansi)     "-ansi"
+config set METAOPT(stl)      ""
+config set METAOPT(shared)   "-fPIC" ;# ??? really ???
+# config set METAOPT(32bit)   "-Wl,-n32"   
+
+# with gcc we don't need an external makedepend
+config set EXPLICIT_MAKEDEPEND 0
+
+# gcc work around
+# don't use optimization for a given list of object files
+config proc ::gccNoOpt {_files} {
+    if {($cxx::COMPILER == "gcc") &&
+	(($::CODELEVEL == "max") || ($::CODELEVEL == "opt"))} {
+	exception $_files {::cxx::gcc::FLAGS} {
+	    set ::cxx::gcc::FLAGS $::cxx::gcc::FLAGS_DBG
+	}
+    }
+}
+    
+#-----------------------------------------------------------------
+# OS depended part.
+# please define OS depended proc and variables here.
+#-----------------------------------------------------------------
+if { $OS == "Linux" } {
+    source $::tmk::dir_soft/comp/gcc-linux.tmk
+} elseif { $OS == "IRIX" } {
+    source $::tmk::dir_soft/comp/gcc-irix.tmk
+} elseif { $OS == "IRIX64" } {
+    source $::tmk::dir_soft/comp/gcc-irix.tmk
+} elseif { $OS == "SunOS" } {    
+    source $::tmk::dir_soft/comp/gcc-sun.tmk
+} elseif { $OSCLASS == "windows" } {    
+    source $::tmk::dir_soft/comp/gcc-windows.tmk
+} elseif { $OS == "Darwin" } {    
+    source $::tmk::dir_soft/comp/gcc-darwin.tmk    
+} else {
+    log_msg "Warning! : OS ($OS) is not recognized, use default."
+}
+
+#-----------------------------------------------------------------
+# config default procs when not exists.
+#-----------------------------------------------------------------
+# return desired meta compiler options 
+if { [ info procs meta_option_flags ] == "" } {
+    dbg_msg "use default meta_option_flags."
+    config proc meta_option_flags {opt} {
+	variable METAOPT 
+	set result {}
+	foreach o $opt {
+	    if [info exists METAOPT($o)] {
+		dbg_msg "meta option $o: flags $METAOPT($o)" 2
+		set result [concat $result $METAOPT($o)]
+	    } else {
+		dbg_msg "no flags for meta option $o" 2
+	    }
+	}
+	return $result
+    }
+} else {
+    dbg_msg "config proc meta_option_flags is already defined."
+}
+
+# compile a source file (C or C++) 
+if { [ info procs compile_obj ] == "" } {
+    dbg_msg "use default compile_obj."
+    config proc compile_obj {obj src dep flags opt} {
+
+	variable EXECUTABLE
+	if [regexp "async" $opt] {
+	    set async 1
+	} else {
+	    set async 0
+	}
+
+	# convert filenames to native representation, and pay attention
+	#   attention that no argument is evaluated too often ('\' problem)!
+	set flags [concat $flags [meta_option_flags $opt]]
+	if $async {
+	    set cmd [list ::tmk::cmd_thread $obj [file nativename $EXECUTABLE] "-Wp,-MD,$dep"]
+	} else {
+	    set cmd [list "cmd" [file nativename $EXECUTABLE] "-Wp,-MD,$dep"]
+	}
+	set cmd [concat $cmd $flags]
+	lappend cmd  "-o" $obj "-c" $src
+	uplevel \#0 $cmd
+    }
+} else {
+    dbg_msg "config proc compile_obj is already defined."    
+}
+
+# # only update dependency file, but do not compile
+if { [ info procs update_dependencies ] == "" } {
+    dbg_msg "use default update_dependencies."
+    config proc update_dependencies {obj src dep flags opt} {
+	variable EXECUTABLE
+	# convert filenames to native representation, and pay attention
+	#   attention that no argument is evaluated too often ('\' problem)!
+	if [file exists $dep] {file delete $dep}
+	set flags [concat $flags [meta_option_flags $opt]]
+	puts "updating dependencies for $obj"
+	set cmd [list "cmd_quiet" [file nativename $EXECUTABLE] "-M"]
+	lappend cmd "-Wp,-MG -Wp,-MD,$dep"
+	set cmd [concat $cmd $flags]
+	lappend cmd $src
+	uplevel \#0 $cmd
+	### why no -o option? How does gcc know which is the target???
+    }
+} else {
+    dbg_msg "config proc update_dependencies is already defined."        
+}
+
+# # link a static lib
+if { [ info procs link_lib ] == "" } {
+    dbg_msg "use default link_lib."
+    config proc link_lib {lib obj libspec flags opt} {
+	variable AR
+	# hack: flags are just not passed to AR at all
+	set flags [concat $flags [meta_option_flags $opt]]
+	set cmd [list "cmd" [file nativename $AR] "rf" $lib]
+	set cmd [concat $cmd $obj]
+	uplevel \#0 $cmd
+	### use libspec?
+    }
+} else {
+    dbg_msg "config proc link_lib is already defined."        
+}
+
+# # link a shared lib
+if { [ info procs link_shlib ] == "" } {
+    dbg_msg "use default link_shlib."
+    config proc link_shlib {lib obj export_obj libspec flags opt} {
+	variable EXECUTABLE
+	if {$export_obj != {}} {
+	    dbg_msg "warning (gcc): no support for interface subset export"
+	}
+	if [regexp "async" $opt] {
+	    set async 1
+	} else {
+	    set async 0
+	}
+	
+	# needed?
+	if [lcontains $opt "soname"] {
+	    lappend flags "-Wl,-soname=[file tail $lib]"
+	}
+	set flags [concat $flags [meta_option_flags $opt]]
+	set libs  [make_lib_options $libspec $opt]
+	set sharedflag "-shared"
+	if $async {
+	    set cmd [list "::tmk::cmd_thread" $lib [file nativename $EXECUTABLE] $sharedflag]
+	} else {
+	    set cmd [list "cmd" [file nativename $EXECUTABLE] $sharedflag]
+	}
+	set cmd [concat $cmd $flags [list "-o" $lib] $obj $libs]
+	uplevel \#0 $cmd
+    }
+} else {
+    dbg_msg "config proc link_shlib is already defined."        
+}
+
+# link an executable
+if { [ info procs link_exe ] == "" } {
+    dbg_msg "use default link_exe."
+    config proc link_exe {prog obj libspec flags opt} {
+	
+	set flags [concat $flags [meta_option_flags $opt]]
+	set libs  [make_lib_options $libspec $opt]
+	
+	if [regexp "async" $opt] {
+	    set async 1
+	} else {
+	    set async 0
+	}
+	
+	variable EXECUTABLE
+	if $async {
+	    set cmd [concat [list ::tmk::cmd_thread $prog [file nativename $EXECUTABLE]] $flags]
+	} else {
+	    set cmd [concat [list cmd [file nativename $EXECUTABLE]] $flags]
+	}	
+	set cmd [concat $cmd [list "-o" $prog] $obj $libs]
+	uplevel \#0 $cmd 
+    }
+} else {
+    dbg_msg "config proc link_exe is already defined."        
+}
+
+# generate all flags for linking libs with what we are generating.
+# recognized options:
+# - rpath: store runtime linker paths in lib
+# - circular: resolve circular inter-lib symbol dependencies 
+# - twice: obsolete, should use "circular"
+if { [ info procs make_lib_options ] == "" } {
+    dbg_msg "use default make_lib_options."
+    config proc make_lib_options {libspec opt_expr} {
+	
+	set paths {}
+	set libs  {}
+	
+	# rpathflag is depends on environment (see gcc-sunos.tmk). ??? wie kann das sein ???
+	set rpathflag "-Wl,-rpath,"
+	
+	# ??? muss das echt sein? und was ist mit /usr/local? ???
+	# set paths "-L/usr/lib $rpathflag/usr/lib"
+	
+	# expand options expression, look for some of the options
+	eval set opt \[list $opt_expr\]
+	set circ [expr [lcontains $opt "circular"] || [lcontains $opt "twice"]]
+	set rpath [lcontains $opt "rpath"]
+	
+	# process pairs (dir shortname)
+	foreach lib [::link::libspec projlib_list $libspec] {
+	    
+	    set dir  [lindex $lib 0]
+	    set name [lindex $lib 1]
+	    if {![file isdirectory $dir]} {
+		exit_msg "directory $dir does not exist."
+	    }
+	    lappend paths "-L[file nativename $dir]"
+	    if $rpath {lappend paths "$rpathflag[file nativename $dir]"}
+	    lappend libs "-l[file nativename ${name}]"
+	}
+	
+	# lib path + sys libs
+	foreach dir [::link::libspec libpath $libspec] {
+	    lappend paths "-L[file nativename $dir]" 
+	    if $rpath {lappend paths "$rpathflag[file nativename $dir]"}
+	}
+	foreach lib [::link::libspec syslibs $libspec] {
+	    lappend libs "-l[file nativename $lib]"
+	}
+	
+	# resolve circular inter-lib dependencies?
+	# well, we can't really do this, so we just put every lib twice
+	if {$circ && ([llength $libs] > 1)} {
+	    return [concat $paths $libs $libs]
+	} else {
+	    return [concat $paths $libs]
+	}
+    }
+} else {
+    dbg_msg "config proc make_lib_options is already defined."        
+}

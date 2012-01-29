@@ -1,0 +1,89 @@
+# =========================================================================
+# (C)opyright 1999,2000 Stefan Brabec + Hartmut Schirmacher
+# This software may be used and distributed according to the 
+# GNU general public licence (GPL), see file LICENSE.TXT
+# ===========================================================================
+# $Id: module_macro_vars.tmk,v 1.6 2002/07/15 13:27:30 brabec Exp $
+# define the automatic module variables that will trigger some action
+# e.g. if you invoke module xxx, and xxx::LDFLAGS exists, then the script
+# $MODULE_ACTION(LDFLAGS) will be evaluated in namespace xxx with 
+# $__MODNAME == xxx 
+# ===========================================================================
+# $Log: module_macro_vars.tmk,v $
+# Revision 1.6  2002/07/15 13:27:30  brabec
+# *** empty log message ***
+#
+# Revision 1.5  2001/01/22 10:23:10  botsch
+# Mario ist doof
+#
+# Revision 1.4  2000/10/23 07:54:52  htschirm
+# added DEFS
+#
+# Revision 1.3  2000/09/28 07:30:42  htschirm
+# removed obsolete choose_element code (now done via config set_lazy)
+#
+# Revision 1.2  2000/09/28 07:25:12  htschirm
+# fixed dot-in-varname bug
+#
+# Revision 1.1  2000/07/20 16:15:59  htschirm
+# towards tmk release 0.9
+#
+# ===========================================================================
+
+set MODULE_ACTION(LDFLAGS) {
+    dbg_msg "adding \[$LDFLAGS\] to link::FLAGS" 2
+    foreach __d $LDFLAGS {
+	lappend ::link::FLAGS $__d
+    }
+}
+
+set MODULE_ACTION(CXXFLAGS) {
+    dbg_msg "adding \[$CXXFLAGS\] to cxx::FLAGS" 2
+    foreach __d $CXXFLAGS {
+	lappend ::cxx::FLAGS $__d
+    }
+}
+
+set MODULE_ACTION(CFLAGS) {
+    dbg_msg "adding \[$CFLAGS\] to c::FLAGS" 2
+    foreach __d $CFLAGS {
+	lappend ::c::FLAGS $__d
+    }
+}
+
+set MODULE_ACTION(DEFS) {
+    dbg_msg "defining \[$DEFS\] for C/C++" 2
+    foreach __d $DEFS {
+	lappend ::c::FLAGS   -D$__d
+	lappend ::cxx::FLAGS -D$__d
+    }
+}
+
+set MODULE_ACTION(DEPEND) {
+    dbg_msg "module $__MODNAME depends on \[$DEPEND\]" 2
+    module $DEPEND
+}
+
+set MODULE_ACTION(INCPATH) {
+    foreach __d $INCPATH {
+	dbg_msg "adding $__d to c/cxx include path" 2
+	lappend ::cxx::FLAGS -I$__d 
+	lappend ::c::FLAGS   -I$__d
+    }
+}
+
+set MODULE_ACTION(LIBPATH) {
+    foreach __d $LIBPATH {
+	dbg_msg "appending $__d to link::LIBPATH" 2
+	# lappend ::link::LIBPATH $__d
+	set ::link::LIBPATH [ concat $__d $::link::LIBPATH ]
+    }
+}
+
+set MODULE_ACTION(LIBS) {
+    foreach __d $LIBS {
+	dbg_msg "appending $__d to link::SYSLIBS" 2
+	# lappend ::link::SYSLIBS $__d
+	set ::link::SYSLIBS [ concat $__d $::link::SYSLIBS ]
+    }
+}
