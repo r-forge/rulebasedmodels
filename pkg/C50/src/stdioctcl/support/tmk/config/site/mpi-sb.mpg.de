@@ -1,0 +1,23 @@
+# -*-Mode: tcl -*-
+# $Id: mpi-sb.mpg.de,v 1.5 2007/02/19 02:07:30 yamauchih Exp $
+# site config file, Max-Planck-Institut fur Informatik, AG4
+#
+
+#
+# read config in order to the OS.
+#
+if { $OS == "Linux" } {
+    source $::tmk::dir_site/mpi-sb.mpg.de_confdir/linux.config
+} elseif { $OS == "IRIX" } {
+    source $::tmk::dir_site/mpi-sb.mpg.de_confdir/irix.config
+} elseif { $OS == "IRIX64" } {
+    source $::tmk::dir_site/mpi-sb.mpg.de_confdir/irix64.config
+} elseif { $OS == "SunOS" } {    
+    source $::tmk::dir_site/mpi-sb.mpg.de_confdir/sunos.config
+} elseif { $OSCLASS == "windows" } {    
+    source $::tmk::dir_site/mpi-sb.mpg.de_confdir/windows.config
+} else {
+    # $OSCLASS == "macintosh" is possible.
+    puts "Error! : mpi-sb.mpg.de : Unknown operating system under the AG4 configration."
+    puts "Please contact to ag4-admin."
+}

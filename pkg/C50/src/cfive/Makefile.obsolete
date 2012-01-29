@@ -1,0 +1,128 @@
+#/*************************************************************************/
+#/*									 */
+#/*  Copyright 2010 Rulequest Research Pty Ltd.				 */
+#/*  Copyright 2011 Nathan Coulter and others				 */
+#/*									 */
+#/*  This file is part of C5.0 GPL Edition, a single-threaded version	 */
+#/*  of C5.0 release 2.07.						 */
+#/*									 */
+#/*  C5.0 GPL Edition is free software: you can redistribute it and/or	 */
+#/*  modify it under the terms of the GNU General Public License as	 */
+#/*  published by the Free Software Foundation, either version 3 of the	 */
+#/*  License, or (at your option) any later version.			 */
+#/*									 */
+#/*  C5.0 GPL Edition is distributed in the hope that it will be useful,	 */
+#/*  but WITHOUT ANY WARRANTY; without even the implied warranty of	 */
+#/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU	 */
+#/*  General Public License for more details.				 */
+#/*									 */
+#/*  You should have received a copy of the GNU General Public License	 */
+#/*  (gpl.txt) along with C5.0 GPL Edition.  If not, see 		 */
+#/*									 */
+#/*      <http://www.gnu.org/licenses/>.					 */
+#/*									 */
+#/*************************************************************************/
+
+#*************************************************************************#
+#*									 *#
+#*		Makefile for the C5.0 system				 *#
+#*		----------------------------				 *#
+#*									 *#
+#*************************************************************************#
+
+
+AR = ar
+CC	= gcc -ffloat-store
+CFLAGS = -D_GNU_SOURCE -g -Wall -DVerbOpt -O0 $(DEFS)
+C5CFLAGS = -O3 -fpic
+LDFLAGS = $(S) -L.
+LDFLAGS_ORIGIN:= -Wl,--enable-new-dtags -Wl,--rpath,'$$ORIGIN' \
+	-Wl,--rpath,'$$ORIGIN/../lib'
+LIBS = -lm -ltcl8.5 
+SHELL  = /bin/csh
+
+
+#	Definitions of file sets
+#	New file ordering suggested by gprof
+#	except c50Main.c, which is in an arbitrary position
+
+src =\
+	global.c\
+	construct.c\
+	formtree.c\
+	info.c\
+	discr.c\
+	contin.c\
+	subset.c\
+	prune.c\
+	p-thresh.c\
+	trees.c\
+	siftrules.c\
+	ruletree.c\
+	rules.c\
+	getdata.c\
+	implicitatt.c\
+	mcost.c\
+	confmat.c\
+	sort.c\
+	update.c\
+	attwinnow.c\
+	classify.c\
+	formrules.c\
+	getnames.c\
+	modelfiles.c\
+	utility.c\
+	xval.c \
+
+obj =\
+	 c50.o c50Main.o global.o\
+	 construct.o formtree.o info.o discr.o contin.o subset.o prune.o\
+	 p-thresh.o trees.o\
+	 formrules.o siftrules.o ruletree.o rules.o\
+	 xval.o\
+	 getnames.o getdata.o implicitatt.o\
+	 mcost.o classify.o confmat.o sort.o\
+	 update.o utility.o\
+	 modelfiles.o\
+	 attwinnow.o\
+
+all:
+	make c5.0lib
+	make c5.0
+	$(CC) $(LDFLAGS) -o report report.c -lm
+
+
+# debug version (including verbosity option)
+
+c5.0dbg:\
+	$(obj) defns.i extern.i text.i Makefile
+	$(CC) -g -o c5.0dbg $(obj) -lm
+
+
+# production version
+
+c5.0.o:\
+	$(src) defns.i text.i Makefile
+	cat defns.i $(src)\
+		| egrep -v 'defns.i|extern.i' >c50gt.c
+	$(CC) $(CFLAGS) $(C5CFLAGS) -c c50gt.c
+
+c5.0lib: c5.0.o
+	$(AR) -rcs libc5.0.a c50gt.o
+#	rm c50gt.c
+
+c5.0so: c5.0.o
+	$(CC) $(LDFLAGS) -shared -o libc5.0.so c50gt.o $(LIBS) 
+#	strip libc5.0.so
+#	rm c50gt.c
+
+c5.0: c5.0so
+	$(CC) $(CFLAGS) $(C5CFLAGS) $(LDFLAGS) $(LDFLAGS_ORIGIN) -fpic -L. -o c5.0 c50.c -lc5.0 $(LIBS)
+#	strip c5.0
+
+
+$(obj):		Makefile defns.i extern.i text.i
+
+
+.c.o:
+	$(CC) $(CFLAGS) $(C5CFLAGS) -c $<

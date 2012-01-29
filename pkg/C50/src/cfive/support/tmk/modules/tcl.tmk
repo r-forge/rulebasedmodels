@@ -1,0 +1,119 @@
+#! /bin/env tclsh
+
+# Copyright (C) 2011-2012, Nathan Coulter and others 
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 2 of the License.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+module tmkutil
+
+#effect: a variable by the same name as this proc is set in its namespace
+proc findTclLibrary {} {
+	set myname [namespace tail [lindex [info level 0] 0]]
+	upvar [namespace current]::$myname val
+	tcl_findLibrary tcl [info tclversion] [info patchlevel] init.tcl \
+		TCL_LIBRARY [namespace current]::$myname
+	if {[string length $val]} {
+		return $val 
+	}
+}
+
+proc findTclLibrary_vardefault {name name2 op} {
+	return [findTclLibrary]
+}
+
+proc tclConfigShPath {} {
+	variable tclConfigShName
+	variable findTclLibrary
+
+	set maybe [file join [file dirname [info library]] $tclConfigShName]
+	if {[file exists $maybe]} {
+		variable tclConfigPath $maybe
+		return $maybe
+	}
+
+	if {![isnull $findTclLibrary]} {
+		set maybe [file join [file dirname $findTclLibrary] $tclConfigShName]
+		if [file exists $maybe] {
+			return $maybe
+		}
+	}
+
+	if [info exists ::tcl_pkgPath] {
+		set maybe [file join [lindex $::tcl_pkgPath 0] $tclConfigShName] 
+		if [file exists $maybe] {
+			return $maybe
+		}
+	}
+
+}
+
+proc tclConfigShPath_vardefault {name name2 op} {
+	return [tclConfigShPath]
+}
+
+proc pkgPath {} {
+	variable pkgPath
+	variable findTclLibrary
+
+	if [info exists ::tcl_pkgPath] {
+		return [lindex $::tcl_pkgPath 0]
+	}
+
+	set res [file dirname [info library]]
+	if {![isnull $res]} {
+		return $res
+	}
+
+	if {![isnull $findTclLibrary]} {
+		return [file dirname $findTclLibrary]
+	}
+
+	#check directories first of symlink, then of target 
+	foreach dummyname [list "" __dummy__] {
+		set maybe [file dirname [file dirname [file dirname \
+			[file normalize [file join [info nameofexecutable] __dummy__]]]]]
+		if {![isnull $maybe]} {
+			set tcldir tcl[info tclversion]
+			foreach dir [glob [file join $maybe *]] {
+				set maybe [file join $maybe $dir $tcldir init.tcl]
+				if [file exists $maybe] {
+					return [file dirname $maybe]
+				}
+			}
+		}
+	}
+
+	#$env(TCLLIBPATH) should be in auto_path
+	foreach maybe $::auto_path {
+		set maybe [file join $maybe tcl[info tclversion]]
+		if [file exists $maybe] {
+			return [file dirname $maybe]
+		}
+	}
+}
+
+proc pkgPath_vardefault {name name2 op} {
+	return [pkgPath]
+}
+
+lappend ::link::SYSLIBS tcl
+#variable tclsh tclsh
+variable tclsh [info nameofexecutable]
+variable pkgPath
+trace add variable pkgPath read var_default
+variable tclConfigShName tclConfig.sh
+variable tclConfigShPath
+trace add variable tclConfigShPath read var_default
+variable findTclLibrary 
+trace add variable findTclLibrary read var_default
+
