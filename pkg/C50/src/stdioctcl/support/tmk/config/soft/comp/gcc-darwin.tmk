@@ -1,0 +1,59 @@
+#
+# gcc.tmk 
+# $Id: gcc-darwin.tmk,v 1.1 2005/04/23 20:53:58 yamauchih Exp $
+# configure EGCS / GNU C/C++ compilers for Darwin
+#
+
+assert {![string compare $OS "Darwin"]}
+
+# additional Mac stuff
+foreach x {FLAGS_PRF FLAGS_DBG FLAGS_STD FLAGS_OPT FLAGS_MAX} {
+    lappend LD$x -lobjc
+}
+
+# definition for Darwin.
+# link a static lib 
+config proc link_lib {lib obj libspec flags opt} {
+    variable AR
+    # hack: flags are just not passed to AR at all
+    set flags [concat $flags [meta_option_flags $opt]]
+    set cmd [list "cmd" [file nativename $AR] "rs" $lib]
+    set cmd [concat $cmd $obj]
+    uplevel \#0 $cmd
+    ### use libspec?
+}
+
+# definition for Darwin.
+# link a shared lib
+config proc link_shlib {lib obj export_obj libspec flags opt} {
+    variable EXECUTABLE
+    if {$export_obj != {}} {
+	log_msg "warning (gcc): no support for interface subset export"
+    }
+    if [regexp "async" $opt] {
+	set async 1
+    } else {
+	set async 0
+    }
+
+    # needed?
+    if [lcontains $opt "soname"] {
+        # Darwin
+	lappend flags "-install_name"
+	lappend flags "$::PROJROOT/$::SUBDIR/$lib"
+	lappend flags "-flat_namespace"
+	lappend flags "-undefined"
+	lappend flags "suppress"
+    }
+    set flags [concat $flags [meta_option_flags $opt]]
+    set libs  [make_lib_options $libspec $opt]
+    # Darwin
+    set sharedflag "-dynamiclib"
+    if $async {
+	set cmd [list "::tmk::cmd_thread" $lib [file nativename $EXECUTABLE] $sharedflag]
+    } else {
+	set cmd [list "cmd" [file nativename $EXECUTABLE] $sharedflag]
+    }
+    set cmd [concat $cmd $flags [list "-o" $lib] $obj $libs]
+    uplevel \#0 $cmd
+}
