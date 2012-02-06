@@ -1,9 +1,0 @@
-#! /bin/env tclsh
-
-module tcl
-
-exception test {} {
-	exec [info nameofexecutable] all.tcl >@stdout 2>@stderr
-}
-
-
