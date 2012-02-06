@@ -1,2 +1,0 @@
-set_ifndef PACKAGE myprog
-set_ifndef VERSION 0.1
