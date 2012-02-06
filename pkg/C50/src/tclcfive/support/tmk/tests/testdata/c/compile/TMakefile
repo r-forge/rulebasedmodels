@@ -1,4 +1,0 @@
-#! /bin/env tclsh
-
-set ARCH build
-module c
