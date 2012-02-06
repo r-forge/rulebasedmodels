@@ -11,7 +11,7 @@ $(SHLIB): stdioctcl cfive tclcfive
 stdioctcl:
 	cd stdioctcl ;\
 	support/tmk/src/tmk
-	cp -fp stdioctcl/stdioctcl/build/libstdioctcl.so $(PWD) 
+	cp -fp stdioctcl/stdioctcl/build/libstdioctcl$(DYLIB_EXT) $(PWD) 
 
 cfive: stdioctcl
 	CPPFLAGS="-I../../stdioctcl/include $$CPPFLAGS" ;\
@@ -20,7 +20,7 @@ cfive: stdioctcl
 	export LDFLAGS ;\
 	cd cfive ;\
 	support/tmk/src/tmk -D USE_STDIOCTCL_REDEFINE
-	cp -fp cfive/cfive/build/libcfive.so $(PWD) 
+	cp -fp cfive/cfive/build/libcfive$(DYLIB_EXT) $(PWD) 
 
 tclcfive: cfive
 	cd tclcfive ;\
@@ -29,7 +29,7 @@ tclcfive: cfive
 	LDFLAGS="-L../../cfive/cfive/build -Wl,-rpath,\\\$$ORIGIN -Wl,-rpath,\\\$$ORIGIN/../libs" ;\
 	export LDFLAGS ;\
 	support/tmk/src/tmk
-	cp -fp tclcfive/tclcfive/build/libtclcfive.so $(PWD)/../inst/tclcfive
+	cp -fp tclcfive/tclcfive/build/libtclcfive$(DYLIB_EXT) $(PWD)/../inst/tclcfive
 	cp -fp tclcfive/tclcfive/cfive.tcl $(PWD)/../inst/tclcfive
 	cp -fp tclcfive/tclcfive/inmemvfs.tcl $(PWD)/../inst/tclcfive
 	cp -fp tclcfive/tclcfive/pkgIndex.tcl $(PWD)/../inst/tclcfive
