@@ -1,0 +1,16 @@
+#! /bin/env tclsh
+
+module c
+module tclext
+
+set ::link::MAKE_LIB 0
+set ::link::MAKE_SHLIB 0
+
+lappend ::link::OPTIONS lib_in_lib
+lappend ::link::SYSLIBS cfive
+lappend ::LIBRARIES {*}[glob *.tcl] libtclcfive[info sharedlibext]
+
+link::make_shlib libtclcfive[info sharedlibext] tclcfive.o 
+
+build libtclcfive[info sharedlibext]
+depend test libtclcfive[info sharedlibext]
