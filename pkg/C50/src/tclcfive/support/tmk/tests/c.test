@@ -1,0 +1,16 @@
+#! /bin/env tclsh
+
+source [file join [file dirname [info script]] common.tcl]
+
+namespace eval ::tmk::test {
+		namespace import ::tcltest::*
+
+		test compile {} -setup {
+			set mywd [setup1 compile]
+		} -body {
+			exec {*}$env(TMK)
+		} -match glob -result "*tmk: finished*" -cleanup {
+		}
+
+		cleanupTests
+}
