@@ -1,0 +1,61 @@
+# -*-Mode: tcl -*-
+# =========================================================================
+# Copyright (C) 2003 Yamauchi Hitoshi
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (LICENSE.TXT); if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# =============================================================================
+# tags.tmk: tmk module for generating TAGS file
+# $Id: tags.tmk,v 1.1 2003/12/06 22:26:27 yamauchih Exp $
+# =============================================================================
+# $Log: tags.tmk,v $
+# Revision 1.1  2003/12/06 22:26:27  yamauchih
+# add module for tags search
+#
+# Revision 1.1  2003/09/25 20:31:57  yamauchi
+# add tags module
+#
+# $Revision: 1.1 $
+# $Author: yamauchih $
+# =============================================================================
+# Original version by Joerg Haber in the medusa project
+#
+# Usage: 
+#  1. 'module { tags }' in TMakefile
+#  2. tmk tags
+#
+
+#
+# namespace : this is not tags, since target name is also tags.
+# What happen if I use the same name in target and namespace?
+# So, I avoid the same name. Hitoshi
+#
+namespace eval tagsfile { }
+
+# 
+set_ifndef ::tagsfile::TAGS_FILES "*.c *.C *.c++ *.C++ *.cpp *.CPP *.cxx *.CXX *.h *.H *.hh  *.HH *.h++ *.H++ *.in"
+target tags {} {
+    set cmd "find ./ \( -name XYZ [lmap $::tagsfile::TAGS_FILES {-o -name \"$ITEM\"}] \)"
+    append cmd " -print"
+    if [file exists TAGS] { cmd rm -f TAGS; }
+    puts "creating TAGS file..."
+    set pwd [pwd]
+    set files [eval exec $cmd] 
+    set files [lmap $files {$pwd/[string range $ITEM 2 end]}]
+    foreach file $files {
+        puts -nonewline stderr "."
+        exec etags -a $file
+    }
+    puts ""
+}

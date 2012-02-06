@@ -1,0 +1,11 @@
+- subdir-order umkehren (top-down / bottom up) per flag?
+
+- libspec dependency checking ist zu langsam und redundant
+  -> symbolische handles fuer libspec, und dann nur einmal fuer alle
+     gleichen was checken!
+- versioning ausprobieren!!!
+- if [string match mpino* $HOST] ... in site-config.tmk
+
+- wer setzt wann IPA fuer den Linker?!
+
+- was ist das INIT-Skript?

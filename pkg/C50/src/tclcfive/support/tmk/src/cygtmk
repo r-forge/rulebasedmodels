@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+export TMK_TCLSH=cygtclsh80
+export TMK_HOME=C:/cygwin/home/brabec/Projects/tmk
+/usr/bin/cygtclsh80 C:\\cygwin\\home\\brabec\\Projects\\tmk\\src\\tmk $*
+
+

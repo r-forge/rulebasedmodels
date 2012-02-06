@@ -1,0 +1,42 @@
+#! /bin/env expect
+
+proc break_pend name {
+	global spawn_id
+	send "break $name\n"
+	expect "Make breakpoint pending on future shared library load? (y or \\\[n]) " {
+		send "y\n"
+	} "Breakpoint * at" {
+	}
+}
+
+spawn gdb tclsh
+set gdbprompt "\n(gdb)"
+
+expect $gdbprompt {
+	send "directory [pwd]\n"
+}
+
+expect $gdbprompt {
+	send "directory /grid/gro/vol/minigrid/src/tcl-8.5.11/tcl8.5.11/generic\n"
+}
+
+expect $gdbprompt {
+	send "directory /grid/gro/vol/minigrid/src/tcl-8.5.11/tcl8.5.11/unix\n"
+}
+
+expect $gdbprompt {
+		send "directory /grid/gro/vol/gnlstats/users/coultn/y/var/t/projects/stdioctcl/src\n"
+	}
+
+expect $gdbprompt {
+		send "/grid/gro/vol/gnlstats/users/coultn/y/var/t/projects/cfive/src\n"
+	}
+
+expect $gdbprompt {
+	#send "run bash -u adv use /grid/gro/vol/gbl_statcomp_prod/noarch/modulefiles\n"
+	send "run [file join [file dirname [info script]] test1]\n"
+}
+
+expect $gdbprompt {
+	interact
+}
