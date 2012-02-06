@@ -1,0 +1,35 @@
+# ===========================================================================
+# $Id: unix_irix_sysinfo.tmk,v 1.1 2004/08/09 14:17:08 yamauchih Exp $
+# get system information on a irix system
+# ===========================================================================
+# $Log: unix_irix_sysinfo.tmk,v $
+# Revision 1.1  2004/08/09 14:17:08  yamauchih
+# separate system dependent sysinfo
+#
+#=========================================================
+
+# !!! these informations are always determined directly, and never read
+#     from the config cache !!!
+
+assert { [string tolower $::tcl_platform(os)] == "irix" } 
+
+dbg_msg "reading [info script]." 1
+
+set ::DIST    "sgi"
+set ::DISTVER "1.0"
+
+set _irixPlat "" 
+catch { set _irixPlat [exec hinv -c processor] }
+foreach _irixPlat [split $_irixPlat "\n"] {
+    if [regexp \(\[0-9\]+\)\\s\(\[0-9\]+\)\\sMHZ\\sIP\(\[0-9\]+\) \
+	    $_irixPlat _dummyMatch _numProc _MHZ _irixArch] {
+	set ::NRCPUS $_numProc
+	set ::CPUFREQ $_MHZ
+    }
+    if [regexp "^CPU: MIPS \(.*\) Processor" $_irixPlat _a _irixCpu] {
+	set _irixCpu [string trim [string tolower $_irixCpu]]
+	regsub "000\$" $_irixCpu k _irixCpu
+	set ::CPU $_irixCpu
+    }
+}
+

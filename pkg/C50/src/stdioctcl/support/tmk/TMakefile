@@ -1,0 +1,8 @@
+#! /bin/env tclsh
+
+subdir [list tests] 
+
+lappend PKGDATA config contrib modules tools
+set PKGDATA [concat $PKGDATA [glob -dir [file join $PROJDIR] -tails src/*.tmk]]
+set PKGDATA [concat $PKGDATA [glob -dir [file join $PROJDIR] -tails src/*.msg]]
+lappend PROGRAMS src/tmk src/tmk.bat src/cygtmk
