@@ -56,6 +56,9 @@ Boolean		SUBSET=0,	/* subset tests allowed */
 		WINNOW=0,	/* attribute winnowing */
 		GLOBAL=1;	/* use global pruning for trees */
 
+/* Added for sample.c */
+Boolean         RULESUSED=0;    /* list applicable rules */
+
 CaseCount	MINITEMS=2,	/* minimum cases each side of a cut */
 		LEAFRATIO=0;	/* leaves per case for boosting */
 
@@ -173,6 +176,9 @@ CRule		*Rule=0;	/* current rules */
 
 RuleNo		NRules,		/* number of rules */
 		RuleSpace;	/* space currently allocated for rules */
+
+/* Added for sample.c */
+RuleNo		*RulesUsed=Nil; /* list of all rules used */
 
 CRuleSet	*RuleSet=0;	/* rulesets */
 

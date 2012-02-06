@@ -39,6 +39,9 @@ extern	Boolean		SUBSET,
 			WINNOW,
 			GLOBAL;
 
+/* Added for sample.c */
+extern  Boolean         RULESUSED;
+
 extern	CaseCount	MINITEMS,
 			LEAFRATIO;
 
@@ -137,6 +140,9 @@ extern	CRule		*Rule;
 
 extern	RuleNo		NRules,
 			RuleSpace;
+
+/* Added for sample.c */
+extern  RuleNo          *RulesUsed;
 
 extern	CRuleSet	 *RuleSet;
 

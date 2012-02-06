@@ -1,3 +1,5 @@
+#ifndef MAIN_PROGRAM
+
 #ifndef _REDEFINE_H_
 #define _REDEFINE_H_
 
@@ -30,4 +32,5 @@ extern int rbm_remove(const char *fname);
 extern void rbm_removeall();
 extern void rbm_exit(int status);
 
+#endif
 #endif

@@ -1,3 +1,5 @@
+#ifndef MAIN_PROGRAM
+
 #ifdef putc
 #undef putc
 #endif
@@ -24,3 +26,5 @@
 
 #define printf Rprintf
 #define puts(X) Rprintf("%s", X)
+
+#endif
