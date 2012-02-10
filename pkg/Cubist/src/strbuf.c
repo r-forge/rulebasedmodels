@@ -227,8 +227,6 @@ int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
             return -1;
 
         size = sb->len - sb->i;  /* Recompute remaining space left */
-        s = vsnprintf(sb->buf + sb->i, size, format, ap2);
-        assert(s < size);
     }
 
     /* This corresponds to the va_copy */
