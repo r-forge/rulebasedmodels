@@ -26,11 +26,13 @@ extern void Rprintf(const char *, ...);
 
 /*
  * Not sure what value to use, but it will be automatically increased
- * if necessary, so the initial value is not critical.
+ * if necessary, so the initial value is not critical, but a larger value
+ * will help avoid a realloc with each printf. Use powers of 2
+ * to hopefully make memory allocation more smooth
  */
-#define STRBUF_LEN 100
+#define STRBUF_LEN 8192 
 
-#define HASH_LEN 100
+#define HASH_LEN 128
 
 /* Used to implement rbm_exit */
 jmp_buf rbm_buf;
