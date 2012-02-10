@@ -209,17 +209,21 @@ int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
      * That tells us how much we need to extend "sb" by if the first
      * attempt fails.
      */
-    if ((s = vsnprintf(sb->buf + sb->i, size, format, ap)) >= size) {
+    while (((s = vsnprintf(sb->buf + sb->i, size, format, ap2)) >= size) ||
+		s<0) {
+		va_end(ap2);
+		va_copy(ap2, ap);
+
         /*
-         * We didn't have enough space, but now we know how
-         * much we need, so extend the STRBUF and do it again.
+         * On Windows, s*printf doesn't give useful information about the
+		 * space needed, so just extend the STRBUF and do it again.
          * We'll ask for twice as much as we need, which is
          * our simple-minded strategy for reducing the number
          * of times that we allocate memory.
          */
         unsigned int nlen = sb->n + s + 1;  /* Minimum length needed */
 
-        if (extend(sb, 2 * nlen) != 0)
+        if (extend(sb, sb->len * 2) != 0)
             return -1;
 
         size = sb->len - sb->i;  /* Recompute remaining space left */
