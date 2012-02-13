@@ -1,6 +1,20 @@
 \name{NEWS}
 \title{Cubist News}
 
+\section{Version 0.0.9: 2012-02-13}{
+cubist uses a string buffer to capture the output files that would
+normally get saved to external files. The packge was failing R CMD
+check only on windows because the output files were getting garbled.
+
+s*printf functions work differently on Windows. On Linux, they return 
+the size that is needed to correctly print the string.  On Windows,
+if there isn't enough space, they return -1.  
+
+Also, work-arounds were added to the C sources because of R CMD check
+issues. printf(), assert() and exist() statements were removed or
+redefined.
+  }
+
 \section{Version 0.0.8: 2011-06-21}{
     A bug was fixed for the \code{coef} method.
   }
