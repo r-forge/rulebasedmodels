@@ -139,7 +139,8 @@ int strbuf_truncate(STRBUF *sb)
     /* Set the current data size to the current position */
     sb->n = sb->i;
 
-    assert(sb->n <= sb->len);
+    /* gets flagged by R CMD check, uncomment for debugging */
+    /* assert(sb->n <= sb->len); */
 
     return 0;
 }
@@ -181,7 +182,8 @@ int strbuf_write(STRBUF *sb, const unsigned char *data, unsigned int n)
     if (sb->i > sb->n)
         sb->n = sb->i;
 
-    assert(sb->n <= sb->len);
+    /* gets flagged by R CMD check, uncomment for debugging */
+    /*assert(sb->n <= sb->len); */
 
     return 0;
 }
@@ -240,7 +242,8 @@ int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
     if (sb->i > sb->n)
         sb->n = sb->i;
 
-    assert(sb->n <= sb->len);
+    /* gets flagged by R CMD check, uncomment for debugging */
+    /*assert(sb->n <= sb->len); */
 
     /* This corresponds to the va_copy */
     va_end(ap2);
@@ -273,7 +276,8 @@ int strbuf_putc(STRBUF *sb, int c)
     if (sb->i > sb->n)
         sb->n = sb->i;
 
-    assert(sb->n <= sb->len);
+    /* gets flagged by R CMD check, uncomment for debugging */
+    /*assert(sb->n <= sb->len); */
 
     return 0;
 }
@@ -322,8 +326,9 @@ unsigned char *strbuf_getall(STRBUF *sb)
 {
     /* Make sure there is enough memory to null-terminate the data */
     if (sb->n >= sb->len) {
-        /* sb->n should never actually be larger than sb->len */
-        assert(sb->n == sb->len);
+        /* sb->n should never actually be larger than sb->len */   
+      /* gets flagged by R CMD check, uncomment for debugging */
+      /*assert(sb->n == sb->len); */
         if (extend(sb, 2 * sb->n) != 0)
             return NULL;
     }
