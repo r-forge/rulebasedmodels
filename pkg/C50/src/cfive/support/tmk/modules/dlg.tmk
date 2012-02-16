@@ -1,0 +1,47 @@
+# =============================================================================
+# dlg.tmk: tmk module for dlg lexers (part of pccts)
+# =============================================================================
+# $Id: dlg.tmk,v 1.11 2001/02/12 18:42:50 brabec Exp $
+# =============================================================================
+# $Log: dlg.tmk,v $
+# Revision 1.11  2001/02/12 18:42:50  brabec
+# added support for QT designer (.ui files)
+#
+# Revision 1.10  2000/08/01 14:23:31  brabec
+# fixed for new tmk
+#
+# Revision 1.9  2000/08/01 12:41:21  brabec
+# fixed g and dlg
+#
+# Revision 1.8  2000/04/25 10:07:24  brabec
+# C -> cxx
+#
+# Revision 1.7  2000/04/22 16:23:36  htschirm
+# new names for user-visible function
+#
+# Revision 1.6  2000/04/20 11:38:00  htschirm
+# lots of new names
+#
+# Revision 1.5  1999/10/03 11:58:58  brabec
+# fixed bug in find_in_pathlist (list of patterns)
+#
+# =============================================================================
+# default values for some variables; should only be set if variable does not
+#   already exist
+# =============================================================================
+
+module cxx
+
+set_ifndef DLGRFLAGS   -CC
+set_ifndef DLGR        ${g::PCCTS}/bin/dlg
+set_ifndef DLG_LEXERS  {.dlg }
+
+# =============================================================================
+# auto targets & dependencies
+# only generate rules for the extensions which have been found
+# =============================================================================
+
+target *.cpp \$ROOT$DLG_LEXERS {
+    cmd $dlg::DLGR $dlg::DLGRFLAGS -o $ARCH $SRC
+}
+

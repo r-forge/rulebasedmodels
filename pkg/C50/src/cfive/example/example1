@@ -1,0 +1,14 @@
+#! /bin/env tclsh
+
+#package require vfs
+
+set mydir [file dirname [info script]]
+#source [file join $mydir memchan.tcl]
+
+set fh [vfs::memchan]
+
+puts $fh "hello"
+seek $fh 0
+set data [read $fh]
+puts "yeah: $data"
+

@@ -1,0 +1,33 @@
+#! /bin/env tclsh
+
+source [file join [file dirname [info script]] common.tcl]
+
+namespace eval ::tmk::test {
+		namespace import ::tcltest::*
+
+		test install {} -setup {
+			set mywd [setup1 install]
+		} -body {
+			exec {*}$env(TMK) -D prefix=[file join $mywd myprog] install
+			set res [list]
+			lappend res [file exists [file join $mywd myprog bin prog1]]
+			lappend res [file exists [file join $mywd myprog bin prog2]]
+			lappend res [file exists [file join $mywd myprog include header1.h]]
+			lappend res [file exists [file join $mywd myprog include header2.h]]
+			lappend res [file exists \
+				[file join $mywd myprog include myprog header1a.h]]
+			lappend res [file exists \
+				[file join $mywd myprog include myprog header2a.h]]
+			lappend res [file exists \
+				[file join $mywd myprog lib libmyfakelib1.so ]]
+			lappend res [file exists \
+				[file join $mywd myprog lib libmyfakelib2.so ]]
+			lappend res [file exists \
+				[file join $mywd myprog lib myprog libmyfakelib1a.so]]
+			lappend res [file exists \
+				[file join $mywd myprog lib myprog libmyfakelib2a.so]]
+			return $res
+		} -result [list 1 1 1 1 1 1 1 1 1 1]
+
+		cleanupTests
+}
