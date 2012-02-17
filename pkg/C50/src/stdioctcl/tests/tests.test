@@ -1,0 +1,180 @@
+#! /bin/env tclsh
+
+# Copyright (C) 2011-2012, Nathan Coulter and others 
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 2 of the License.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package require tcltest
+
+interp alias {} f {} file
+
+eval ::tcltest::configure $argv
+
+set scriptlpath [info script]
+set scriptldir [f dirname $scriptlpath]
+set scriptpath [f normalize $scriptlpath]
+set scriptdir [f dirname $scriptpath]
+
+proc cat {fname} {
+	set data [read [set fh [open $fname]]]
+	close $fh
+	return $data
+}
+
+set testdatadir testdata
+set testdatafname data 
+set testdatanoeolfname data2
+set testdatapath [f join $testdatadir $testdatafname]
+file attributes $testdatapath -permissions 00666 
+set testdata [cat $testdatapath]
+
+namespace eval test {
+	namespace import ::tcltest::*
+
+	#return COUNT lines from data
+	proc getlines {data count} {
+		set end -1
+		while {$count > 0} {
+			set res [string first \n $data $end]
+			if {$res > -1} {
+				set end [expr $res + 1]
+			}
+			incr count -1
+		}
+		return [string range $data 0 $res]
+	}
+
+	proc runtest {args} {
+		global scriptldir
+		set res [exec -keepnewline [f join $scriptldir build tests] {*}$args ]
+		return $res
+	}
+
+	set alltests {
+		test stdioctcl_fopen_permission_denied {} -body {
+			file attributes $testdatapath -permissions 00000
+			set status [catch {
+				runtest -input $testdatapath stdioctcl test_fgetc} res opts] 
+			if {$status} {
+				set errorcode [dict get $opts -errorcode]
+				if {[lindex $errorcode 0] eq "CHILDSTATUS"} {
+					set status [lindex $errorcode 2]
+				} else {
+					return -options $opts
+				}
+			}
+			file attributes $testdatapath -permissions 00666 
+			return [list $status [regexp -nocase {Permission denied} $res]]
+			#return $res
+		} -result [list 1 1]
+
+		test stdioctcl_feof {} -body {
+			set res_libc [runtest -input $testdatapath libc test_feof]
+			set res_stdioctcl [runtest -input $testdatapath stdioctcl test_feof]
+			set res [expr $res_libc eq $res_stdioctcl]
+		} -result 1 
+
+		test stdioctcl_fgetc {reading with fgetc} -body {
+			set res [runtest -input $testdatapath stdioctcl test_fgetc ]
+			set res2 [runtest -input $testdatapath libc test_fgetc ]
+			set res3 [string range $testdata 0 9]
+			set result [list]
+			lappend result [string equal $res $res2]
+			lappend result [string equal $res $res3]
+		} -result [list 1 1] 
+
+		test stdioctcl_fgets_basic {reading with fgets} -body {
+			set res [runtest -input $testdatapath stdioctcl test_fgets_basic]
+			set res2 [runtest -input $testdatapath libc test_fgets_basic]
+			set res3 [getlines $testdata 2]
+			set result [list]
+			lappend result [string equal $res $res2]
+			#should not be equal because of embedded null in test data
+			lappend result [string equal $res $res3]
+		} -result [list 1 0] 
+
+		test stdioctcl_fgets_partial {reading with fgets} -body {
+			set res_partial \
+				[runtest -input $testdatapath stdioctcl test_fgets_partial]
+			set res_partial_libc \
+				[runtest -input $testdatapath libc test_fgets_partial]
+			set res_control [getlines $testdata 2]
+
+			set res_control [regexp -inline -all {[^\n]{0,5}.} $res_control]
+			set tmp {}
+			foreach item $res_control {
+				append tmp ${item}XXX
+			}
+			set res_control $tmp
+			set res [list]
+			lappend res [string equal $res_partial $res_partial_libc]
+			#should not be equal because of embedded null in test data
+			lappend res [string equal $res_partial $res_control]
+		} -result [list 1 0]
+
+		test stdioctcl_fread {} -body {
+			set res_libc [runtest -input $testdatapath libc test_fread]
+			set res_stdioctcl [runtest -input $testdatapath stdioctcl test_fread]
+			set res [expr {$res_libc eq $res_stdioctcl}]
+		} -result 1 
+
+		test stdioctcl_fwrite {} -body {
+			set res_libc [runtest -input $testdatapath libc test_fwrite]
+			set res_stdioctcl [runtest -input $testdatapath stdioctcl test_fwrite]
+			set res [expr $res_libc eq $res_stdioctcl]
+		} -result 1 
+
+		test stdioctcl_readfile_fgetc {} -body {
+			set res_libc [runtest -input $testdatapath libc test_readfile_fgetc]
+			set res_stdioctcl \
+				[runtest -input $testdatapath stdioctcl test_readfile_fgetc]
+			set res [expr {$res_libc eq $res_stdioctcl}]
+			
+		} -result 1
+
+		test stdioctcl_readfile_fgets {read entire file with fgets} -body {
+			set res_libc [runtest -input $testdatapath libc test_readfile_fgets]
+			set res_stdioctcl \
+				[runtest -input $testdatapath stdioctcl test_readfile_fgets]
+			set res [expr {$res_libc eq $res_stdioctcl}]
+			
+		} -result 1
+
+		test stdioctcl_readfile_fread {read entire file with fread} -body {
+			set res_libc [runtest -input $testdatapath libc test_readfile_fread]
+			set res_stdioctcl \
+				[runtest -input $testdatapath stdioctcl test_readfile_fread]
+			set res [expr {$res_libc eq $res_stdioctcl}]
+		} -result 1
+
+		test stdioctcl_putchar {putchar test} -body {
+			set res_libc [runtest -input $testdatapath libc test_putchar]
+			set res_stdioctcl [runtest -input $testdatapath stdioctcl test_putchar]
+			set res [expr {$res_libc eq $res_stdioctcl}]
+		} -result 1
+
+		#test stdioctcl_fflush {flushing a file} -body {
+		#	set val_stdioctcl [runtest -input $testdatapath stdioctcl test_flush]
+		#	set val_libc [runtest -input $testdatapath libc test_flush]
+		#} -result {}
+	}
+
+	variable failed 0
+	eval $alltests
+	incr failed $::tcltest::numTests(Failed)
+	set testdatapath [f join $testdatadir $testdatanoeolfname]
+	eval $alltests
+	incr failed $::tcltest::numTests(Failed)
+
+	cleanupTests
+}
