@@ -2,35 +2,66 @@
 
 .PHONY: all stdioctcl cfive tclcfive
 
-export CC CFLAGS CPPFLAGS LDFLAGS
+export CC CFLAGS CPPFLAGS LDFLAGS LIBS TCLTK_CPPFLAGS TCLTK_LIBS
 
 all: $(SHLIB)
 
 $(SHLIB): stdioctcl cfive tclcfive
 
+#insert at front of stack (in reverse order)
+LDFLAGS = -L../../stdioctcl/stdioctcl/build -Wl,-rpath,$ORIGIN/../lib $(LDFLAGS)
+LDFLAGS = -L../../stdioctcl/stdioctcl/build -Wl,-rpath,$ORIGIN $(LDFLAGS)
+
+FIND_R_TCLSH = library(tcltk); \
+cat(tclvalue(.Tcl(" \
+if {[info exists env(R_TCLSH)]} { \
+	return [set env(R_TCLSH)] ;\
+} ;\
+set tclbindir {} ;\
+catch {set tclbindir [file join [set env(R_HOME)] Tcl bin]} ;\
+if {[set tclbindir] ne {}} { \
+	set rtclsh [lindex [glob -nocomplain -dir [set tclbindir] tclsh*.exe ] 0] ;\
+	if {[set rtclsh] ne {}} { \
+		return [set rtclsh] ;\
+	} ;\
+} ;\
+set tclbindir {} ;\
+catch {set tclbindir [file join [file dirname [file dirname [info library]]] bin]} ;\
+if {[set tclbindir] ne {}} { ;\
+	set rtclsh [file join [set tclbindir] tclsh] ;\
+	if {[set rtclsh] ne {} && [file exists [set rtclsh]]} { \
+		return [set rtclsh] ;\
+	} ;\
+} ;\
+")))
+
 stdioctcl:
 	cd stdioctcl ;\
-	support/tmk/src/tmk
-	cp -fp stdioctcl/stdioctcl/build/libstdioctcl$(DYLIB_EXT) $(PWD) 
+	CPPFLAGS="$(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
+	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
+	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
+	"$$TMK_TCLSH" support/tmk/src/tmk
+	cp -fp stdioctcl/stdioctcl/build/libstdioctcl$(DYLIB_EXT) .
 
 cfive: stdioctcl
-	CPPFLAGS="-I../../stdioctcl/include $$CPPFLAGS" ;\
-	export CPPFLAGS ;\
-	LDFLAGS="-L../../stdioctcl/stdioctcl/build -Wl,-rpath,\\\$$ORIGIN -Wl,-rpath,\\\$$ORIGIN/../libs" ;\
-	export LDFLAGS ;\
 	cd cfive ;\
-	support/tmk/src/tmk -D USE_STDIOCTCL_REDEFINE
-	cp -fp cfive/cfive/build/libcfive$(DYLIB_EXT) $(PWD) 
+	CPPFLAGS="-I../../stdioctcl/include $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
+	LDFLAGS="-L../../stdioctcl/stdioctcl/build $$LDFLAGS" ;\
+	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
+	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
+	"$$TMK_TCLSH" support/tmk/src/tmk -D USE_STDIOCTCL_REDEFINE
+	cp -fp cfive/cfive/build/libcfive$(DYLIB_EXT) . 
 
 tclcfive: cfive
 	cd tclcfive ;\
-	CPPFLAGS="-I../../cfive/cfive $$CPPFLAGS" ;\
-	export CPPFLAGS ;\
-	LDFLAGS="-L../../cfive/cfive/build -Wl,-rpath,\\\$$ORIGIN -Wl,-rpath,\\\$$ORIGIN/../libs" ;\
-	export LDFLAGS ;\
-	support/tmk/src/tmk
-	cp -fp tclcfive/tclcfive/build/libtclcfive$(DYLIB_EXT) $(PWD)/../inst/tclcfive
-	cp -fp tclcfive/tclcfive/cfive.tcl $(PWD)/../inst/tclcfive
-	cp -fp tclcfive/tclcfive/inmemvfs.tcl $(PWD)/../inst/tclcfive
-	cp -fp tclcfive/tclcfive/pkgIndex.tcl $(PWD)/../inst/tclcfive
-	rm -f $(PWD)/../inst/tclcfive/empty
+	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
+	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
+	"$$TMK_TCLSH" support/tmk/src/tmk;\
+	cp -fp tclcfive/tclcfive/build/libtclcfive$(DYLIB_EXT) ../inst/tclcfive
+	cp -fp tclcfive/tclcfive/cfive.tcl ../inst/tclcfive
+	cp -fp tclcfive/tclcfive/inmemvfs.tcl ../inst/tclcfive
+	cp -fp tclcfive/tclcfive/pkgIndex.tcl ../inst/tclcfive
+	rm -f ../inst/tclcfive/empty
