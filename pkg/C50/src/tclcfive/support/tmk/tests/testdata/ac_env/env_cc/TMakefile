@@ -1,7 +1,0 @@
-target all {} {
-	puts "c compiler: $::c::COMPILER"
-	puts "c executable: [set ::c::EXECUTABLE]"
-}
-
-build all
-
