@@ -1,0 +1,2170 @@
+#!/bin/sh
+# -*-Mode: tcl -*-
+#\
+# if [ -f /HPS/opt/lib/uncompress.o ];then TMK_USE_COMPRESSION=1;LD_PRELOAD=/HPS/opt/lib/uncompress.o; fi; \
+exec ${TMK_TCLSH:=tclsh} "$0" "$@"
+# =========================================================================
+# Copyright (C) 1999-2005  Hartmut Schirmacher, Stefan Brabec
+#                          Hendrik Lensch, Hitoshi Yamauchi
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (LICENSE.TXT); if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# ===========================================================================
+# $Id: tmk,v 1.133 2006/11/23 17:12:24 yamauchih Exp $
+# core of the tmk system
+# ===========================================================================
+# $Log: tmk,v $
+# Revision 1.133  2006/11/23 17:12:24  yamauchih
+# show module name during reading it
+#
+# Revision 1.132  2005/11/27 16:13:55  yamauchih
+# fix: ::tmk::MODULE_PATH is a string
+#
+# Revision 1.131  2005/10/21 21:57:07  yamauchih
+# add ::tmk::MODULE_PATH
+#
+# Revision 1.130  2005/07/06 21:28:10  yamauchih
+# add -nomakef option
+#
+# Revision 1.129  2005/04/23 23:25:41  yamauchih
+# add runmode +folloegccname
+#
+# Revision 1.128  2005/04/23 20:53:58  yamauchih
+# add runmode to build 64bit executables
+#
+# Revision 1.127  2003/09/29 10:18:23  lensch
+# executables are now created even for the parallel version at the first run
+#
+# Revision 1.126  2002/12/12 13:46:20  brabec
+# *** empty log message ***
+#
+# Revision 1.125  2002/12/12 13:06:39  brabec
+# fixed thread model
+#
+# Revision 1.124  2002/12/10 13:34:05  brabec
+# *** empty log message ***
+#
+# Revision 1.123  2002/12/09 20:13:59  brabec
+# fixed dependency stuff for Visual C++
+#
+# ===========================================================================
+# code comments:
+# - precede every internal global name with __ to avoid conflicts with 
+#   user-defined global names
+# ===========================================================================
+
+# version check (need tclsh 8.x)
+if { [lindex [split [info tclversion] \.] 0] < 8 } {
+    puts stderr "tmk needs a more recent version of 'tclsh' (8.x)"
+    puts stderr "please upgrade / set TMK_TCLSH"
+    exit 1
+}
+
+namespace eval ::tmk {
+    # CVS determines the core version 
+    variable CoreVersion [lindex {$Revision: 1.133 $} 1]
+    # the release number is set manually
+    variable Release {1.0.1}
+}
+
+# ========================================================================
+# some user-visible general helper routines
+# ========================================================================
+
+# only set a variable if it's not already defined; also create namespace
+proc ifdef {var then_part {else_part {}} } {
+    if {[uplevel 1 info vars $var] == {}} {
+	uplevel 1 $else_part
+    } else {
+	uplevel 1 $then_part
+    }
+}
+# only set a variable if it's not already defined; also create namespace
+proc set_ifndef {var val} {
+    if {[uplevel 1 info vars $var] == {}} {
+	set ns [namespace qualifiers $var]
+	set v  [namespace tail $var]
+	# special case: the global namespace must be "::", not ""
+	if {([string range $var 0 1] == "::") && ($ns == {})} {
+	    set ns "::"
+	}
+	if {$ns == {}} {
+	    set ns [uplevel 1 namespace current]
+	}
+	uplevel 1 [list namespace eval $ns [list variable $v $val]]
+    }
+}
+
+# only set a variable (by evaluating an expression) if it's not already defined
+#proc eval_ifndef { var expr } {
+#    upvar $var v
+#    if {![info exists v]} {
+#	uplevel 1 "variable $var \"$expr\""
+#    }
+#}
+
+# only define a procedure if it's not already defined
+proc proc_ifndef { name params body } {
+    if {[llength [info commands $name]] == 0} {
+	proc $name $params $body
+    }
+}
+
+# assert that the condition is true; else exit with an internal error
+proc assert { cond } {
+
+    global __OutputPrefix
+    upvar __assertCond acond
+    upvar __assertMsg  msg
+    set msg "${__OutputPrefix} assertion failed:\n  $cond"
+    set acond $cond
+    uplevel 1 {if {![expr $__assertCond]} {error $__assertMsg}}
+}
+
+# return <n> blanks
+proc blanks {n} {
+    set r ""
+    while {$n>0} {append r " "; incr n -1}
+    return $r
+}
+
+# output fatal error and exit with code 1
+proc exit_msg { msg } {
+
+    puts stderr "${::__OutputPrefix} $msg"
+
+    if $::__DbgLevel {
+	# this gives a stack trace
+	error "${::__OutputPrefix} exiting."
+    } else {
+	# this only produces the error message and exits
+	puts stderr "${::__OutputPrefix} exiting."
+    } 
+
+    if { [info exists ::__Threads] && $::__UseThreads } {
+	if [llength $::__RunningThreads] {
+	    log_msg "waiting for threads $::__RunningThreads to finish"
+	    ::tmk::wait_for_threads_name $::__RunningThreads
+	}
+    }
+    # return 1
+    exit 1 
+}
+
+# output debugging message if the level is <= __DbgLevel
+proc dbg_msg { msg {level 1} } {
+    global __DbgLevel
+    if { $level <= $__DbgLevel } {log_msg "\[dbg\] $msg"}
+}
+
+# output currently executed commands
+# if args contains "noprefix", no prefix is used
+proc log_msg {msg args} {
+    global __DoLog __OutputPrefix
+    if $__DoLog {
+	if [lcontains $args "noprefix"] {
+	    puts stdout $msg
+	} else {
+	    puts stdout "${__OutputPrefix} $msg"
+	}
+    }
+}
+
+# search a file (pattern) in a number of directories; 
+#   return list of found files
+proc find_in_pathlist { filepattern pathlist } {
+
+    set full_name_list " "
+    foreach i $filepattern {
+	append full_name_list "[lmap $pathlist {[file join $ITEM $i]}] "
+    }
+    set result [list]
+    foreach item [lmap $full_name_list {[glob -nocomplain $ITEM]}] {
+	lappend result {*}$item
+    }
+    if { [llength $result] > 0 } {
+	dbg_msg "found: \[$result\]" 3
+    } else {
+	dbg_msg "file $filepattern not found in any of \[$pathlist\]" 2
+    }
+    return $result
+}
+
+# =============================================================================
+# determine absolute path in which this script resides
+# =============================================================================
+proc ::tmk::scriptname {} {
+
+    global env __IsWindowsSystem __IsCygwinSystem
+
+    # already an absolute path? -> finished
+    set name [info script]
+    set pt   [file pathtype $name] 
+    if {$pt != "absolute"} {
+
+	# no path? -> search in $env(PATH)
+	if {[llength [file split $name]] == 1} {
+	    set w [lindex [find_in_pathlist $name $env(PATH)] 0]
+	    if {$w == {}} {
+		exit_msg "could not find tmk script in path.\n  please set the TMK_HOME environment variable." 
+	    }
+	} else {
+	    # relative path, insert [pwd]
+	    switch $pt {
+		"relative" {
+		    set name [file join [pwd] $name]
+		}
+		"volumerelative" {
+		    foreach vol [file volumes] {
+			set found 0
+			set path [file join $vol $name]
+			if [file exists $path] {
+			    set name $path ; set found 1 ; break
+			}
+		    }
+		    if {!$found} {
+			exit_err "could not determine absolute path for $name."
+		    }
+		}
+	    }
+	}
+    }
+
+    # now we know the absolute path; we only have to follow links to the end
+    while {[file type $name] == "link"} { 
+	set link [file readlink $name]
+	if {[file pathtype $link] == "relative"} {
+	    # relative in that case means relative to dir in which link resides
+	    set name [file join [file dirname $name] $link]
+	} else {
+	    set name $link
+	}
+    }
+    
+    return [normalize_filename $name]
+}
+
+proc ::tmk::tmkdir {} {
+    if [ catch { set ::tmk::dir $::env(TMK_HOME) } ] {
+        set mydir [file dirname [file dirname $::tmk::Script]]
+        foreach maybe [list . [file join share tmk] ] {
+            set found 0
+            set maybe [file normalize [file join $mydir $maybe]]
+            if {[file exists [file join $maybe config config.tmk]] &&
+                [file exists [file join $maybe contrib cgi]] &&
+                [file exists [file join $maybe modules modules.tmk]] &&
+                [file exists [file join $maybe tools arg_tester]]
+            } {
+                return $maybe
+            }
+        }
+        return -code error "Could not find tmk installation directory!"
+    } 
+}
+
+# ========================================================================
+# rule storage/retrieval routines
+# ========================================================================
+
+# add a rule for a single target pattern in a global struct
+# uses associative arrays
+proc __AddRule { pat dep cmd } { 
+
+    global __Rules
+
+    # normalize it so the cache will work
+    set pat [targetname_short $pat]
+    dbg_msg "adding rule $pat <- $dep"
+    lappend __Rules($pat) [list $pat $dep $cmd]
+
+}
+
+# retrieve list of rules for a certain pattern.
+# note that <pat> should be trimmed before handing it to any proc
+proc __GetListOfRules { pat } {
+    global __Rules
+    if [info exists __Rules($pat)] {
+	return $__Rules($pat)
+    } else {
+	return [list]
+    }
+}
+
+# retrieve target pattern from a single rule
+proc __GetRulePattern { rule } { return [lindex $rule 0] }
+
+# retrieve source file expressions from a single rule
+proc __GetRuleSources { rule } { return [lindex $rule 1] }
+
+# retrieve commands from a single rule 
+proc __GetRuleCmd     { rule } { return [lindex $rule 2] }
+
+# ========================================================================
+# secondary dependencies storage/retrieval routines
+# ========================================================================
+
+# add secondary dependencies for a single target pattern in a global struct
+# uses associative arrays
+proc __AddSecondaries { pat dep } { 
+
+    if {[string trim $dep] == {}} {return}
+#    set pat [targetname_short [string trim $pat]]
+#    set dep [lmap $dep {[targetname_short $ITEM]}]
+    dbg_msg "adding depend ($pat,$dep)"
+
+    # this function only stores a SINGLE pattern!
+    assert {[llength $pat] == 1}
+
+    # check if rule for this pattern already exists
+    if { ! [info exists ::__Secondaries($pat)] } {
+	set ::__Secondaries($pat) [list]
+    }
+
+    # add new rule to list of rules
+    append ::__Secondaries($pat) " $dep"
+}
+
+# retrieve list of secondary dependencies for a certain pattern.
+proc __GetSecondaries { pat } {
+
+    if [info exists ::__Secondaries($pat)] {
+	return $::__Secondaries($pat)
+    } else {
+	return [list]
+    }
+
+}
+
+# ========================================================================
+# file searching and parsing
+# ========================================================================
+
+#  execute tcl-script (and check for filename conversion)
+proc __source { scriptname } {
+    if {![file readable $scriptname]} {
+	exit_msg "cannot read file $scriptname"
+    }
+    dbg_msg "executing file $scriptname" 2
+    uplevel 1 [list source $scriptname]
+#    uplevel 1 source $scriptname
+}
+
+# process a makefile. 
+proc __ReadMakefile { makefilename } {
+    if [file readable $makefilename] { 
+
+	# simply parse the makefile as TCL source code in global context
+	dbg_msg "----- begin processing $makefilename -----"
+	uplevel \#0 [list __source $makefilename]
+	dbg_msg "----- end processing $makefilename -----"
+
+    } else { 
+	exit_msg "could not read $makefilename"
+    }
+}
+
+# search "TMakefile.project" and "TMakefile.priv", and set PROJDIR
+proc __FindGlobalMakefiles {} {
+
+    global __ProjectMakefile __DefaultProjectFileName 
+    global __PrivateProjectMakefile __DefaultPrivateProjectFileName
+    global ::PROJDIR ::ARGS
+
+    # explicitly do not read a project file (who will ever need this?)
+    if {$__ProjectMakefile == "{}"} {
+	set PROJDIR [pwd]
+	dbg_msg "skipping TMakefile.proj, setting PROJDIR to $PROJDIR"
+	return {}
+    }
+    
+    # -proj not specified? -> look in . .. ../.. ../../.. ...
+    if {$__ProjectMakefile == ""} {
+	
+	set path [pwd]
+	set oldPath "dummy$path" 
+	set found 0
+	while { $path ne $oldPath } {
+	    set file [file join $path TMakefile.proj]
+	    if [file readable $file] {
+		set __ProjectMakefile [normalize_filename $file]
+		set PROJDIR [file dirname $file]
+		dbg_msg "found $file"
+		set found 1
+		break
+	    }
+	    dbg_msg "no readable file $file" 2
+	    set oldPath $path
+	    set path [file dirname $path]
+	}
+
+	if {!$found} {
+	    set PROJDIR [pwd]
+	    dbg_msg "no TMakefile.proj found, setting PROJDIR to $PROJDIR"
+	}
+	
+    } else {
+	# use the specified TMakefile.proj
+	set PROJDIR [file dirname $__ProjectMakefile]
+    }
+   
+    # -nopriv specified -> just return the .proj file
+    if {$__PrivateProjectMakefile == "{}"} {
+	return [list $__ProjectMakefile]
+    } 
+    # -priv specified? 
+    if {$__PrivateProjectMakefile != ""} {
+	return [list $__ProjectMakefile $__PrivateProjectMakefile]
+    }
+    # look in same directory as .proj
+    set file [file rootname $__ProjectMakefile].priv
+    if [file readable $file] {
+	dbg_msg "found $file"
+	set __PrivateProjectMakefile $file
+	return [list $__ProjectMakefile $__PrivateProjectMakefile]
+    } else {
+	set __PrivateProjectMakefile "{}"
+	dbg_msg "no readable file $file"
+	return [list $__ProjectMakefile]
+    }
+}
+
+# ========================================================================
+# building-time subroutines
+# ========================================================================
+
+# compare patterns and create list of all matching rules
+proc __GetMatchingRules { target } {
+
+    global __Rules
+
+    # match against all defined target patterns 
+    set result [list]
+    foreach pat [array names __Rules] {
+	if [string match $pat $target] {
+	    lappend result {*}$__Rules($pat)
+	}
+    }
+
+    return $result
+}
+
+# compare patterns and create list of all matching secondary dependencies
+proc __GetMatchingSecondaries { target } {
+
+    set ts [targetname_short $target]
+    
+    # loop over all defined rules
+    variable result [list]
+    foreach pat [array names ::__Secondaries] {
+	if [string match $pat $ts] {
+
+	    set sec $::__Secondaries($pat)
+	    # evaluate T-expression
+	    set sec [__T_Expr $pat $target $ts $sec \#0 TARGET ""]
+	    # after T-expr expansion, we can do the dependency exclusions
+	    __exclude sec $::DEPEND_EXCLUDE \
+		    "$ts's secondary dependencies" 2
+	    lappend result {*}$sec
+	}
+    }
+    return $result
+}
+
+# check if a target exists in the specified directory or in .../$ARCH/...
+# NOTE: function may change $targetvarname to the correct target location!
+# NOTE: returns last modification time in $modtimevarname
+proc __TargetExists { targetvarname modtimevarname} {
+    upvar $targetvarname target
+    upvar $modtimevarname mtime
+
+    global ::USE_ARCH ::ARCH
+    assert {[info exists USE_ARCH]}
+
+    # first look in architecture-dependent target directory?
+    if $USE_ARCH { 
+	assert {[info exists ARCH]}
+	set dir [file dirname $target] ;   # target base directory name
+	set tail [file tail $target]   ;   # target name excluding directory
+	set newtarget [file join $dir $ARCH $tail] ; # new target location
+	normalize_filevar newtarget
+	if [file exists $newtarget] {
+	    set target $newtarget ; # !!! changes upvar !!!
+	    set mtime [file mtime $newtarget] ; # !!! changes upvar !!!
+	    return 1
+	} 
+    } 
+    
+    # now look if its in the specified directory
+    normalize_filevar target
+    if [file exists $target] {
+	set mtime [file mtime $target] ; # !!! changes upvar !!!
+	return 1
+    } else {
+	return 0
+    }
+}
+
+# trim a filename and:
+#   - "//" -> "/"
+#   - "./" -> ""
+#   - "x/.." -> ""
+#   - remove trailing "/"'s
+proc normalize_filename { file } {
+    return [normalize_filevar file]
+}
+# change the variable named _file
+proc normalize_filevar { _file } {
+
+    upvar $_file path
+    
+    # split into segments
+    set path [file split $path]
+
+    # remove ./ if it's not the only thing 
+    set p [lsearch -exact $path "."]
+    while {([llength $path] > 1) && ($p != -1)} {
+	set path [lreplace $path $p $p]
+	set p [lsearch -exact $path "."]
+    }
+
+    # collapse ".."
+    set p [lsearch -exact [lrange $path 1 end] ".."]
+    while {$p !=-1} {
+	set path [lreplace $path [expr $p] [expr $p + 1]]
+	set p [lsearch -exact [lrange $path 1 end] ".."]
+    }
+
+    # re-construct path from segments
+    set path [eval file join $path]
+
+    return $path
+}
+
+# Find the named file recursively in the specified path
+# If a third argument is given, call that procedure with a file name
+# argument in order to determine whether the file is suitable. The procedure
+# should return 1 if the file is the right one, 0 else.
+proc find-file {path filename args} {
+
+    if { 0 == [file exists $path] } {
+	return {}
+    }
+
+    dbg_msg "searching in $path" 3
+
+    # exists in this path?
+    if [file exists [file join $path $filename]] {
+
+	# call procedure?
+	if [llength $args] {
+	    if [$args [file join $path $filename]] {
+		return [file join $path$filename]
+	    }
+	} else {
+	    return [file join $path $filename]
+	}
+    }
+
+    # recurse down
+    set d [lfilter [glob -nocomplain -directory $path *] {[file isdirectory $ITEM]}]
+    foreach x $d {
+	set r [find-file $x $filename $args]
+	if [llength $r] {
+	    return $r
+	}
+    }
+
+    return {}
+}
+
+# remove leading/trailing spaces
+# check if a to-be-built target has to be put into an ARCH directory
+# if so, create directory and change target location
+# NOTE: function may change $targetvarname to the correct target location!
+proc __PrepareNewTarget { targetvarname } {
+
+    upvar $targetvarname target
+
+    # check if we need to append $ARCH to the dir path
+
+    set target [targetname_long $target]
+    set newdir [file dirname $target]
+
+    # check if we need to create the directory first
+    if [file exists $newdir] { 
+	if [file isdirectory $newdir] {
+	    return  ; # ok, it's already there
+	} else {
+	    __ExitErr "$newdir already exists, but it is not a directory."
+	}
+    } else {
+	dbg_msg "creating directory $newdir" 2
+	__CreateDirRecursively $newdir
+    }
+}
+
+# recursively create all non-existent parts of a directory path
+proc __CreateDirRecursively { dirname } {
+    if [file exists $dirname] {
+	if [file isdirectory $dirname] {
+	    return
+	} else {
+	    exit_msg "$dirname already exists, but it is not a directory."
+	}
+    } else {
+	file mkdir $dirname
+    }
+}
+
+# exclude matching things from a list, write dbg message
+proc __exclude {varName patlist what {level 1}} {
+    
+    upvar $varName list
+    set ex [lmatch $list $patlist]
+    if [llength $ex] {
+	dbg_msg "excluding \[$ex\] from $what" $level
+	set list [lminus $list $ex]
+    }
+
+}
+
+# query state of a target ("failed", "updated", "untouched", or "")
+# -  write file modification time or failure message into time_or_msg
+proc target_state {target {time_or_msg __ttime}} {
+    global __TCACHE
+    upvar $time_or_msg msg
+    set msg ""
+    set short [targetname_short $target]
+    if [info exists __TCACHE($short)] {
+	set cache $__TCACHE($short)
+	set msg [lindex $cache 2]
+	return [lindex $cache 1]
+    }
+    return ""
+}
+
+# mark a target as updated; internally called with dbglevel 2
+proc target_updated {target {time now} {dbglevel 1}} {
+    global __TCACHE 
+    if {$time == "now"} {set time [clock seconds]}
+    set ts [targetname_short $target]
+    dbg_msg "marking $ts as updated ([clock format $time])" $dbglevel
+    set __TCACHE($ts) [list $target "updated" $time]
+    return "updated"
+}
+
+# mark a target as updated; internally called with dbglevel 2
+# default timestamp is file mtime if file exists, or 0 else
+proc target_untouched {target {time mtime} {dbglevel 1}} {
+    global __TCACHE 
+    if {$time == "mtime"} {
+	if {![__TargetExists target time]} { ;# sets time upon success
+	    set time 0
+	}
+    }
+    set ts [targetname_short $target]
+    dbg_msg "marking $ts as untouched ([clock format $time])" $dbglevel
+    set __TCACHE($ts) [list $target "untouched" $time]
+    return "untouched"
+}
+
+# mark a target as failed; internally called with dbglevel 2; return state
+proc target_failed {target msg {dbglevel 1}} {
+    global __TCACHE
+    set ts [targetname_short $target]
+    dbg_msg "marking $ts as failed ($msg)" $dbglevel
+    set __TCACHE($ts) [list $target "failed" $msg]
+    return "failed"
+}
+
+# return cache entry in readable form
+proc __print_tcache {t} {
+    global __TCACHE 
+    if [info exists __TCACHE($t)] {
+	set c $__TCACHE($t)
+	set stat [lindex $c 1]
+	set time [lindex $c 2]
+	if { ($stat == "updated") || ($stat == "untouched") } {
+	    return "$t:$stat:[clock format $time]"
+	} elseif { $stat == "failed" } {
+	    return "$t:failed:$time"
+	} else {
+	    exit_msg "unknown cache contents for $t"
+	}
+    } else {
+	return "$t: not in target cache"
+    }
+}
+
+
+# ************************************
+# *** here comes the core of tmk ***
+# ************************************
+
+# user-friendly frontend to __Build, returns list with each target's status 
+proc build_now {targetlist} {
+    set result {}
+    foreach x $targetlist {
+	puts "building $x"
+	lappend result [__Build x msg]
+    }
+    set ::__AlreadyBuilding 0
+    return $result
+}
+
+# try to recursively build target 
+# NOTE: $targetvarname may be changed according to $USE_ARCH and $ARCH in order
+#       to point to the correct target location!
+# NOTE: _msg will contain some error message if "failed" is returned
+# path contains the list of dependent targets that require this target
+#   in the current chain of reasoning; it is used to detect cycles
+proc __Build { targetvarname _msg {path {}} } {
+
+    # possible results
+    global __TCACHE __ForceBuilding __AlreadyBuilding
+    global ::TARGETS ::EXCLUDE 
+
+    # mark that it's now too late to call things like 'build'
+    set __AlreadyBuilding 1
+
+    # real target location
+    upvar $targetvarname target
+    set shorttarget [targetname_short $target]
+    dbg_msg "checking target: $shorttarget" 3
+    upvar $_msg msg
+    set msg ""
+
+    # check cycles
+    if [lcontains $path $shorttarget] {
+	set msg "dependency loop:\n"
+	append msg "   \[[join $path " <- "] <- $shorttarget]"
+	exit_msg $msg
+    } else {
+	lappend path $shorttarget
+    }
+
+
+    # look up target in cache
+    # contents of cache: (complete target name, building result, mod time)
+    set state [target_state $shorttarget ttime] 
+    if {$state != ""} {
+	set target [lindex $__TCACHE($shorttarget) 0]
+	dbg_msg "cache hit ($target:$state:$ttime)" 2
+	return $state
+    }
+
+    
+    # find target, and set $target to the real name
+    set target_exists [__TargetExists target ttime]
+
+    # check if the target which is not yet finished 
+    # is currently beeing updated 
+    if {$target_exists == 0} {
+	#  create name to look in the cache
+	global ::USE_ARCH ::ARCH
+	assert {[info exists USE_ARCH]}
+	global __TCACHE 
+	set lookuptarget [file join $ARCH/[file tail $target]]
+	set mytarget [targetname_short $lookuptarget]
+	if {[info exists __TCACHE($mytarget)]} {
+	    if { [lindex $__TCACHE($mytarget) 1] == "updated"} {
+		return 
+	    }
+	    
+	}
+    }
+
+
+    # look if it has to be excluded
+    global ::EXCLUDE
+    if {[lmatch $shorttarget $EXCLUDE] != ""} {
+	return "exclude"
+    }
+
+    # secondary dependencies are rule-invariant, but target-dependent
+    set tseconds [__GetMatchingSecondaries $target]
+    __exclude tseconds $EXCLUDE "$shorttarget's secondary dependencies"
+    set tseconds [lmap $tseconds {[targetname_short $ITEM]}]
+
+    # there may be a number of rules for the same target, 
+    #   so try them until one can be executed (e.g. all prerequisites exist)
+    set rules [__GetMatchingRules $shorttarget]
+
+    # trivial reject
+    if {[llength $rules] == 0} { ;#  && [llength $tseconds] == 0
+
+	if { [__TargetExists target ttime] } { 
+	    set msg "no rule how to make ${target}, but it exists."
+	    dbg_msg $msg 2
+	    return [target_untouched $target $ttime 2]
+	} else {
+	    append dbg ".."
+	    set msg "no rule how to make non-existing ${target}"
+	    dbg_msg $msg 1
+	    return [target_failed $target $dbg 2]
+	}
+    }
+
+    dbg_msg  "potential rules for $shorttarget: $rules" 2 
+
+    # try all rules 
+    set rule_failure_log {} ;# here we collect all failed rules
+    set failed 0
+    foreach rule $rules {
+
+	# exit condition
+	set try_next_rule 0
+	set pattern [__GetRulePattern $rule]
+	set sources [__GetRuleSources $rule]
+
+	# try to build all rule source files and secondary dependencies;
+	# register the file mod times on that occasion
+	set target_needs_update [expr ! $target_exists]
+	set realsources {} ;# this will contain the correct locations ($ARCH)
+	set realdep     {} 
+
+	# expand T-expressions in $sources
+	set tsources [__T_Expr $pattern $target $shorttarget \
+		$sources \#0 TARGET ""]
+	set slen [llength $tsources]
+
+	# unexpand target names for the sake of the cache
+	set tsources [lmap $tsources {[targetname_short $ITEM]}]
+
+	# remove excluded targets (short names!)
+	__exclude tsources $EXCLUDE "$shorttarget's primary dependencies"
+
+	# check if all depdency files are there and check their mtime
+	set allsrc [list {*}$tsources "__XXX__" {*}$tseconds]
+	
+	# dbg
+	set nsources [llength $tsources]
+	if {$::__DbgLevel == 1} {
+	    dbg_msg "$target <- \[$tsources\], \[[llength $tseconds] secondary dep.\]"
+	} else {
+	    dbg_msg "$target <- \[$tsources\], \[$tseconds\]" 2
+	}
+	set isSecondary 0
+
+	foreach src $allsrc {
+
+	    # switch from primaries to secondaries?!
+	    if { $src == "__XXX__" } {
+
+		# special: check if there are no primary dependencies left
+		# because of exclusion ; in that case skip this target
+		if {($nsources == 0) && ($slen > 0)} {
+		    dbg_msg "skipping $shorttarget due to exclusion (no source files left)"
+		    # process with next rule???
+		    return "exclude"
+		}
+
+		set isSecondary 1
+		continue 
+	    }
+  
+	    # try to build prerequisites
+	    normalize_filevar src 
+	    set result [__Build src msg $path]
+	    
+	    # special case: skip if source has been excluded for some reason 
+	    if {$result == "exclude"} {
+		if {!$isSecondary} {
+		    incr nsources -1
+		}
+		continue
+	    } 
+
+	    # add to the list of actually used source / dep files
+	    if $isSecondary {
+		lappend realdep $src
+	    } else {
+		lappend realsources $src
+	    }
+
+	    if { $result == "failed" } {
+
+		# if a secondary dependency fails, this is FATAL!
+		#  (does not only affect this rule, but all rules)
+		if $isSecondary { 
+		    set err "cannot build $target because $src is missing."
+		    set dname [filename_dep [file rootname $target]]
+		    if [file exists $dname] {
+			append err "\n -> invalid dependency file $dname?"
+		    }
+		    exit_msg $err
+		}
+
+		# if a primary dependency fails, well ... try the next rule
+		append rule_failure_log "- could not build $shorttarget from $src:\n"
+		append rule_failure_log "  $msg\n"
+		set try_next_rule 1
+		set failed 1
+
+	    } else { 
+
+		# if we've updated a target, we don't need to check its mtime
+		# (this also works for virtual targets which get never built)
+		if { $result == "updated" } {
+		    dbg_msg "$target must be built because $src has been updated"
+		    set target_needs_update 1
+		}
+
+		# if we haven't detected that we need an update so far...
+		if { !$target_needs_update } {
+		    ### DEBUG BEGIN 2004-11-11(Thu) Hitoshi
+		    if { [llength $__TCACHE([targetname_short $src])] < 3 } {
+			puts "DEBUG: Sometimes this __TCACHE has no item, but why?"
+			puts "DEBUG: $__TCACHE([targetname_short $src])"
+		    }
+		    ### DEBUG END   2004-11-11(Thu) Hitoshi
+		    set stime [lindex $__TCACHE([targetname_short $src]) 2]
+		    if { $stime > $ttime } {
+			set target_needs_update 1
+			dbg_msg "$target must be built because $src is newer"
+			dbg_msg "  (target: $ttime src: $stime)" 2
+		    } elseif $__ForceBuilding {
+			# build unconditionally?
+			if [lcontains $TARGETS $shorttarget] {
+			    set target_needs_update 1
+			    dbg_msg "$target must be built because of -force"
+			}
+		    }
+		}
+	    }
+
+	    if $try_next_rule { break }
+	}
+
+
+
+
+	if {[llength $allsrc] > 1} {
+	    dbg_msg "back to processing $shorttarget" 2
+	}
+
+	# if no source files are specified (only __XXX__), 
+	#   build unconditionally
+	if { ( [llength $allsrc] == 1 ) && ( ! $target_exists ) } {
+	    
+	    __PrepareNewTarget target ; # this may change $target!
+	    dbg_msg "$target gets built because it has no prerequisites and does not exist"
+	    return [__ExecTargetCode $pattern $target [__GetRuleCmd $rule] \
+		    $shorttarget {}]
+
+	}
+
+	# successfully matched a rule -> apply or leave target untouched
+	if { ! $try_next_rule } {
+
+	    dbg_msg "$target <- \[$realsources\], \[$realdep\]" 2
+
+	    if {!$target_exists} {
+		dbg_msg "$target must be built because it does not exist."
+	    }
+
+	    if { $target_needs_update } {
+
+ 
+
+		# apply commands to build the target
+		__PrepareNewTarget target ; # this may change $target!
+
+		# waiting for all relevant threads to finish 
+		if $::__UseThreads {
+		    if [::tmk::wait_for_threads_name [list {*}$realsources {*}$realdep]] {
+			exit_msg "at least on thread failed"
+		    }
+		}
+ 		return [__ExecTargetCode $pattern $target \
+			[__GetRuleCmd $rule] $shorttarget $realsources]
+		
+	    } else {
+		dbg_msg "nothing to be done for $target"
+		return [target_untouched $target $ttime 2]
+
+	    }
+
+	} 
+
+    } ; # end of <loop over all rules>
+
+    if [file exists $target] {
+	dbg_msg "leaving $target untouched because no rule applies"
+	return [target_untouched $target $ttime 2]
+    } else {
+	set msg "no rule applicable for building $target"
+	if {[string trim $rule_failure_log] != ""} {
+	    append msg "\n$rule_failure_log"
+	}
+	dbg_msg $msg
+	return [target_failed $target $msg 2]
+    }
+    
+}
+
+# output the current list of valid rules and secondary dependencies
+proc __OutputRules { fileId } {
+
+    global __Rules
+
+    foreach pat [array names __Rules] {
+
+	# output all rules for this pattern
+	foreach rule $__Rules($pat) {
+	    
+	    puts $fileId "$pat <- [__GetRuleSources $rule]:"
+	    puts $fileId "    [__GetRuleCmd $rule]"
+
+	}
+
+	# output all secondary dependencies for this pattern
+	set dep [__GetMatchingSecondaries $pat]
+	if [llength $dep] {
+	    puts $fileId "$pat secondary dependencies:"
+	    puts $fileId "    $dep"
+	}
+    }
+}
+
+
+# ========================================================================
+# user commands for defining targets/dependencies/exceptions
+# ========================================================================
+
+# define rule for list of target patterns
+proc target { targets depfiles cmd } {
+
+    global __SelfDepend __Makefilename __AlreadyBuilding
+    set result {}
+
+    foreach target $targets {
+	set t [targetname_short $target]
+	lappend result $t
+	if $__AlreadyBuilding {
+	    exit_msg "defining target $t after building has started."
+	}
+	__AddRule $t $depfiles $cmd
+	if $__SelfDepend {depend $t $__Makefilename}
+    }
+
+    return $result
+}
+
+# skip execution of the ``normal'' rule in an exception
+proc exception_return {} {
+    global __ex_skip
+    set __ex_skip 1
+}
+
+# define an exception for a list of target patterns
+proc exception {targets vars script} {
+
+    global __ExceptionScript __ExceptionVars 
+
+    foreach target $targets {
+	set t [targetname_short $target]
+	if [__PatternInCache $t match] {
+	    log_msg "warning: defining exception for $t after $match has been processed."
+	}
+	set __ExceptionScript($t) $script
+	set __ExceptionVars($t)   $vars
+    }
+
+}
+
+# define secondary dependencies (those not coming with a building rule)
+proc depend { targets depfiles } {
+    # todo: normalize DEPEND_EXCLUDE
+    # global ::DEPEND_EXCLUDE 
+
+    foreach target $targets {
+
+	set t [targetname_short $target]
+	if [__PatternInCache $t match] {
+	    log_msg "***** WARNING: calling depend for $t after $match has been processed."
+	}
+	
+#	dbg_msg "secondary: $t <- \{$depfiles\}" 1
+	__AddSecondaries $t $depfiles
+    }
+} 
+
+
+# define which targets to build by default
+proc build { targets } {
+
+    global ::TARGETS __AlreadyBuilding
+
+    foreach target $targets {
+	set t [targetname_short $target]
+	if $__AlreadyBuilding {
+	    exit_msg "calling 'build' after building has already started"
+	}
+	dbg_msg "adding default target $t" 
+	lappend TARGETS $t
+    }
+}
+
+# check if the single pattern matches any target in the cache 
+# return matched target if any
+proc __PatternInCache {pat {matchVar __xxx}} {
+
+    global __TCACHE
+    set names [array names __TCACHE]
+    set t [lsearch -glob $names $pat]
+    if {$t != -1} {
+	upvar $matchVar up
+	set up [lindex $names $t]
+	return 1
+    }
+    return 0
+  
+}
+
+# ===========================================================================
+# subdirectory processing 
+# ===========================================================================
+
+# process outer list of inner lists of subdirectories;
+# all items of an inner list can be processed independently (in parallel)
+proc subdir { subdirslist } {
+    lappend ::tmk::SUBDIRS {*}$subdirslist
+}
+
+# declare a target local-only. This will prevent subdirectory processing
+#   when this target is specified
+proc local_only {targetlist} {
+    foreach target $targetlist {
+	dbg_msg "marking $target as local-only"
+	lappend ::tmk::LOCALTARGETS $target
+    }
+}
+
+# process all subdirs that have been declared so far
+proc tmk::process_subdirs {} {
+
+    if {[llength tmk::SUBDIRS] < 1} {
+	dbg_msg "no subdirs specified" 2
+    }
+    # remove local-only targets from command line
+    foreach x $::tmk::localtargets {lremove ::ARGS $x}
+
+    # conditions under which we should not process subdirectories
+    if [llength $::tmk::localtargets] {
+	if {![llength $::tmk::normaltargets]} {
+	    dbg_msg "only local targets specified  - skipping subdirs"
+	    return
+	}
+    }
+    if { [lsearch -exact $::ARGS {-f}] != -1 } {
+	dbg_msg "skipping subdirectory processing (-f specified)"
+	return 
+    }
+
+    # pass TMakefile.proj and TMakefile.priv down to subprocesses later
+    lremove ::ARGS -noproj ; lremove ::ARGS -nopriv
+    lremove ::ARGS -proj 1 ; lremove ::ARGS -priv 1
+
+    # remember where we are now
+    dbg_msg "processing subdirs: $tmk::SUBDIRS" 2
+    set currentdir [pwd]
+    normalize_filevar currentdir
+
+    # normalize path names
+    set ::SUBDIR_EXCLUDE [lmap $::SUBDIR_EXCLUDE {[normalize_filevar ITEM]}]
+
+    # loop through outer list
+    set changed 0
+    foreach subdirs $::tmk::SUBDIRS {
+
+	# normalize path names
+	set subdirs [lmap $subdirs {[normalize_filevar ITEM]}]
+
+	# exclude certain directories from subdirectory list
+	set subdirs [lminus $subdirs $::SUBDIR_EXCLUDE]
+
+	# exclude everything which is not a directory
+	set subdirs [lfilter $subdirs {[file isdirectory $ITEM]}]
+
+	# use only those dirs  where we find a TMakefile
+	set subdirs [lfilter $subdirs {[file exists [file join $ITEM TMakefile]]}]
+
+	# recursively call tmk in all those items that are directories
+	set parallel [expr [llength $subdirs] > 1]
+	if $parallel {
+	    dbg_msg "processing in parallel: $subdirs"
+	}
+ 
+	foreach dir $subdirs {
+	    
+	    # pass location of project TMakefiles down to subprocesses
+	    set pmf {}
+	    if {![file readable [file join $dir TMakefile.proj]]} {
+		if {$::__ProjectMakefile == "{}"} {
+		    lappend pmf "-noproj"
+		} else {
+		    lappend pmf -proj $::__ProjectMakefile
+		    if {$::__PrivateProjectMakefile == "{}"} {
+			lappend pmf "-nopriv"
+		    } else {
+			lappend pmf -priv $::__PrivateProjectMakefile
+		    }
+		}
+	    }
+	    
+
+	    # when processing in parallel, add some output prefix for logging
+	    if { !$parallel } {
+		dbg_msg "processing subdir $dir"
+		set prefix ""
+	    } else {
+		set prefix "-prefix \"tmk:[file tail $dir]:\""
+	    }
+	    
+	    # execute tmk in subdir; make sure stdout/stderr 
+	    # remain the same
+	    cd $dir
+	    set cmd "$::TMK ${pmf} -D __TmkInSubdir=1 $::ARGS $prefix >@stdout 2>@stderr <@stdin"
+	    dbg_msg "calling $cmd"
+
+	    # do NOT protocol this recursive execution
+	    if {[info commands ::tmk::old_exec] != {}} {
+		set exec "::tmk::old_exec"
+	    } else {
+		set exec "exec"
+	    }
+	    # TODO: parallel execution
+	    if { [catch "$exec --  $cmd" msg] != 0 } {
+		exit_msg $msg
+	    }
+	    
+	    cd $currentdir
+	    set changed 1
+	}
+    }
+    
+    if $changed { 
+	log_msg "" noprefix
+	log_msg "back in directory $currentdir"
+    }
+    
+}
+
+# ============================================================================
+# module handling
+# ============================================================================
+
+# execute all modules in the list
+# module name may contain ::version
+proc module { modules } {
+
+    global ::tmk::dir MODULES env
+
+    foreach mod $modules {
+	
+	# specific version requested?
+	set p [string first "::" $mod]
+	set mod [string tolower $mod]
+	if {$p != -1} {
+	    set modver [string range $mod [expr $p + 2] end]
+	    set mod [string range $mod 0 [expr $p - 1]]
+	    dbg_msg "requested module $mod \[$modver\]" 2
+	} else {
+	    # default: get active or default version
+	    if [lcontains $MODULES ${mod}] {
+		eval set modver \$\{::${mod}::VERSION\}
+		dbg_msg "using already active version \[$modver\] for $mod" 2
+	    } else {
+		if {[info vars ::${mod}::DEFAULT_VERSION] != {}} {
+		    eval set modver \$\{::${mod}::DEFAULT_VERSION\}
+		    dbg_msg "using default version \[$modver\] for $mod" 2
+		} else {
+		    set modver {}
+		    dbg_msg "no version given for $mod" 2
+		}
+	    }
+	}
+
+
+	# module already loaded? check for version conflict!
+	if [lcontains $MODULES ${mod}] {
+	    eval set actVers \$\{::${mod}::VERSION\}
+	    if {$actVers == $modver} {
+		dbg_msg "module $mod already loaded" 2
+		continue
+	    } else {
+		set conf "$mod \[$actVers\] and $mod \[$modver\]"
+		exit_msg "cannot load two versions of same module\n  ($conf)"
+	    }
+	}
+
+	# register module, and set active version
+	lappend MODULES ${mod}
+	namespace eval ::${mod} [list variable VERSION $modver]
+
+	# this imports the right config vars (e.g. of a version) into ::$mod
+	load_submodule $mod $modver
+
+	# look if some macro variables <modulename>::<something> are set,
+	# and if so, do the corresponding action
+	set found [__eval_module_macros $mod]
+
+	# load module file
+	set file [::tmk::find_module_file $mod dirs]
+	if {$file != {}} {
+	    dbg_msg "reading module $mod file $file"
+	    uplevel \#0 [list namespace eval ::${mod} [list __source $file]]
+	} else {
+	    if {!$found} {
+		set msg "module $mod version $modver requested,\n"
+		append msg "  but no ${mod}::... config variables found,\n"
+		append msg "  and no $mod.tmk file found in \[$dirs\]"
+		exit_msg $msg
+	    }
+	}
+    }
+
+}
+
+# find a module file in the appropriate path
+proc ::tmk::find_module_file {module {pathvarname __xxx}} {
+
+    global env ::tmk::MODULE_PATH
+    
+    set mod [string tolower $module]
+    # search module file in the current dir and the path
+    set dirs [list . {*}${::tmk::MODULE_PATH}]
+
+    if [info exists env(TMK_MODULE_PATH)] {
+	lappend dirs {*}$env(TMK_MODULE_PATH)
+    }
+    lappend dirs [file join $::tmk::dir modules]
+
+    # pass path to caller
+    upvar $pathvarname path
+    set path $dirs
+
+    # now look for the first one we find
+    return [lindex [find_in_pathlist $mod.tmk $dirs] 0]
+}
+
+
+# activate a specific submodule (e.g. version) of a module's variables
+# by importing the vars+procs from ::module::ver into ::module
+# - recursively: import mod <- mod::v1 <- mod::v1::v1.1
+proc load_submodule {mod version} {
+    
+    # create namespace if not already done
+    namespace eval ::$mod {}
+    
+    # recurse until we reach the last version segment
+    set p [string first "::" $version]
+    if {$p != -1} {
+	set rmod "${mod}::[string range $version 0 [expr $p - 1]]"
+	load_submodule $rmod [string range $version [expr $p + 2] end]
+	set version [string range $version 0 [expr $p - 1]]
+    }
+
+    # no special version requested? nothing to do
+    if {[string trim $version]  == ""} {
+	return 
+    }
+    set v ::${mod}::$version
+    regsub -all "::::" $v "::" v
+    if {![lcontains [namespace children ::$mod] $v]} {
+	exit_msg "version ${version} of module ${mod} does not exist." 
+    }
+
+    # override the generic variables with those for the specific version
+    set ns "::${mod}::${version}"
+    foreach v [info vars ${ns}::*] {
+	dbg_msg "$v -> ::${mod}::[namespace tail $v]" 2
+	eval set ${mod}::[namespace tail $v] \$\{$v\}
+    }
+    # now the same procedure for procedures (as every year)
+    namespace eval ${ns} namespace export *
+    namespace eval ::${mod} namespace import -force ${ns}::*
+
+}
+
+# look which of the module macros are set, and trigger corresponding action
+# return if any variable was found
+proc __eval_module_macros { names } {
+    global MODULE_ACTION
+    set found 0
+    foreach name $names {
+	set name [string tolower $name]
+	foreach var [array names MODULE_ACTION] {
+	    if {[info vars ::${name}::${var}] != {}} {
+		set found 1
+		dbg_msg "executing config macro $var for module $name" 2
+		uplevel \#0 "set __MODNAME $name"
+		uplevel \#0 namespace eval ::$name [list $MODULE_ACTION($var)]
+	    }
+	}
+    }
+    return $found
+}
+
+# recursively list all children namespaces of a given absolute namespace
+proc tmk::children_namespaces {ns} {
+    namespace eval $ns {}
+    set ch [namespace eval :: [list namespace children $ns]]
+    set result {}
+    foreach c $ch {
+	lappend result $c
+	lappend  result {*}[tmk::children_namespaces $c]
+    }
+    return $result
+}
+
+# Register some code which has to be executed right before starting to build
+#   the targets. This is used (for example) in the modules.
+proc eval_later { proc } {
+
+    global __BBProcs 
+    lappend __BBProcs [uplevel 1 [list namespace code $proc]]
+
+}
+
+# return normalized absolute namespace for a given variable or procedure
+proc tmk::full_namespace {name} {
+    set name [string trim $name]
+    set ns [namespace qualifiers $name]
+    if {($ns == {}) && ([string range $name 0 1] == "::")} {
+	set ns "::"
+    } else {
+	set ns "[uplevel 1 namespace current]::$ns"
+    }
+    set ns [split $ns ":"]
+    lremove ns {}
+    return ::[join $ns "::"]
+}
+
+
+# return normalized procedure name for tracing a variable / procedure
+#   and return namespace name in ns_var
+proc tmk::trace_proc_name {name} {
+    set ns [uplevel 1 tmk::full_namespace $name]
+    set procname ${ns}::[namespace tail $name]
+    regsub -all : $procname _ procname
+    return "::tmk::__trace$procname"
+}
+
+# Evaluate the value for a variable just when the variable is first needed.
+#   The value expression is treated as the body of a procedure (use return)
+#  if msg_only, then the variable isn't changed, but only the code is executed
+proc set_lazy {varname script {msg_only 0}} {
+    
+    set ns       [uplevel 1 tmk::full_namespace $varname]
+    set var      [namespace tail $varname]
+    set procname [tmk::trace_proc_name $varname]
+
+    # set the on-read trace
+    namespace eval ::$ns [list variable $var {<lazy>}]
+    trace variable ${ns}::$var "r"  ${procname}_lazy
+    trace variable ${ns}::$var "wu" ${procname}_lazy_forget
+
+    # define the evalutation procedure to be called
+    set body {
+
+	dbg_msg "lazily setting ${ns}::$var" 3
+	
+	# call the defining procedure
+	if $msg_only {
+	    set cmd ${procname}_lazy_expr
+	} else {
+	    set cmd "variable $var \[${procname}_lazy_expr\]"
+	}
+	namespace eval ${ns} \$cmd
+
+	# if var is traced, output result!
+	if [lcontains \$::tmk::traced_vars ${ns}::$var] {
+	    uplevel 1 $procname
+	}
+	# now stop expanding the variable's value on further read ops
+	${procname}_lazy_forget \$__name \$__elem xy
+    }	
+    proc ${procname}_lazy_expr {} [list uplevel \#0 $script]
+    proc ${procname}_lazy {__name __elem __op} [subst -nocommands $body]
+
+    # override lazy evaluation if variable is written or unset lateron
+    set body {
+
+	dbg_msg "forgetting lazy value for ${ns}::$var" 3
+	# delete all traces for this variable
+        trace vdelete ${ns}::$var r ${procname}_lazy
+        trace vdelete ${ns}::$var wu ${procname}_lazy_forget
+        rename ${procname}_lazy {}
+        rename ${procname}_lazy_expr {}
+        rename ${procname}_lazy_forget {}
+    }
+    proc ${procname}_lazy_forget {name elem op} [subst -nocommands $body]
+}
+
+# lazy-evaluate the value for a variable;
+#   update the value every time the 'dependency variable' is changed
+proc set_connected {varname depvars script} {
+    
+    set ns       [uplevel 1 tmk::full_namespace $varname]
+    set var      [namespace tail $varname]
+    set procname [tmk::trace_proc_name $varname]
+
+    # set the on-read trace for the targeted variable
+    namespace eval ::$ns {}
+    trace variable ${ns}::$var "r" ${procname}_lazy
+    # set the on-modification trace for the dependency variables
+    set depvars_full {}
+    foreach depvar $depvars {
+	set dns       [uplevel 1 tmk::full_namespace $depvar]
+	set dvar      [namespace tail $depvar]
+	lappend depvars_full ${dns}::$dvar
+	namespace eval ::$dns {}
+	trace variable ${dns}::$dvar "w" ${procname}_lazy
+    }
+    
+    # define the evalutation procedure to be called
+    set body {
+
+	# if some dep var is not set yet, don't eval lazy expr
+	foreach v {$depvars_full} {
+	    if {[uplevel 1 info vars \$v] == {}} {
+		dbg_msg "cannot set ${ns}::$var yet because \$v is not set"
+		return
+	    }
+	}
+	
+	# call the defining procedure
+	namespace eval ::${ns} [list variable $var \[${procname}_lazy_expr\]]
+	# if var is traced, output result!
+	if [lcontains \$::tmk::traced_vars ${ns}::$var] {
+	    uplevel 1 $procname
+	}
+	# now stop expanding the variable's value on further read ops
+        trace vdelete ${ns}::$var r ${procname}_lazy
+    }
+    proc ${procname}_lazy_expr {} [list uplevel \#0 $script]
+    proc ${procname}_lazy {__name __elem __op} [subst -nocommands $body]
+}
+
+# delete dependencies to other variables (as done by set_connected)
+proc set_disconnect {varname depvars} {
+
+    # remove the on-modification trace for the dependency variables
+    set procname [tmk::trace_proc_name $varname]
+    foreach depvar $depvars {
+	set dns       [uplevel 1 tmk::full_namespace $depvar]
+	set dvar      [namespace tail $depvar]
+	namespace eval ::$dns {}
+	trace vdelete ${dns}::$dvar "w" ${procname}_lazy
+    }
+
+}
+
+# ========================================================================
+# additional helper commands for use in TMakefiles
+# ========================================================================
+
+# file containing dependency information 
+proc filename_dep { shortname } {return "${shortname}.dep"}
+
+# echo a command before doing it
+proc echo args {
+    global __DoLog
+    if $__DoLog {
+	uplevel 1 "puts \{$args\}"
+	flush stdout
+    }
+    uplevel 1 $args
+}
+
+# echo and execute a command, 
+# and cleanly exit with an error message if needed
+proc cmd args {
+
+    global __DoCmd __DoLog
+
+    if $__DoLog {
+	puts $args
+	flush stdout
+    }
+
+    if $__DoCmd {
+	if [catch [list uplevel 1 "exec $args >@stdout 2>@stderr <@stdin"] m] {
+	    exit_msg $m
+	} 
+    }
+    return 1
+   
+}
+
+
+# execute a command, and do NOT redirect output to stdout/stderr; 
+# cleanly exit with an error message if needed
+proc cmd_quiet args {
+    global __DoCmd
+    if $__DoCmd {
+	if [catch "uplevel 1 exec $args" msg] {
+	    exit_msg $msg
+	} 
+    }
+    return 1
+}
+
+
+# read a named file and append it to a given variable
+# don't append anything if the file does not exist
+proc read_file {filename varName} {
+    upvar $varName result
+    if [file exists $filename] {
+	set f [open $filename r]
+	while {![eof $f]} {
+	    append result "[gets $f]\n"
+	}
+	close $f
+    } else {
+	if {![info exists result]} {
+	    set result ""
+	}
+    }
+}
+
+# write a string into a file; if args is "append", append to existing file
+proc write_file {filename varName args} {
+    upvar $varName txt
+    if {$args == "append"} {
+	set f [open $filename a+]
+    } else {
+	set f [open $filename w]
+    }
+    puts $f $txt
+    close $f
+}
+
+# ===========================================================================
+# array related procedure
+# ===========================================================================
+# \param  _arrayName an array name to look up.
+# \param  _key
+# \return return 1 if _arrayName(_key) exists.
+proc arraykeyexistp { _arrayName _key } {
+    global $_arrayName
+    assert [info exist ${_arrayName} ] 
+    if [info exist "${_arrayName}(\"$_key\")" ] {
+        # puts "key exists"
+        return 1
+    } else {
+        # puts "no key"
+        return 0
+    }
+}
+
+# \param  _arrayName an array name to look up.
+# \param  _key       key of associative array.
+# \param  _val       value. A list is also acceptable.
+# \return return 1 if [ $_arrayName($_key) == $val ] == 1.
+proc arraykeyvalexistp { _arrayName _key _val } {
+    global $_arrayName
+    if { [ arraykeyexistp $_arrayName $_key  ] } {
+        set vlist "\$[subst ${_arrayName}(\"$_key\")]"
+        # puts "[subst $vlist]"
+        foreach elem [subst $vlist] {
+            if { $elem == $_val } {
+                # puts "_key _val exists"         
+                return 1
+            }
+        }
+    }
+    return 0
+}
+
+#
+# runmode convenient function \internal
+# such key exist?
+#
+proc ::tmk::is_runmodestat { _key } {
+    return [ arraykeyexistp __RunModeStatList $_key ]
+}
+
+#
+# runmode convenient function \internal
+# get the value of \param _key
+#
+proc ::tmk::get_runmodestat { _key } {
+    global __RunModeStatList
+
+    if ![ ::tmk::is_runmodestat $_key ] {
+	dbg_msg "no such runmode key ($_key)"
+	return 0
+    } else {
+	return "$__RunModeStatList(\"$_key\")"
+    }
+}
+#
+# runmode convenient function \internal
+# set the key and value with cheking candidates list.
+# \param  _keyval "key=value", ex. "addressmode=64bit"
+# \return true if key is exist and set is succeeded.
+#
+proc ::tmk::set_runmodestat { _keyval } {
+    global __AvailableRunModeStatLList
+    global __RunModeStatList
+
+    set kv  [split  $_keyval =]
+    set key [lindex $kv      0]
+    if { [llength $kv] == 1 } {
+	dbg_msg "($kv) is key=, the value is missing."
+	return 0
+    } else {
+	set value [lindex $kv 1]
+    }
+    
+    if [ arraykeyvalexistp __AvailableRunModeStatLList $key $value ] {
+	set __RunModeStatList(\"$key\") $value
+	return 1
+    } else {
+	dbg_msg "could not find mode = $key, value = $value, no set."
+	return 0
+    }
+}
+
+# ===========================================================================
+# file/target name handling 
+# ===========================================================================
+
+# if USE_ARCH is on, insert $ARCH as last path segment if it's not 
+# already somewhere in the path
+proc targetname_long  { target } {
+
+    normalize_filevar target
+
+    # no ARCH? don't do anything 
+    if {!$::USE_ARCH} {return $target}
+
+    set d [file split $target]
+    if {([file pathtype $target] != "relative") || [lcontains $d $::ARCH]} {
+	return $target
+    }
+
+    # insert PATH at the beginning (?)
+    return [eval file join \{$::ARCH\} $d]
+}
+
+# if USE_ARCH is on, and first path item is $ARCH, remove it
+proc targetname_short  { target } {
+
+    normalize_filevar target
+
+    if {!$::USE_ARCH} {return $target}
+    if {[file pathtype $target] != "relative"} {return $target}
+    set d [file split $target]
+    if {[lindex $d 0] != $::ARCH} {return $target}
+    return [eval file join [lrange $d 1 end]]
+}
+
+
+# ========================================================================
+# tmk command line argument parsing
+# ========================================================================
+
+proc __ExitWithSyntax {} {
+
+    global ::tmk::dir_src __txt
+    read_file [file join $::tmk::dir_src help.msg] __txt
+    uplevel \#0 {puts stderr [subst -nocommands $__txt]}
+    exit 1
+}
+
+# parse command line and set some global variables accordingly
+proc __ParseCommandLine { argv0 argv } {
+
+    global ::__rest ::__args ::__opt ::ARGS ::__OPT_ACTION 
+    global ::__mark_updated ::__mark_untouched
+
+    dbg_msg "called $argv0 $argv" 2
+    set ARGS $argv
+    set opt_loaded 0
+    set __mark_updated {}
+    set __mark_untouched {}
+
+    # targets specified at command line
+    global ::__CmdLineTargets 
+    set __CmdLineTargets {}
+    
+    # parse options (starting with -)
+    set __rest $argv
+    set __args [llength $__rest]
+    
+    while { $__args > 0 && "[string range $__rest 0 0]" == "-"} { 
+
+	# this is supposed to be an option, so load option scripts
+	if {!$opt_loaded} {
+	    uplevel \#0 {__source [file join $::tmk::dir_src cmdline.tmk]}
+	}
+	set __opt [lindex $__rest 0]
+	set __rest [lrange $__rest 1 end]
+	set __args [llength $__rest]
+	
+	# explicit end of options
+	if { "$__opt" == "--" } {
+	    break
+	}
+	if [info exists __OPT_ACTION($__opt)] {
+	    uplevel \#0 $__OPT_ACTION($__opt)
+	} else { 
+	    __ExitWithSyntax
+	}
+    }
+
+    # the remaining command line arguments are supposed to be targets
+    if [llength $__rest] {
+	set __CmdLineTargets $__rest
+    }
+
+}
+
+# execute "before building" procedures registered in the modules
+proc __doEvalLaterCommands {} {
+    global ::__BBProcs
+    for {set i 0} {$i  < [llength $__BBProcs]} {incr i} {
+	uplevel \#0 [lindex $__BBProcs $i]
+    }
+}
+    
+# ========================================================================
+# tmk general state init
+# ========================================================================
+
+if {![info exists env(TMK_TCLSH)]} {
+	set env(TMK_TCLSH) [info nameofexecutable]
+}
+#string constants
+set STR_DEFAULT default
+set STR_CYGWIN cygwin
+set STR_DARWIN Darwin
+set STR_GCC gcc
+set STR_IRIX IRIX
+set STR_IRIX64 IRIX64
+set STR_LINUX Linux
+set STR_MACINTOSH macintosh
+set STR_SUNOS SunOS
+set STR_UNIX unix
+set STR_WINDOWS windows
+
+
+# list of traced variables
+set ::tmk::traced_vars {}
+    
+# system check (pre-config, just for file name conventions etc.)
+set __System [string tolower $tcl_platform(os)]
+if {$__System == {}} {set __Sytem "<unknown>"}
+
+# windows, cygwin? 
+set __IsWindowsSystem [string match *$STR_WINDOWS* $__System]
+set __IsCygwinSystem  0
+#checking __System isn't good enough - we may still be using cygwin executables
+#if {[string match *$STR_CYGWIN* __System]} {
+#    set __IsCygwinSystem 1
+#}
+if { [auto_execok cygpath] ne {} } {
+    set __IsCygwinSystem 1
+}
+
+# our registry key for the user cache
+set __HKeyUser "HKEY_CURRENT_USER\\Software\\TMK\\Cache"
+
+# we have not yet started to build targets
+set __AlreadyBuilding 0
+# debugging level (0 = off, 1 ...)
+set __DbgLevel 0
+# switch command logging on/off (cf. -verbose / -silent)
+set __DoLog   1
+# switch shell command execution on/off
+set __DoCmd   1
+# always include TMakefile as dependency?
+set __SelfDepend   0
+# force explicit targets to be created unconditionally
+set __ForceBuilding 0
+# only output commands, don't really execute them
+set __DisplayCommandsOnly 0
+# force re-configuration (rebuilds config cache)
+set __ForceReconfig 0
+set __SysInfoOnly 0
+# order in which to process subdirectories: "bottom-up", "top-down", or "none"
+set ::SUBDIR_PROCESSING "bottom-up"
+
+# code generation level
+set ::CODELEVEL "dbg"
+
+set ::USE_ARCH  1
+set ::TARGETS   {}
+set ::MODULES   {}
+set ::EXCLUDE   {}
+set ::tmk::SUBDIRS {}
+set ::tmk::LOCALTARGETS {}
+# additional module path
+set ::tmk::MODULE_PATH [list]
+
+set __BBProcs          {}               ; # code stored by "eval_later"
+set __OutputPrefix     "tmk:"           ; # important for parallel processing
+set __OutputPrefixConfig  "tmk-config:"          
+set __Makefilename     "TMakefile"      ; # name of the file to be sourced in
+set __ProjectMakefile  ""               ; # project-wide 'global' definitions
+set __PrivateProjectMakefile  ""        ; # private 'global' definitions
+set __ReadMakefileOn   1                ; # do not read TMakefile when 0
+set __ExecBefore       {}               ; # code stored by "-cmd 'code'" option
+set __ExecInit         {}               ; # code stored by "-init 'code'" option
+set __ParProcesses     -1
+set __DefaultProjectFileName         "TMakefile.proj" 
+set __DefaultPrivateProjectFileName  "TMakefile.priv" 
+# available run modes
+set __AvailableRunModeStatLList("addressmode") { "default" "64bit"   }
+set __AvailableRunModeStatLList("archmode")    { "+followgccname" "norunmodepref" "+gccver" }
+set __AvailableRunModeStatLList("gccexename")  { "default" "gcc" "gcc-2.95" "gcc-3.2" "gcc-3.3" "gcc-3.4" }
+# current run mode
+set __RunModeStatList("addressmode")           $STR_DEFAULT
+set __RunModeStatList("archmode")              "+followgccname"
+set __RunModeStatList("gccexename")            "gcc"
+
+#if $__IsWindowsSystem {
+#    puts  stderr "sorry, but Windows is not supported in this beta release."
+#    exit 1
+#}
+# if [regexp {[mM]acintosh} $__System] {
+#     exit_msg "sorry, but Macintosh is not supported in this beta release."
+# }    
+
+# on Windows, should use the registry packagex
+set __UseRegistry 0
+if { $__IsWindowsSystem && ! $__IsCygwinSystem} {
+    if { 0 == [ catch { package require registry } ] } {
+	set __UseRegistry 1
+    } else {
+	dbg_msg "warning: could not load 'registry' package"
+    }
+}
+
+# =====================
+# paths / config
+# =====================
+
+# the directory where tmk is installed. used for finding modules etc.
+set ::tmk::Script [::tmk::scriptname]
+set ::tmk::dir [::tmk::tmkdir]
+
+#bootstrap when run from source directory
+if {[file exists [file join $::tmk::dir pkgIndex.tcl]]} {
+   set auto_path [linsert $auto_path 0 $::tmk::dir]
+}
+package require tmk
+
+set ::tmk::dir_src        [file join $::tmk::dir src]
+set ::tmk::dir_config     [file join $::tmk::dir config]
+set ::tmk::dir_contrib    [file join $::tmk::dir contrib] 
+set ::tmk::dir_priv       [file join $::tmk::dir usr]
+catch {set ::tmk::dir_priv [file join $env(HOME) .tmk]}
+if $__IsCygwinSystem {
+     set _tmpa [exec cygpath -w $::tmk::dir_priv]
+     regsub -all \\\\ $_tmpa / _tmpa
+     set ::tmk::dir_priv $_tmpa
+}
+
+
+# set TMK to the right tclsh call
+if { $__IsWindowsSystem && !$__IsCygwinSystem } {
+    regsub -all \\\\ "$env(TMK_TCLSH) $::tmk::dir\\SRC\\TMK" / TMK
+} else {
+    if [info exists env(TMK_TCLSH) ]  {
+	set TMK [list $env(TMK_TCLSH) $::tmk::Script]
+    } else {
+	set TMK [list [info nameofexecutable] $::tmk::Script]
+    }
+    if $__IsCygwinSystem {
+	regsub -all \\\\ $TMK \\\\\\\\ TMK
+    }
+
+}
+
+#
+# set TMK_RUNMODE if it exists. command line can override this.
+#
+if [info exists env(TMK_RUNMODE) ]  {
+    set runmode $env(TMK_RUNMODE)
+    set vv [split $runmode :]
+    foreach elem $vv {
+	set kv [split $elem =]	
+	if [ ::tmk::set_runmodestat $elem ] {
+	    dbg_msg "set runmode TMK_RUNMODE ${elem}." 1
+	} else { 
+	    log_msg "Non supported TMK_RUNMODE (${elem}), ignored."	
+	}
+    }
+}
+
+# ===============
+# tmk main action
+# ===============
+
+proc ::tmk::Main {argv0 argv} {
+    
+    # parse command line and remember things to do later
+    __ParseCommandLine $argv0 $argv
+
+    # exec commands specified with -init 'proc' 
+    global __ExecInit
+    foreach cmd $__ExecInit { uplevel \#0 $cmd }
+
+    # make known all global variables starting with __
+    eval global ::ARGS ::TARGETS ::ARCH ::PROJDIR [info globals __*]
+
+    # do configuration
+    set cfg [file join ${::tmk::dir_config} config.tmk]
+    if [file readable $cfg] {
+	uplevel \#0 [list __source $cfg]
+    } else {
+	puts stdout "warning: main configuration file $cfg missing"
+    }
+   
+    # remove outer spaces and trailing slashes from ARCH variable
+    normalize_filevar ARCH
+
+    # read definition of the module "macro" action for certain variables
+    uplevel \#0 [list __source \
+	[file join ${::tmk::dir_src} module_macro_vars.tmk]]
+
+    # read definition of the module "threads" 
+    uplevel \#0 [list __source [file join ${::tmk::dir_src} module_threads.tmk]]
+
+
+    # find project and private makefile, set PROJDIR etc.
+    # but do not yet execute these files
+    set mfs [__FindGlobalMakefiles]
+
+    # load default module
+    module default
+
+    # exec commands specified with -cmd'proc' 
+    foreach cmd $__ExecBefore { uplevel \#0 $cmd }
+
+    # read and execute proj/priv makefiles
+    foreach mf $mfs {
+	set olddir [pwd]
+	cd $PROJDIR
+	__ReadMakefile $mf
+	cd $olddir
+    }
+
+    # mark specified targets as updated/untouched
+    lappend __mark_updated ALWAYS_BUILD
+    foreach t $__mark_updated   {target_updated   $t 0 1}
+    foreach t $__mark_untouched {target_untouched $t 0 1}
+
+    #  read / parse / execute the specified TMakefile
+    if { $__ReadMakefileOn } {
+	if [string compare $__Makefilename "-"] {
+	    __ReadMakefile $__Makefilename
+	} else {
+	    log_msg "now entering tmk's interactive mode (leave with ^D)..."
+	    source [file join ${::tmk::dir_src} interactive.tmk]
+	}
+    } else {
+	dbg_msg "no read TMakefile" 3
+    }
+    
+    # execute commands wrapped in eval_later 
+    __doEvalLaterCommands
+
+    # if targets are spec'd on the cmd line, process only those.
+    if { [llength $__CmdLineTargets] > 0 } {
+	set TARGETS $__CmdLineTargets
+    }
+
+    # split local-only and normal targets
+    set __cond {[lcontains $::tmk::LOCALTARGETS [targetname_short $ITEM]]}
+    set ::tmk::localtargets  [lfilter $TARGETS $__cond]
+    set ::tmk::normaltargets [lfilter $TARGETS "!$__cond"]
+
+    # where are we?
+    if {[llength $::tmk::normaltargets] || ![llength $::tmk::localtargets]} {
+	log_msg "" noprefix
+	log_msg "in directory [pwd]"
+    }
+
+    # bottom-up? then process subdirectories now, before the local targets
+    if {$::SUBDIR_PROCESSING == "bottom-up"} {::tmk::process_subdirs}
+    
+    # only output rule database 
+    set_ifndef ::tmk::todo {}
+    if { [lsearch -exact $::tmk::todo "rules"] != -1 } {
+	__OutputRules stdout
+	return
+    }
+    
+    # only do the building if "todo" list is empty.
+    if { [llength $::tmk::todo] == 0 } {
+
+	# go through explicit list of targets and build them
+	if { [llength $TARGETS] > 0 } {
+	    
+	    dbg_msg "toplevel targets: $TARGETS"
+	    
+	    foreach target $TARGETS {
+		
+		set result [__Build target msg]
+		if { $result == "failed" } {
+		    exit_msg $msg
+		} elseif { $result == "untouched" } {
+		    log_msg "nothing to be done for $target"
+		} elseif { $result == "exclude" } {
+		    log_msg "$target skipped due to exclusion"
+		}
+	    }
+	    
+	} else {
+
+	    log_msg "no targets in [pwd]."
+	    
+	}
+    }
+
+    # top-down? then process subdirectories now, after the local targets
+    if {$::SUBDIR_PROCESSING == "top-down"} {::tmk::process_subdirs}
+
+} 
+
+if { ! [info exists __TmkInSubdir] } {
+    set __TmkStartTime [clock seconds]
+}
+
+#in case tmk was sourced instead of executed
+if {![info exists argv0]} {
+	set argv0 [info script]
+}
+if {![info exists argv]} {
+	set argv [list]
+}
+::tmk::Main $argv0 $argv
+	
+# waiting for all relevant threads to finish 
+if $::__UseThreads {
+    if [::tmk::wait_for_threads_name $::__RunningThreads ] {
+	exit_msg "at least on thread failed"
+    }
+}
+ 
+if { ! [info exists __TmkInSubdir] } {
+    set __TmkRunningTime [expr [clock seconds] - $__TmkStartTime]
+    log_msg "finished [format "%.0f" [expr $__TmkRunningTime / 60.0]] min [expr $__TmkRunningTime \% 60] sec."
+}

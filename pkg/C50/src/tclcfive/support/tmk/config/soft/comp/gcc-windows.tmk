@@ -1,0 +1,52 @@
+#
+# gcc.tmk 
+# $Id: gcc-windows.tmk,v 1.1 2005/04/23 20:53:58 yamauchih Exp $
+# configure EGCS / GNU C/C++ compilers for Windows
+#
+
+assert {![string compare $OSCLASS $STR_WINDOWS]}
+
+# Windows specialities 
+#lappend ::${__module}::FLAGS "-DWIN32" "-mno-cygwin" "-mwindows"
+#-mno-cywing flag has been removed from gcc
+lappend ::${__module}::FLAGS "-DWIN32" "-mwindows"
+
+# additional flags are needed for cygwin ;-(
+if $__IsCygwinSystem {
+    foreach x {FLAGS_PRF FLAGS_DBG FLAGS_STD FLAGS_OPT FLAGS_MAX} {
+	############################# AAAAAAAAAAAAAAAAAAAAAARRRRRRGGGGGHHHHHHH!!!!
+ 	lappend $x -DWIN32 -D_WIN32 -I[file nativename /pckg/mingw/include]
+ 	#lappend $x -mno-cygwin -mwindows
+ 	lappend $x -mwindows
+ 	#lappend LD_$x  -L[file nativename /pckg/mingw/lib] -mno-cygwin 
+ 	lappend LD_$x  -L[file nativename /pckg/mingw/lib]
+ 	lappend LD_$x  -mwindows -Wl,-e,_mainCRTStartup
+    }
+}
+
+# link_exe For Windows : link an executable
+config proc link_exe {prog obj libspec flags opt} {
+
+    set flags [list {*}$flags {*}[meta_option_flags $opt]]
+    set libs  [make_lib_options $libspec $opt]
+
+    if [regexp "async" $opt] {
+	set async 1
+    } else {
+	set async 0
+    }
+
+    # Windows
+    lappend flags "-Wl,-e,_mainCRTStartup"
+
+    variable EXECUTABLE
+    if $async {
+	set cmd \
+	    [list ::tmk::cmd_thread $prog [file nativename $EXECUTABLE] {*}$flags]
+    } else {
+	set cmd [list cmd [file nativename $EXECUTABLE] {*}$flags]
+    }	
+    set cmd [list {*}$cmd "-o" $prog {*}$obj {*}$libs]
+    uplevel \#0 $cmd 
+
+}

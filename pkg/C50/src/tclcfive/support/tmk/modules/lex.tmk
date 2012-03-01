@@ -1,0 +1,123 @@
+# -*-Mode: tcl -*-
+
+# =============================================================================
+# lex.tmk
+# (C)opyright 1999 by Hartmut Schirmacher (hartmut@acm.org)
+# =============================================================================
+# $Id: lex.tmk,v 1.11 2001/10/29 23:35:21 brabec Exp $
+# =============================================================================
+# $Log: lex.tmk,v $
+# Revision 1.11  2001/10/29 23:35:21  brabec
+# fixed lex and yacc configuration
+#
+# Revision 1.10  2001/04/25 14:07:38  brabec
+# cygwin port
+#
+# Revision 1.9  2001/04/24 13:11:01  brabec
+# *** empty log message ***
+#
+# Revision 1.7  2001/04/05 16:08:47  brabec
+# fixed lex and yacc stuff
+#
+# Revision 1.6  2000/08/30 12:55:04  htschirm
+# windows file names port
+#
+# Revision 1.5  2000/07/20 16:15:57  htschirm
+# towards tmk release 0.9
+#
+# Revision 1.4  2000/04/20 11:38:01  htschirm
+# lots of new names
+#
+# Revision 1.3  1999/12/05 21:55:17  htschirm
+# reasonable dependency handling; fixed EXCLUDE; PROJ_LOCATIONS support
+#
+# Revision 1.2  1999/09/24 07:42:08  htschirm
+# Name change.
+#
+# Revision 1.1  1999/06/09 12:03:15  ag4-adm
+# Initial version for dear Hendrik
+#
+# =============================================================================
+
+# which files should be treated?
+variable FLAGS 
+ifdef LEX {} {
+    if $__IsCygwinSystem {
+	foreach i { /bin /usr/bin /usr/local/bin } {
+	    if [file executable $i/flex] {
+		variable LEX [exec cygpath -w $i/flex]
+		break
+	    }
+	}
+    } else {
+	if { $OSCLASS eq $::STR_UNIX } {
+	    variable LEX [exec which flex]
+	} else {
+	    exit_msg "please specify flex/lex in the tmk config (::lex::LEX) !"
+	}
+    } 
+    lappend FLAGS -l
+}
+set_ifndef SUFFIX .l
+set_ifndef SUFFIX_CXX .cc
+set_ifndef SUFFIX_C   .c
+set_ifndef LANGUAGE cxx
+set FLAGS ""
+
+# how to get a C++ file from a yacc file
+target *$SUFFIX_CXX {$ROOT.l} {
+    read_file $SRC _tmplex
+    if [regexp "TMK_LEX_PREFIX=\"\(\[^\"]+\)\"" $_tmplex _a b] {
+	set lex::tmp_suffix "-P$b"
+    } else {
+	set lex::tmp_suffix ""
+    }
+    unset _tmplex
+
+    set cmd [list cmd [file nativename $::lex::LEX]]
+    eval [list {*}$cmd {*}$lex::tmp_suffix {*}$::lex::FLAGS {*}[list -o$TARGET $SRC]]
+}
+# how to get a C file from a yacc file
+target *$SUFFIX_C {$ROOT.l} {
+    read_file $SRC _tmplex
+    if [regexp "TMK_LEX_PREFIX=\"\(\[^\"]+\)\"" $_tmplex _a b] {
+	set lex::tmp_suffix "-P$b"
+    } else {
+	set lex::tmp_suffix ""
+    }
+    unset _tmplex
+
+    set cmd [list cmd [file nativename $::lex::LEX]]
+    eval [list {*}$cmd {*}$lex::tmp_suffix {*}$::lex::FLAGS {*}[list -o$TARGET $SRC]]
+}
+
+eval_later {
+
+    # must also load a language module, e.g. cxx or c
+    if {![lcontains $::MODULES $LANGUAGE]} {
+	exit_msg "lex: language module $LANGUAGE not loaded"
+    }
+
+    # add this $ARCH directory to the include search path 
+    if $USE_ARCH {
+	set incdir [list -I[file nativename $ARCH]]
+
+	if [info exists ::c::FLAGS] {
+	    set ::c::FLAGS   [list {*}$incdir {*}$::c::FLAGS]
+	}
+	if [info exists ::cxx::FLAGS] {
+	    set ::cxx::FLAGS [list {*}$incdir {*}$::cxx::FLAGS]
+	}
+    }
+
+    # generate object files from the generated source files
+    foreach f [glob -nocomplain *$SUFFIX] {
+	set varname SUFFIX_[string toupper $LANGUAGE]
+	if {[info vars $varname] eq {}} {
+	    exit_msg "module lex: suffix for language $LANGUAGE not defined"
+	}
+	eval set t [file rootname $f]\$$varname
+	${LANGUAGE}::make_obj $t
+    }
+}
+

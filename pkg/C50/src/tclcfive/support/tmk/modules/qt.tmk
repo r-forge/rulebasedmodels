@@ -1,0 +1,146 @@
+# -*-Mode: tcl -*-
+
+# ===========================================================================
+# qt.tmk: tmk module for supporting qt precompilation with "moc"
+# (C)opyright 1999 by Hartmut Schirmacher (hartmut@acm.org)
+# ===========================================================================
+# $Id: qt.tmk,v 1.29 2001/05/28 15:57:36 ag4-adm Exp $
+# ===========================================================================
+# $Log: qt.tmk,v $
+# Revision 1.29  2001/05/28 15:57:36  ag4-adm
+# added AUTO_UIC
+#
+# Revision 1.28  2001/04/24 10:24:45  brabec
+# cygwin/vc port
+#
+# Revision 1.25  2001/02/12 18:42:51  brabec
+# added support for QT designer (.ui files)
+#
+# Revision 1.24  2000/08/30 12:55:04  htschirm
+# windows file names port
+#
+# Revision 1.23  2000/08/07 09:11:01  htschirm
+# fixed automatic -I when INCPATH is not set
+#
+# Revision 1.22  2000/08/04 12:11:15  ag4-adm
+# converting AG4 proj
+#
+# Revision 1.21  2000/08/02 14:00:05  web-tmk
+# *** empty log message ***
+#
+# Revision 1.20  2000/08/02 13:52:02  web-tmk
+# fixed MOC path
+#
+# Revision 1.19  2000/08/01 12:20:54  htschirm
+# towards 0.9beta
+#
+# Revision 1.18  2000/07/20 16:15:57  htschirm
+# towards tmk release 0.9
+#
+# Revision 1.17  2000/05/11 08:27:26  ag4-adm
+# *** empty log message ***
+#
+# Revision 1.16  2000/04/22 17:53:03  ag4-adm
+# tried eval_later, but that does not work
+#
+# Revision 1.15  2000/04/22 16:23:36  htschirm
+# new names for user-visible function
+# ===========================================================================
+
+module {cxx grep}
+
+# don't do uic compilation by default
+set_ifndef ::qt::AUTO_UIC 0
+
+# options for the precompiler
+set_ifndef MOCFLAGS   "-p [pwd]"
+
+# which files to search for the "QT_OBJECT" keyword
+set_ifndef HDR "*.h *.hh *.H *.hpp *.hxx *.h++"
+
+# where is what?
+eval_later { 
+    ifdef ::qt::DIR {
+	# set MOC and lib/include path dependent on qt::DIR
+	set_ifndef ::qt::MOC ${::qt::DIR}/bin/moc
+	ifdef ::qt::INCPATH {} {
+	    lappend ::cxx::FLAGS -I[file nativename $::qt::DIR/include]
+	}
+	ifdef ::qt::LIBPATH {} {
+	    lappend ::link::LIBPATH $::qt::DIR/lib
+	}
+    } {
+	catch {set_ifndef ::qt::MOC [exec which moc]}
+    }
+}
+
+# generate target for creating a C++ file (.moc.C) from qt header file
+# returns target name
+proc make_moc_C {header {target {}}} {
+
+    set troot [file rootname $header]
+    if {$target == {}} {
+	set target $troot.moc.cc
+    }
+    target $target $header {
+	set cmd [list [file nativename $::qt::MOC]]
+	lappend cmd {*}$::qt::MOCFLAGS -o $TARGET $SRC
+	eval cmd $cmd
+    }
+    return $target
+
+}
+
+# ==========================================================================
+# auto-detect files to be moc'd
+# ==========================================================================
+
+eval_later {
+
+    # only ``moc'' files that contain the Q_OBJECT keyword
+    set_ifndef PATTERNS [grep --files "Q_OBJECT" \
+	    [eval glob -nocomplain $HDR]]
+   
+    # loop over all possible extensions
+    foreach pat $PATTERNS {
+	
+	# get all matching source files and generate targets
+	foreach file [glob -nocomplain $pat] {
+	    ::cxx::make_obj [::qt::make_moc_C $file]
+	}
+    }
+}
+
+# ==========================================================================
+# auto-detect files to be uic'd (qt designer)
+# - stefan
+# 
+# Well, yet another quick hack (I hope everything's right :-)
+# We first check for all files *.ui and then generate 
+# targets for the header file and the implementation
+# implementation is passed to cxx, header file to moc
+# we also append -I$ARCH so that the user's source files can
+# simply include the generated headers.
+# ==========================================================================
+
+eval_later {
+    if $::qt::AUTO_UIC {
+	# set UIC dependent on qt::DIR
+	set_ifndef ::qt::UIC ${::qt::DIR}/bin/uic
+	if $USE_ARCH {
+	    lappend cxx::FLAGS -I$ARCH
+	}
+	# loop over all .ui 
+	foreach uicfile [glob -nocomplain "*.ui"] {
+	    target [file rootname $uicfile].h $uicfile {
+		cmd ${::qt::UIC} -o $TARGET $SRC
+	    }
+	    target [file rootname $uicfile].C $uicfile {
+		cmd ${::qt::UIC} -o $TARGET -impl [file rootname $SRC].h $SRC
+	    }
+	    depend [file rootname $uicfile].C [file rootname $uicfile].h
+	    cxx::make_obj "[file rootname $uicfile].C"
+	    ::cxx::make_obj [::qt::make_moc_C "[file rootname $uicfile].h"]
+	}
+    }
+}

@@ -1,0 +1,229 @@
+# -*-Mode: tcl -*-
+# ===========================================================================
+# $Id: dist.tmk,v 1.21 2001/01/14 15:47:36 htschirm Exp $ 
+# tmake module for building executable distributions of code parts
+# ===========================================================================
+# $Log: dist.tmk,v $
+# Revision 1.21  2001/01/14 15:47:36  htschirm
+# changes during Hartmut's stay at Phil's lab
+#
+# Revision 1.20  2000/11/28 09:30:35  htschirm
+# fixed path handling
+#
+# Revision 1.19  2000/10/25 13:11:35  htschirm
+# *** empty log message ***
+#
+# Revision 1.18  2000/10/05 11:58:50  brabec
+# fixed bug (by mario)
+#
+# Revision 1.17  2000/09/25 14:52:36  htschirm
+# fixed dist_path location ; added test-libs-only
+#
+# Revision 1.16  2000/09/04 10:58:57  htschirm
+# fixed shell variable in braces (before, the ':' was a problem...)
+#
+# Revision 1.15  2000/09/01 15:19:21  htschirm
+# adapted to new namespaces and tmk core/default functions; however there
+# currently a tmk core bug that causes re-copying all files all the time
+#
+# Revision 1.14  2000/08/04 12:11:14  ag4-adm
+# converting AG4 proj
+#
+# Revision 1.13  2000/07/20 16:15:57  htschirm
+# towards tmk release 0.9
+#
+# Revision 1.11  2000/04/20 11:38:00  htschirm
+# lots of new names
+#
+# Revision 1.10  2000/04/10 14:52:16  htschirm
+# replaced empty dependency lists by ALWAYS_BUILD
+#
+# Revision 1.9  2000/02/10 16:10:07  ag4-adm
+# changed cache-handling
+# ===========================================================================
+
+# list of primary targets (executables!) to be included in the distribution
+set_ifndef TARGETS ""
+
+# list of [string match] patterns from where libs should ***not*** be copied
+set_ifndef EXCLUDE_DIRS {/usr/lib*}
+
+# name of the wrapper script to be created
+set_ifndef WRAPPER dist_wrapper
+
+# how to rename the executable ($ITEM) so that the wrapper can take its place 
+set_ifndef RENAME_EXE {${ITEM}.dist}
+
+# relative library dir
+set_ifndef LIBDIR lib
+
+# relative binary dir
+set_ifndef BINDIR bin
+
+# which environment variable(s) contain the runtime library path
+set_ifndef RPATH_VARS {
+    LD_LIBRARY64_PATH 
+    LD_LIBRARYN32_PATH 
+    LD_LIBRARY_PATH
+}
+
+# list of commands to be put in the distribution's wrapper script
+set_ifndef SCRIPT_TYPE "sh"
+set_ifndef SCRIPT {}
+
+# linker driver tool for determining the libs
+if [catch {set_ifndef LDD "[exec which ldd] -v"} msg] {
+    exit_msg "could not find the 'ldd' tool for module dist\n  $msg"
+}
+# chmod tool for changing file permissions
+if [catch {set_ifndef CHMOD [exec which chmod]} msg] {
+    exit_msg "could not find the 'chmod' tool for module dist\n  $msg"
+}
+
+# Windows? Hmmm.
+if {$OSCLASS == $::STR_WINDOWS} {
+    log_msg "warning: the 'dist' module does not yet support Windows."
+}
+
+# determine libs and copy them into the LIBDIR directory
+proc copy_libs { TARGET } {
+
+    # determine all dependend files (libs) recursively
+    set files [::tmk::lunify [get_relevant_libs $TARGET]]
+    
+    if [llength $files] {
+	set output [join $files "\n  "]
+	dbg_msg "libs for target [file tail $TARGET]:\n  $output"
+	if $::USE_ARCH {
+	    ::copy_files $::ARCH/$dist::LIBDIR $files
+	} else {
+	    ::copy_files $dist::LIBDIR $files
+	}
+    }
+}
+
+# create wrapper script for calling the executables
+proc create_wrapper {TARGET} {
+
+    puts "creating $TARGET"
+    set f [open $TARGET "w"]
+    # script for determining the absolute location of the distribution, and
+    #   the name of the wrapped program to be called
+    set txt [exec cat "$::tmk::dir/modules/dist_whereami.sh"]
+    puts $f $txt
+    puts $f "# ----------------------------------------------------------"
+    puts $f "# wrapper script for executable code distribution, generated"
+    puts $f "#   by the tmk 'dist' module"
+    puts $f "# ----------------------------------------------------------"
+    puts $f ""
+    puts $f "if \[ \$PROGNAME = \"$::dist::WRAPPER\" \] ; then \\"
+    puts $f "   echo \"this wrapper must be called via a symbolic link\" ; \\"
+    puts $f "   exit 1 ; \\"
+    puts $f "fi"
+    puts $f "DIST_PATH=\$LOCATION/.."
+    puts $f "DIST_LIBPATH=\$DIST_PATH/$::dist::LIBDIR"
+    puts $f "DIST_BINPATH=\$DIST_PATH/$::dist::BINDIR"
+    foreach line $::dist::SCRIPT {puts $f $line}
+    puts $f ""
+    puts $f "# just test the used libraries?"
+    puts $f "case \$1 in"
+    puts $f "  --test-dist) \\"
+    puts $f "    echo \"*** dist location is \$DIST_PATH\" ; \\"
+    puts $f "    echo \"*** ld lib path is \$LD_LIBRARY_PATH\" ; \\"
+    puts $f "    $::dist::LDD \$LOCATION/\$PROGNAME.dist ; exit ;;"
+    puts $f "esac"
+    puts $f "# call the wrapped executable -----"
+    puts $f "\$LOCATION/[lmap \$PROGNAME $::dist::RENAME_EXE] $*"
+    close $f
+    catch "exec $::dist::CHMOD a+x $TARGET" 
+
+}
+
+# get all shared libs and exclude those from the EXCLUDE_DIRS
+proc get_relevant_libs {filename} {
+
+    set files [get_shared_libs $filename]
+    ::__exclude files $::dist::EXCLUDE_DIRS "excluded directories for dist"
+    return $files
+
+}
+
+
+# procedure to parse the ldd output in order to obtain a list of libraries
+proc get_shared_libs { filename } {
+
+    # execute ldd
+    set res [catch "exec $::dist::LDD $filename 2>@stdout" msg]
+    if $res {
+	exit_msg "dist::LDD call failed: $msg"
+    }
+    
+    # extract full library names
+    set txt [split $msg "\n"]
+    proc getPath { x } { 
+	set p [string first "=>" $x]
+	return [lindex [string range $x [expr $p + 2] end] 0]
+    }
+    set txt [lfilter $txt {[string first "=>" $ITEM] > 0}]
+    set txt [lmap $txt {[getPath $ITEM]}]
+}
+
+
+# --------------
+#   begin main 
+# --------------
+
+eval_later {
+
+
+    # create general wrapper shell script containing path name
+    set WRAPPER_FILE $::ARCH/$::dist::BINDIR/$::dist::WRAPPER
+    target $WRAPPER_FILE {$::__Makefilename} {dist::create_wrapper $TARGET}
+    build $WRAPPER_FILE 
+
+    # set the library path environment variable(s)
+    foreach pathvar $::dist::RPATH_VARS {
+	lappend dist::SCRIPT "export ${pathvar}=\$\{DIST_LIBPATH\}:\${${pathvar}:=}"
+    }
+
+    # copy/rename/wrap executables, and copy used libs
+    foreach tt $::dist::TARGETS { 
+
+	if {[file pathtype $tt] == "absolute"} {
+	    set t $tt
+	} else {
+	    set t [::find_proj_file $tt]
+	}
+
+	if {![file exists $t]} {
+	    exit_msg "could not find dist target \[$tt\]"
+	}
+
+	# copy/rename executable and copy all relevant shared libs
+	set renamed $ARCH/$dist::BINDIR/[lmap [file tail $t] $dist::RENAME_EXE]
+	if [file exists $t] {
+	    dist::copy_libs $t
+	} else {
+	    log_msg "warning: dist target $t does not exist."
+	}
+	target $renamed $t {
+	    puts "copying $SRC -> $TARGET"
+	    file copy -force -- $SRC $TARGET
+	}
+	build $renamed
+
+	# create symbolic link so that the wrapper is called instead of 
+	#   the original executable
+	set dir $ARCH/$dist::BINDIR
+	set substitute $dir/[file tail $t]
+	target $substitute $dir/$dist::WRAPPER {
+	    set dir [file dirname $TARGET]
+	    set olddir [pwd]
+	    cd $dir ; cmd ln -sf [file tail $SRC] [file tail $TARGET]
+	    cd $olddir
+	}
+	build $substitute
+
+    }
+}
+

@@ -1,0 +1,35 @@
+
+mpi-sb.mpg.de_confdir 
+
+configration files for AG4
+				Yamauchi, Hitoshi
+				2004-7-19(Mon)
+
+This directory contains tmk config file for each environment.
+
+---
+
+The idea of this directory is the same to move from old BSD style
+rc.local to SysV init.d. The file mpi-sb.mpg.de contains {Linux, IRIX,
+SunOS, windows} related codes in one file. But now if someone edit the
+windows related part, there should be no effect to Linux,IRIX,SunOS
+part.
+
+---
+
+When new environment is added, 
+
+1. You can edit 
+
+	tmk/config/site/mpi-sb.mpg.de 
+	tmk/config/site/mpi-sb.mpg.de_confdir/Linux.config (for Linux)
+
+   These files are dispatcher to which file will be finally read.
+
+2. Add a new environment file. (e.g., linux.debian2.2.config)
+
+The file names are lowercase, because the same name to $ARCH might be
+some problems in some environment. (e.g., set CVS global ignore as
+IRIX*, Debian*).
+
+
