@@ -1,0 +1,300 @@
+# -*-Mode: tcl -*-
+# =========================================================================
+# Copyright (C) 1999,2000  Hartmut Schirmacher, Stefan Brabec
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (LICENSE.TXT); if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# =============================================================================
+# cxx.tmk: tmk module for supporting C++ code compilation
+# $Id: cxx.tmk,v 1.32 2008/04/21 12:04:09 cfuchs_sf Exp $
+# =============================================================================
+# $Log: cxx.tmk,v $
+# Revision 1.32  2008/04/21 12:04:09  cfuchs_sf
+# added cuda stuff
+#
+# Revision 1.31  2002/12/12 13:06:38  brabec
+# fixed thread model
+#
+# Revision 1.30  2002/12/10 13:34:04  brabec
+# *** empty log message ***
+#
+# Revision 1.29  2002/12/09 13:38:59  brabec
+# added basic thread support
+#
+# Revision 1.28  2002/12/09 10:45:41  brabec
+# add thread support
+#
+# Revision 1.27  2001/11/22 10:41:34  brabec
+# various fixed for Win2K
+#
+# Revision 1.26  2001/05/09 11:51:53  brabec
+# *** empty log message ***
+#
+# Revision 1.25  2001/04/25 14:07:38  brabec
+# cygwin port
+#
+# Revision 1.24  2001/04/24 10:24:45  brabec
+# cygwin/vc port
+#
+# Revision 1.23  2000/10/12 07:23:36  htschirm
+# added compiler init function
+#
+# Revision 1.22  2000/10/10 08:17:23  htschirm
+# fixed ARCH_ string toupper
+#
+# Revision 1.21  2000/08/10 15:05:44  htschirm
+# Windows/cygwin port
+#
+# Revision 1.20  2000/08/10 08:39:49  htschirm
+# Windows file name port
+#
+# Revision 1.18  2000/08/01 12:20:54  htschirm
+# towards 0.9beta
+#
+# Revision 1.16  2000/07/20 17:22:08  brabec
+# fixed auto-detect for main
+#
+# Revision 1.12  2000/05/16 14:33:48  brabec
+# fixed bug for makeshlib (cxx missing in option list)
+# =============================================================================
+
+# standard codelevel-independent compiler flags 
+set flags [list -DARCH_[string toupper $OS] -DCOMP_[string toupper $COMPILER]]
+regsub -all {\.} $flags {} flags
+eval lappend FLAGS {*}$flags
+
+
+# auto detection of object files and executables
+set_ifndef DETECT_OBJ 1
+set_ifndef DETECT_EXE 1
+
+# should the auto-detected files be added to the local lib?
+set_ifndef ADD_TO_LIB 1
+
+# default meta compiler options for compiling C++ object files
+set_ifndef OPTIONS {}
+
+set_ifndef ::THREADED_ALL_OBJ {}
+
+# 'makedepend' program for compiler-independent dependency checking
+catch {set_ifndef MAKEDEPEND [exec which makedepend]}
+
+# file suffixes that mark C++ code files
+if {$OSCLASS eq $STR_WINDOWS} {
+    set_ifndef PATTERNS {*.C *.c++ *.cpp *.cxx *.cc}
+} else {
+    set_ifndef PATTERNS {*.C *.c++ *.cpp *.cxx *.cc *.cu}
+}
+
+# we need to load the actual implementation as specified in cxx::COMPILER
+#   the default is the first compiler mentioned in COMPILERS
+set_ifndef COMPILER [lindex $COMPILERS 0]
+if {[string trim $COMPILER] eq {}} {
+    exit_msg "error: variable cxx::COMPILER / cxx::COMPILERS empty."
+}
+
+# default value for compiler-specific FLAGS / LDFLAGS 
+dbg_msg "cxx compilers: \[$COMPILERS\]"
+foreach comp $COMPILERS {
+    foreach name [list ::cxx::${comp}::FLAGS ::cxx::${comp}::LDFLAGS] {
+	set cl [string toupper $CODELEVEL]
+	ifdef $name {} {
+	    ifdef ${name}_$cl {
+		set $name [set ${name}_${cl}]
+	    } {
+		log_msg "warning: variable ${name}_$cl not defined"
+		set_ifndef $name {}
+	    }
+	}
+    }
+}
+
+# by default, the language module also implements the linker
+set_ifndef ::link::LINKER ::cxx::$COMPILER
+
+# this needs the link module 
+module link
+
+# return the actual chosen compiler 
+proc get_compiler {} {
+    return ${::cxx::COMPILER}
+}
+
+# auto-detect which source file will become executables
+proc is_executable {src} {
+    read_file $src txt
+    return [regexp "\[ \t\n\]+main\[ \t\n\]*\\\(" $txt]
+}
+
+# compile source file into an object file and handle dependencies
+#   returns target name, e.g. to be used in build [make_obj ...]
+proc make_obj {src {obj {}} {flags_expr undef} {opt_expr undef} } {
+
+    # default values
+    if {$obj eq {}}             {set obj [filename_obj [file rootname $src]]}
+    if {$flags_expr eq "undef"} {set flags_expr {[::cxx::default_flags]}}
+    if {$opt_expr eq "undef"}   {set opt_expr   {$::cxx::OPTIONS}}
+
+    # target: make obj from src
+    set depname {[filename_dep $ROOT]}
+    set rule {
+	set dep $depname
+	set empty {}
+	write_file \$dep empty
+	global ::__UseThreads 
+	if \$::__UseThreads {
+	    set threaded yes
+	} else {
+	    set threaded no
+	}
+	
+
+	set mk_dep [expr [set ::cxx::[::cxx::get_compiler]::EXPLICIT_MAKEDEPEND]]
+	set opt      $opt_expr
+	if {\$threaded eq "yes" && \$mk_dep == 0} {
+	    lappend opt async
+	}
+	::cxx::[::cxx::get_compiler]::compile_obj \
+	    \$TARGET \$SRC \$dep $flags_expr \$opt
+
+	if {\$mk_dep} {
+	    write_file \$dep empty
+	    ::cxx::makedepend \
+		    [file nativename \$TARGET] \
+		    [file nativename \$SRC] \
+		    [file nativename \$dep] $flags_expr
+	}
+    }
+
+    target $obj $src [subst -nocommands $rule]
+
+
+    # secondary dependencies: evaluate only if target is examined
+    depend $obj "\[read_dependencies \$TARGET $depname\]"
+
+    # add target for 'tmk depend'
+    set rule {
+	set depname [filename_dep [file rootname \$ROOT]]
+	set empty {}
+	write_file \$depname empty
+	::cxx::[::cxx::get_compiler]::update_dependencies \
+		[file nativename \$ROOT] \
+		[file nativename \$SRC] \
+		[file nativename \$depname] $flags_expr $opt_expr
+    }
+    target $obj.depend $src [subst -nocommands $rule]
+    depend depend $obj.depend
+
+    # is it a source for an executable?
+    set is_exec 0
+    if {$::cxx::DETECT_EXE} {
+	if [::cxx::is_executable $src] {
+	    set is_exec 1
+	}
+    }
+    
+    if $is_exec {
+	lappend ::link::PROGRAMS [file rootname $obj]
+	dbg_msg "auto-detected program [file rootname $obj]"
+    } else {
+	if $::cxx::ADD_TO_LIB {
+	    lappend ::link::LIB_OBJ $obj
+	} else {
+	    build $obj
+	}
+    }
+    global  THREADED_ALL_OBJ
+    lappend THREADED_ALL_OBJ $obj
+    return $obj
+}
+
+# return complete list of C++ compiler flags (compiler-specific and general)
+proc default_flags {} {
+    upvar #0 ::cxx::[::cxx::get_compiler]::FLAGS compflags
+    return [list {*}$::cxx::FLAGS {*}$compflags]
+}
+
+# generate dependencies manually if the compiler cannot do that
+#  maybe this should be implemented as part of the meta compiler?
+proc makedepend {obj src dep flags_expr} {
+    # namespace for the (lateron) chosen compiler
+
+    # check special constraints that 'makedepend' has
+    set suffix [file extension $obj]
+    set dir1   [file dirname $obj]
+    set dir2   [file dirname $src]
+    # check 1: object/src file names
+    if {[file tail $obj] ne [file rootname [file tail $src]]$suffix} {
+	log_msg "sorry, makedepend needs similar object and source file names"
+	exit_msg "  (here: obj = $obj, src = $src)"
+    }
+    # check 2: obj dir must be 'prefix' to src dir
+    set prefix {}
+    if {$dir1 ne $dir2} {
+	if {$dir2 ne "."} {
+	    set p [string first $dir2 $dir1]
+	    if {$p == -1} {
+		log_msg "sorry, for makedepend the object file directory must"
+		log_msg "  be a prefix to the source file directory"
+		exit_msg "  (here: obj = $obj, src = $src)"
+	    } else {
+		set prefix -p[file nativename [string range $dir1 0 \
+			[expr $p - 1]]/]
+	    }
+	} else {
+	    set prefix -p[file nativename $dir1/]
+	}
+    }
+
+    set _mkdep [set ::cxx::${::cxx::COMPILER}::MAKEDEPEND]
+
+    set cmd [list cmd $_mkdep -- $flags_expr --]
+    lappend cmd -o$suffix $prefix -f[file nativename $dep] 
+    lappend cmd [file nativename $src]
+    uplevel \#0 $cmd
+}
+
+eval_later {
+
+    # call compiler's init function (if existant and not already called)
+    if {[info commands ::cxx::${cxx::COMPILER}::init] ne {}} {
+	if {[info vars ::cxx::${cxx::COMPILER}::IS_INITIALIZED] eq {}} {
+	    ::cxx::${cxx::COMPILER}::init
+	    variable ::cxx::${cxx::COMPILER}::IS_INITIALIZED 1
+	}
+    }
+
+    # auto-detect C++ source files by file patterns?
+    if $DETECT_OBJ {
+	set obj_names {}
+	set src_names {}
+	foreach pat $PATTERNS {
+	    foreach src [glob -nocomplain $pat] {
+		# re-check for case sensitive handling
+		# Win2k is case-preserving but not case-sensitive
+		if {[file extension $src] eq [file extension $pat]} {
+		    make_obj $src
+		    lappend obj_names [filename_obj [file rootname $src]]
+		    lappend src_names $src
+		}
+	    }
+	}
+    }
+
+    # add all possible project root directories as standard include paths
+    foreach dir [list $::PROJROOT {*}$::PROJ_LOCATIONS] {
+	lappend FLAGS -I[file nativename $dir]
+    }
+    
+}
