@@ -4,6 +4,8 @@
 
 export CC CFLAGS CPPFLAGS LDFLAGS LIBS TCLTK_CPPFLAGS TCLTK_LIBS
 
+TOP := $(CURDIR)
+
 all: $(SHLIB)
 
 $(SHLIB): stdioctcl cfive tclcfive
@@ -46,8 +48,8 @@ stdioctcl:
 
 cfive: stdioctcl
 	cd cfive ;\
-	CPPFLAGS="-I../../stdioctcl/include $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
-	LDFLAGS="-L../../stdioctcl/stdioctcl/build $$LDFLAGS" ;\
+	CPPFLAGS="-I$(TOP)/stdioctcl/include $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
+	LDFLAGS="-L$(TOP)/stdioctcl/stdioctcl/build $$LDFLAGS" ;\
 	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
 	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
@@ -57,6 +59,7 @@ cfive: stdioctcl
 tclcfive: cfive
 	cd tclcfive ;\
 	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
+	CPPFLAGS="-I$(TOP)/cfive/cfive $$CPPFLAGS" ;\
 	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk;\
