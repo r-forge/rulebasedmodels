@@ -57,7 +57,7 @@
 #include "defns.h"
 #include "extern.h"
 
-
+extern void FreeGlobals();
 
 /*************************************************************************/
 /*									 */

@@ -57,7 +57,8 @@
 #include "defns.h"
 #include "extern.h"
 
-
+static void		ShowRules(int);
+extern void		FreeGlobals();
 
 /*************************************************************************/
 /*									 */
@@ -68,7 +69,7 @@
 #ifdef MAIN_PROGRAM
 #define MAIN main
 #else
-#define MAIN Ymain
+#define MAIN Zmain
 #endif
 
 int MAIN(int Argc, char *Argv[])
@@ -81,7 +82,6 @@ int MAIN(int Argc, char *Argv[])
     ClassNo		Predict, c;
     Boolean		XRefForm=false;
     extern String	OptArg, Option;
-    void		ShowRules(int);
 
     /*  Process options  */
 
@@ -253,7 +253,7 @@ int MAIN(int Argc, char *Argv[])
 /*************************************************************************/
 
 
-void ShowRules(int Spaces)
+static void ShowRules(int Spaces)
 /*   ---------  */
 {
     int	p, pLast, a, b, First;
