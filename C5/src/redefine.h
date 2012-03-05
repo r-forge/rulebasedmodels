@@ -1,5 +1,3 @@
-#ifndef MAIN_PROGRAM
-
 #ifndef _REDEFINE_H_
 #define _REDEFINE_H_
 
@@ -7,9 +5,6 @@
 #include <setjmp.h>
 
 #include "strbuf.h"
-
-#define JMP_OFFSET 100
-extern jmp_buf rbm_buf;
 
 extern int rbm_init();
 extern int rbm_register(STRBUF *sb, const char *filename, int force);
@@ -32,5 +27,4 @@ extern int rbm_remove(const char *fname);
 extern void rbm_removeall();
 extern void rbm_exit(int status);
 
-#endif
 #endif
