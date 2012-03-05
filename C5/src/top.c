@@ -38,8 +38,8 @@ static void c50(char **namesv,
 
     // Set globals based on the arguments.  This is analogous
     // to parsing the command line in the c50 program.
-    setglobals(*unbiased, *compositev, *neighbors, *committees,
-               *sample, *seed, *rules, *extrapolation);
+    setglobals(*subset, *rules, *bands, *trials, *winnow, *sample,
+               *seed, *noGlobalPruning, *CF, *minCases, *fuzzyThreshold);
 
     // Handles the strbufv data structure
     rbm_removeall();
@@ -58,8 +58,14 @@ static void c50(char **namesv,
 
     // Create a strbuf using *datav and register it as "undefined.data"
     STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
-    // XXX why is sb_datav copied? what that part of my debugging?
+    // XXX why is sb_datav copied? was that part of my debugging?
+    // XXX or is this the cause of the leak?
     rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
+
+    // Create a strbuf using *costv and register it as "undefined.cost"
+    STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
+    // XXX should sb_costv be copied?
+    rbm_register(sb_costv, "undefined.cost", 1);
 
     /*
      * We need to initialize rbm_buf before calling any code that
@@ -72,13 +78,21 @@ static void c50(char **namesv,
 
         Rprintf("c50main finished\n");
 
-        // Get the contents of the the model file
-        char *modelString = strbuf_getall(rbm_lookup("undefined.model"));
-        char *model = R_alloc(strlen(modelString) + 1, 1);
-        strcpy(model, modelString);
+        // Get the contents of the the tree file
+        char *treeString = strbuf_getall(rbm_lookup("undefined.tree"));
+        char *tree = R_alloc(strlen(treeString) + 1, 1);
+        strcpy(tree, treeString);
 
-        // I think the previous value of *modelv will be garbage collected
-        *modelv = model;
+        // I think the previous value of *treev will be garbage collected
+        *treev = tree;
+
+        // Get the contents of the the rules file
+        char *rulesString = strbuf_getall(rbm_lookup("undefined.rules"));
+        char *rules = R_alloc(strlen(rulesString) + 1, 1);
+        strcpy(rules, rulesString);
+
+        // I think the previous value of *rulesv will be garbage collected
+        *rulesv = rules;
     } else {
         Rprintf("c50 code called exit with value %d\n", val - JMP_OFFSET);
     }
@@ -165,7 +179,7 @@ static R_NativePrimitiveArgType c50_t[] = {
     LGLSXP,   // winnow
     REALSXP,  // sample
     INTSXP,   // seed
-    INTSXP,   // noGlobalPruing
+    INTSXP,   // noGlobalPruning
     REALSXP,  // CF
     INTSXP,   // minCases
     LGLSXP,   // fuzzyThreshold

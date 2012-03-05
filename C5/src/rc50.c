@@ -51,8 +51,8 @@
 			ArgOK = true
 
 
-int main(int Argc, char *Argv[])
-/*  ----  */
+int c50main(int Argc, char *Argv[])
+/*  -------  */
 {
     int			o;
     extern String	OptArg, Option;
