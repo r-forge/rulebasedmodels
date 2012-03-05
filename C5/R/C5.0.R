@@ -79,8 +79,8 @@ C5.0.default <- function(x, y,
           ## the model is returned in 2 files: .rules and .tree
           tree = character(1),             # pass back C5.0 tree as a string
           rules = character(1),            # pass back C5.0 rules as a string
-          output = character(1)            # get output that normally goes to screen
-          PACKAGE = "C5.0"
+          output = character(1),           # get output that normally goes to screen
+          PACKAGE = "C50"
           )
 
 
