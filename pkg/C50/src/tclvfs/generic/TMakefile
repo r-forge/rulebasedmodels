@@ -1,0 +1,10 @@
+module c
+module tcl
+
+set c::DETECT_EXE 0
+set ::link::MAKE_LIB 0
+set ::link::MAKE_SHLIB 0
+
+link::make_shlib $libvfs [list vfs.o]
+
+build $libvfs
