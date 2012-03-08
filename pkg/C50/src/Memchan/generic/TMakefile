@@ -1,0 +1,27 @@
+module c
+module tcl
+
+set c::DETECT_EXE 0
+set ::link::MAKE_LIB 0
+set ::link::MAKE_SHLIB 0
+lappend ::c::FLAGS -I[pwd]
+lappend ::c::FLAGS -DPACKAGE_VERSION="2.3"
+if {$__IsWindowsSystem} {
+	lappend ::c::FLAGS -DBUILD_Memchan
+	#lappend ::c::FLAGS -Dinline=__inline -DSTDC_HEADERS=1 -DHAVE_NO_LPFN_DECLS=1 -DHAVE_NO_FINDEX_ENUMS=1 -DTCL_THREADS=1 -DUSE_THREAD_ALLOC=1 -DTCL_CFGVAL_ENCODING="cp1252" -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -Dintptr_t=int -Duintptr_t=unsigned\ int -DTCL_CFG_OPTIMIZED=1 -DTCL_CFG_DEBUG=1
+}
+
+#needed?
+#lappend ::link::FLAGS -Wl,--export-all-symbols 
+
+variable memchan_sources [glob *.c]
+lappend memchan_sources [file join .. isaac randport.c]
+lremove memchan_sources bufStubLib.c
+lremove memchan_sources memchanStubLib.c
+variable memchan_stub_sources [list bufStubLib.c memchanStubLib.c]
+
+c::make_obj [file join .. isaac randport.c]
+
+link::make_shlib $libMemchan [lmap $memchan_sources {$IROOT.o}]
+
+build $libMemchan 

@@ -1,0 +1,14 @@
+#! /bin/env tclsh
+
+subdir [list generic]
+
+target pkgIndex.tcl {} {
+	puts "making pkgIndex.tcl"
+	set fh [open pkgIndex.tcl w]
+	set txt "package ifneeded $PACKAGE $VERSION \\\n"
+	append txt "    \[list load \[file join \$dir $libMemchan]]\n"
+	puts $fh $txt
+	close $fh
+}
+
+build pkgIndex.tcl
