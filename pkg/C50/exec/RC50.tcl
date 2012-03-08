@@ -1,6 +1,7 @@
 #! /bin/env tclsh
 
 package require cfive
+package require vfs
 
 proc Rcfive {resname args} {
 	upvar $resname myres
