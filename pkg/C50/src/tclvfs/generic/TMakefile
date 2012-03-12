@@ -1,5 +1,5 @@
 module c
-module tcl
+module libtcl
 
 set c::DETECT_EXE 0
 set ::link::MAKE_LIB 0

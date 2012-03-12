@@ -5,6 +5,7 @@ export CC CFLAGS CPPFLAGS LDFLAGS LIBS TCL TCLTK_CPPFLAGS TCLTK_LIBS
 Memchan_targets = ../inst/Memchan/pkgIndex.tcl
 tclvfs_targets = ../inst/tclvfs/pkgIndex.tcl
 tclcfive_targets = ../inst/tclcfive/pkgIndex.tcl
+critcl_targets = lib/tcl/critcl
 
 $(SHLIB): $(tclcfive_targets)
 
@@ -42,6 +43,8 @@ $(tclcfive_targets): libcfive.a $(tclvfs_targets)
 	CPPFLAGS="-I../../cfive/cfive $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
 	LDFLAGS="-L.. -L../.. $$LDFLAGS" ;\
 	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	export TCLLIBPATH ;\
+	TCLLIBPATH=`pwd`/../lib/tcl ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk
 	cp -fp tclcfive/tclcfive/build/libtclcfive$(DYLIB_EXT) ../inst/tclcfive
@@ -55,6 +58,8 @@ $(tclvfs_targets): $(Memchan_targets)
 	CPPFLAGS="$(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
 	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
 	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	export TCLLIBPATH ;\
+	TCLLIBPATH=`pwd`/../lib/tcl ;\
 	"$$TMK_TCLSH" ../stdioctcl/support/tmk/src/tmk -reconfig ;\
 	"$$TMK_TCLSH" ../stdioctcl/support/tmk/src/tmk
 	cp -f tclvfs/generic/build/libvfs1.3$(DYLIB_EXT) ../inst/tclvfs
@@ -66,7 +71,7 @@ $(tclvfs_targets): $(Memchan_targets)
 	rm -f ../inst/tclvfs/empty
 
 
-$(Memchan_targets):
+$(Memchan_targets): $(critcl_targets)
 	cd Memchan ;\
 	CPPFLAGS="-I. -I.. $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
 	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
@@ -77,14 +82,15 @@ $(Memchan_targets):
 	cp -f Memchan/generic/build/libMemchan2.3$(DYLIB_EXT) ../inst/Memchan
 	rm -f ../inst/Memchan/empty
 
-	#PATH=`dirname $$TMK_TCLSH`:$$PATH ;\
-	#./configure --prefix="`pwd`/../../inst/Memchan" USE_TCL_STUBS=0 \
-		--exec-prefix="`pwd`/../../inst/Memchan" ;\
-	make ;\
-	make install
+$(critcl_targets):
+	cd critcl ;\
+	CPPFLAGS="-I. -I.. $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
+	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
+	"$$TMK_TCLSH" build.tcl install ../lib/tcl 
 
 
-libcfive.a: libstdioctcl.a
+libcfive.a: libstdioctcl.a $(critcl_targets)
 	cd cfive ;\
 	CPPFLAGS="-I../stdioctcl/include -I../../stdioctcl/include -I../../../stdioctcl/include $(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
 	LDFLAGS="-L../../stdioctcl/stdioctcl/build $$LDFLAGS" ;\
@@ -95,10 +101,13 @@ libcfive.a: libstdioctcl.a
 	#cp -fp cfive/cfive/build/libcfive$(DYLIB_EXT) . 
 	cp -fp cfive/cfive/build/libcfive.a . 
 
-libstdioctcl.a:
+
+libstdioctcl.a: $(critcl_targets)
 	cd stdioctcl ;\
 	CPPFLAGS="$(TCLTK_CPPFLAGS) $$CPPFLAGS" ;\
 	LIBS="$(TCLTK_LIBS) $$LIBS" ;\
+	export TCLLIBPATH ;\
+	TCLLIBPATH=`pwd`/../lib/tcl ;\
 	TMK_TCLSH=`$(R_HOME)/bin/$(R_ARCH_BIN)/Rscript -e '$(FIND_R_TCLSH)'` ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk -reconfig ;\
 	"$$TMK_TCLSH" support/tmk/src/tmk
