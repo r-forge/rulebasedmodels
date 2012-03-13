@@ -5,5 +5,7 @@ config set ARCH build
 
 variable libvfs libvfs1.3[info sharedlibext]
 
+module c
+module libtcl
 module ac_env
 module am

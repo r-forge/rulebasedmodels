@@ -5,5 +5,10 @@ config set ARCH build
 
 variable libMemchan libMemchan2.3[info sharedlibext] 
 
+module c
+namespace eval ::libtcl {
+    variable stubs 0
+}
+module libtcl
 module ac_env
 module am

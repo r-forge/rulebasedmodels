@@ -107,13 +107,21 @@ Tcl_Interp* interp;
 			(Tcl_CmdDeleteProc*) NULL);
 
 #if GT81
+#ifdef TCL_USE_STUBS
     /* register extension and its interfaces as now available package
      */
     Tcl_PkgProvideEx (interp, PACKAGE_NAME, PACKAGE_VERSION, (ClientData) &bufStubs);
 
 #ifndef __WIN32__
     Buf_InitStubs (interp, PACKAGE_VERSION, 0);
+#else
+  /* register memory channels as available package */
+  Tcl_PkgProvide (interp, PACKAGE_NAME, PACKAGE_VERSION);
 #endif
+#else
+  /* register memory channels as available package */
+  Tcl_PkgProvide (interp, PACKAGE_NAME, PACKAGE_VERSION);
+#endif /* TCL_USE_STUBS */
 #else
   /* register memory channels as available package */
   Tcl_PkgProvide (interp, PACKAGE_NAME, PACKAGE_VERSION);
