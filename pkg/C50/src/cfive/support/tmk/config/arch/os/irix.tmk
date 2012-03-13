@@ -1,0 +1,32 @@
+# ==========================================================================
+# $Id: irix.tmk,v 1.2 2004/08/09 14:29:34 yamauchih Exp $
+# architecture-dependent config for 32-bit IRIX 
+# ==========================================================================
+# $Log: irix.tmk,v $
+# Revision 1.2  2004/08/09 14:29:34  yamauchih
+# integrate duplicated codes in config/arch/os/linux.tmk and config/arch/sysinfo/unix.tmk
+#
+# Revision 1.1  2000/08/01 14:45:49  htschirm
+# new config tree structure
+#
+# Revision 1.2  2000/07/20 16:15:52  htschirm
+# towards tmk release 0.9
+#
+# ==========================================================================
+
+assert { [string tolower $OS] eq "irix"] }
+dbg_msg "reading [info script]." 1
+
+# list of available C/C++ compilers, preferred default compiler
+config set ::cxx::COMPILERS {mipspro gcc}
+config set ::cxx::COMPILER  mipspro
+
+config set ::c::COMPILERS   {mipspro gcc}
+config set ::c::COMPILER    mipspro
+
+# standard GUI on IRIX is x11
+config set ::gui::DEPEND x11
+
+# currently no config helpers
+config set ::CONFIG_HELPERS {}
+

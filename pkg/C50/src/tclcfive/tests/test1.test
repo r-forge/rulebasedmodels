@@ -1,0 +1,1001 @@
+#! /bin/env tclsh 
+
+#this was for expect
+#if {[catch exp_version]} {
+#	return [exec expect -f [info script] >@stdout 2>@stderr]
+#}
+#
+##expect debug conflicts with tcltest debug, use exp_debug instead
+#rename debug {}
+##if needed, use exp_interpreter instead
+#rename interpreter {}
+
+set auto_path [linsert $auto_path[set auto_path {}] 0 \
+	[file join \
+		[file dirname [file dirname [file normalize [info script]]]] \
+		tclcfive \
+	]
+]
+package require cfive
+
+package require tcltest 2.0
+namespace import ::tcltest::*
+eval ::tcltest::configure $::argv
+
+##the tcl extension mirrors these tests, overriding this one procedure
+#proc cfive {args} {
+#	return [exstat {*}$args]
+#}
+
+set me [file dirname [file normalize [info script]/__dummy__]]
+set mydir [file dirname $me]
+set tmpdir [makeDirectory cfive://test1tmp]
+
+rename cfive cfive2
+
+proc cfive {args} {
+	set fh [open cfive_stdout w]
+	package require cfive
+	cfive_stdio stdout $fh
+	set status [catch {cfive2 {*}$args} res opts]
+	seek $fh 0
+	set data [read $fh]
+	cfive_stdio stdout stdout 
+
+	#cleave stdout open
+	close $fh
+
+	return [list $status $data]
+}
+
+proc exstat {args} {
+	set status 0
+	if {[catch {exec {*}$args} output options]} {
+		set errorcode [dict get $options -errorcode]
+		if {[lindex $errorcode 0] eq "CHILDSTATUS"} {
+			set status [lindex $options 2]
+		} else {
+			return -options $options output
+		}
+	}
+	return [list $status $output]
+}
+
+proc exordie {args} {
+	lassign [exstat {*}$args] status results
+	if $status {
+		puts stderr $results
+		exit $status
+	}
+}
+
+#not currently used
+proc expect_spawn {args} {
+	spawn {*}$args 
+	set output {}
+	expect full_buffer {
+		append output $expect_out(buffer)
+		exp_continue
+	} eof {
+		append output $expect_out(buffer)
+	}
+	return [list [wait] $output]
+}
+
+proc cleanout {output} {
+	regsub {(C5.0 \[Release 2.07 GPL Edition\])[^\n]*(\n)} \
+		$output {\1\2} output
+	regsub {(\nTime:[[:space:]]*)[^[:space:]]*([[:space:]]*secs)} \
+		$output {\1\2} output
+	set output [string trim $output]
+	set output [split $output \n]
+	return $output
+}
+
+proc linediff {data1 data2} {
+	set length [llength $data1]
+	set res [list]
+	for {set i 0} {$i < $length} {incr i} {
+		set data1line [lindex $data1 $i]
+		set data1line [string trim $data1line \r]
+		set data1line [string trim $data1line]
+		set data2line [lindex $data2 $i]
+		set data2line [string trim $data2line \r]
+		set data2line [string trim $data2line]
+
+		if {![string equal $data1line $data2line]} {
+			lappend res \
+				 "different:\n$data1line\n$data2line\n"
+		}
+	}
+	return $res
+}
+
+set stdout1 {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = f: hypothyroid (148/9)
+            on_antithyroid_medication = t: negative (4/1)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             5   21( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           139    12    (a): class hypothyroid
+             9  3003    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+              5%  on_antithyroid_medication
+
+
+Time:  secs
+}
+set stdout1 [string trim $stdout1]
+
+set stdout_ruleset {
+
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Rule-based classifiers
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Rules:
+
+Rule 1: (218/75, lift 13.7)
+        FTI <= 64
+        ->  class hypothyroid  [0.655]
+
+Rule 2: (2318/3, lift 1.0)
+        TSH <= 6
+        ->  class negative  [0.998]
+
+Rule 3: (2698/8, lift 1.0)
+        FTI > 64
+        ->  class negative  [0.997]
+
+Rule 4: (468/1, lift 1.0)
+        TSH_measured = n
+        ->  class negative  [0.996]
+
+Default class: negative
+
+
+Evaluation on training data (3163 cases):
+
+                Rules     
+          ----------------
+            No      Errors
+
+             4   23( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           140    11    (a): class hypothyroid
+            12  3000    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             73%  TSH
+             15%  TSH_measured
+
+
+Time:  secs
+}
+set stdout_ruleset [string trim $stdout_ruleset]
+
+set stdout_ruleset_u4 {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Rule-based classifiers
+        Rule utility ordering (1/4's)
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Rules:
+
+Rule 1: (2698/8, lift 1.0)
+        FTI > 64
+        ->  class negative  [0.997]
+
+Rule 2: (468/1, lift 1.0)
+        TSH_measured = n
+        ->  class negative  [0.996]
+
+Rule 3: (218/75, lift 13.7)
+        FTI <= 64
+        ->  class hypothyroid  [0.655]
+
+Rule 4: (2318/3, lift 1.0)
+        TSH <= 6
+        ->  class negative  [0.998]
+
+Default class: negative
+
+
+Evaluation on training data (3163 cases):
+
+                Rules     
+          ----------------
+            No      Errors
+
+             4   23( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           140    11    (a): class hypothyroid
+            12  3000    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             73%  TSH
+             15%  TSH_measured
+
+Rule utility summary:
+
+	     Rules	      Errors
+	     -----	      ------
+	     1	  151( 4.8%)
+	     1-2	  151( 4.8%)
+	     1-3	   71( 2.2%)
+
+
+Time:  secs
+}
+set stdout_ruleset_u4 [string trim $stdout_ruleset_u4]
+
+set stdout_boost {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Boosted classifiers
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+-----  Trial 0:  -----
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = f: hypothyroid (148/9)
+            on_antithyroid_medication = t: negative (4/1)
+
+-----  Trial 1:  -----
+
+Decision tree:
+
+FTI > 81: negative (1991.4/38.2)
+FTI <= 81:
+:...on_thyroxine = t: negative (184.4/9.8)
+    on_thyroxine = f:
+    :...TT4_measured = n: negative (64)
+        TT4_measured = y:
+        :...T4U <= 0.89: negative (114.1/15)
+            T4U > 0.89: hypothyroid (809.1/309.7)
+
+-----  Trial 2:  -----
+
+Decision tree:
+
+FTI > 81:
+:...T4U <= 1.72: negative (1492.5)
+:   T4U > 1.72: hypothyroid (58/17.4)
+FTI <= 81:
+:...TT4_measured = n: negative (74.7)
+    TT4_measured = y:
+    :...TT4 <= 9.7: hypothyroid (59.7/3.2)
+        TT4 > 9.7: negative (1478.1/440.3)
+
+-----  Trial 3:  -----
+
+Decision tree:
+
+TSH <= 6.3:
+:...TT4 <= 45: hypothyroid (108/32.6)
+:   TT4 > 45: negative (1594.9/32.2)
+TSH > 6.3:
+:...TT4_measured = n: negative (53.4)
+    TT4_measured = y:
+    :...FTI > 81: negative (104.5)
+        FTI <= 81:
+        :...query_on_thyroxine = t: negative (5.3)
+            query_on_thyroxine = f:
+            :...T3 > 3.5: negative (37.7/2)
+                T3 <= 3.5:
+                :...sick = t: hypothyroid (8.6)
+                    sick = f:
+                    :...TSH > 176: negative (75/17.7)
+                        TSH <= 176:
+                        :...TT4 <= 21: hypothyroid (161.2/1.1)
+                            TT4 > 21:
+                            :...FTI <= 19: negative (55.9)
+                                FTI > 19: hypothyroid (958.6/271.7)
+
+-----  Trial 4:  -----
+
+Decision tree:
+
+FTI > 68: negative (1846.6/142.7)
+FTI <= 68:
+:...TT4_measured = n: negative (37.7)
+    TT4_measured = y:
+    :...query_on_thyroxine = t: negative (4.3)
+        query_on_thyroxine = f:
+        :...TSH <= 27: negative (763.4/286.6)
+            TSH > 27: hypothyroid (510.9/116.6)
+
+-----  Trial 5:  -----
+
+Decision tree:
+
+FTI > 68: negative (1540.6/180.1)
+FTI <= 68:
+:...TSH_measured = n: negative (190.5/21)
+    TSH_measured = y:
+    :...TSH <= 6.3: negative (198.3/59.6)
+        TSH > 6.3:
+        :...on_thyroxine = f: hypothyroid (1051.7/260)
+            on_thyroxine = t: negative (182/64.3)
+
+-----  Trial 6:  -----
+
+Decision tree:
+
+FTI > 64: negative (1662.4/260)
+FTI <= 64:
+:...TSH_measured = n: negative (160.7/34.2)
+    TSH_measured = y:
+    :...tumor = t: negative (2.6)
+        tumor = f:
+        :...goitre = t: hypothyroid (63.2)
+            goitre = f:
+            :...T3_measured = n: hypothyroid (93.1/1.8)
+                T3_measured = y:
+                :...T3 > 3.7: negative (41.7)
+                    T3 <= 3.7:
+                    :...TT4 <= 9.7: hypothyroid (101.1)
+                        TT4 > 9.7:
+                        :...TBG_measured = y: hypothyroid (8.9/0.1)
+                            TBG_measured = n:
+                            :...FTI <= 34: negative (415.8/169.8)
+                                FTI > 34: hypothyroid (612.6/154.9)
+
+-----  Trial 7:  -----
+
+Decision tree:
+
+TSH <= 6.3: negative (1098.5/87.2)
+TSH > 6.3:
+:...FTI > 64: negative (633.2/93.4)
+    FTI <= 64:
+    :...on_antithyroid_medication = t: negative (91.6/23)
+        on_antithyroid_medication = f:
+        :...query_hypothyroid = t: negative (275.3/115.2)
+            query_hypothyroid = f:
+            :...TSH_measured = y: hypothyroid (964.3/130)
+                TSH_measured = n: negative (95.2/27.4)
+
+-----  Trial 8:  -----
+
+Decision tree:
+
+FTI > 68: negative (737.4)
+FTI <= 68:
+:...TSH_measured = n: negative (103)
+    TSH_measured = y:
+    :...TSH <= 6.3: negative (399.4/112.8)
+        TSH > 6.3:
+        :...query_hyperthyroid = t: hypothyroid (63.1)
+            query_hyperthyroid = f:
+            :...goitre = t: hypothyroid (42.6)
+                goitre = f:
+                :...T4U > 1.25: hypothyroid (119.6/2.8)
+                    T4U <= 1.25:
+                    :...TSH <= 8.2: hypothyroid (235.5/13.3)
+                        TSH > 8.2:
+                        :...on_antithyroid_medication = t: negative (54.4)
+                            on_antithyroid_medication = f:
+                            :...TT4 > 62: negative (296.1/99.8)
+                                TT4 <= 62:
+                                :...thyroid_surgery = t: negative (77/20)
+                                    thyroid_surgery = f:
+                                    :...TSH <= 16.5: negative (107.5/40.3)
+                                        TSH > 16.5: hypothyroid (921.5/171.9)
+
+-----  Trial 9:  -----
+
+Decision tree:
+
+FTI > 64:
+:...TSH <= 92: negative (941.9/46.3)
+:   TSH > 92: hypothyroid (41.5/4.6)
+FTI <= 64:
+:...TSH_measured = n: negative (79)
+    TSH_measured = y:
+    :...TSH <= 6: negative (320.6/91.9)
+        TSH > 6:
+        :...T3 <= 3.7: hypothyroid (1704.5/262.9)
+            T3 > 3.7: negative (64.5/5.9)
+
+
+Evaluation on training data (3163 cases):
+
+Trial	    Decision Tree   
+-----	  ----------------  
+          Size      Errors  
+
+   0	     5   21( 0.7%)
+   1	     5  247( 7.8%)
+   2	     5  152( 4.8%)
+   3	    11  106( 3.4%)
+   4	     5   69( 2.2%)
+   5	     5   41( 1.3%)
+   6	    10  103( 3.3%)
+   7	     6   35( 1.1%)
+   8	    12   29( 0.9%)
+   9	     6   23( 0.7%)
+boost	         17( 0.5%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           141    10    (a): class hypothyroid
+             7  3005    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             91%  T4U
+             88%  TT4
+             85%  TSH
+             33%  TT4_measured
+             23%  on_thyroxine
+             16%  TSH_measured
+             14%  on_antithyroid_medication
+             13%  query_hypothyroid
+             11%  query_on_thyroxine
+              8%  T3
+              8%  sick
+              7%  goitre
+              6%  tumor
+              6%  T3_measured
+              5%  query_hyperthyroid
+              5%  TBG_measured
+              4%  thyroid_surgery
+
+
+Time:  secs
+}
+set stdout_boost [string trim $stdout_boost]
+
+set stdout_winnow {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Winnow attributes
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+19 attributes winnowed
+Estimated importance of remaining attributes:
+
+    582%  FTI
+    164%  TSH
+     45%  TSH_measured
+     <1%  on_thyroxine
+     <1%  query_hypothyroid
+     <1%  T3_measured
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = y: hypothyroid (152/12)
+        TSH_measured = n: negative (24.1/0.7)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             4   23( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           140    11    (a): class hypothyroid
+            12  3000    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+
+
+Time:  secs
+}
+set stdout_winnow [string trim $stdout_winnow]
+
+set stdout_threshold {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Probability thresholds
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Decision tree:
+
+FTI >= 65 (64.5): negative (2926.5/8)
+FTI <= 64 (64.5):
+:...TSH <= 5.5 (6): negative (60.3/2.3)
+    TSH >= 6.5 (6):
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = f: hypothyroid (148/9)
+            on_antithyroid_medication = t: negative (4/1)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             5   21( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           139    12    (a): class hypothyroid
+             9  3003    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+              5%  on_antithyroid_medication
+
+
+Time:  secs
+
+}
+set stdout_threshold [string trim $stdout_threshold]
+
+set stdout_DisableDoublePruning {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Do not use global tree pruning
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = t: negative (4/1)
+            on_antithyroid_medication = f:
+            :...on_thyroxine = f: hypothyroid (131/5)
+                on_thyroxine = t:
+                :...TSH <= 23: negative (3)
+                    TSH > 23: hypothyroid (14/1)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             7   18( 0.6%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           139    12    (a): class hypothyroid
+             6  3006    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+              5%  on_antithyroid_medication
+              5%  on_thyroxine
+
+
+Time:  secs
+}
+set stdout_DisableDoublePruning [string trim $stdout_DisableDoublePruning]
+
+set stdout_Pruning15 {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Pruning confidence level 15%
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = f: hypothyroid (148/9)
+            on_antithyroid_medication = t: negative (4/1)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             5   21( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           139    12    (a): class hypothyroid
+             9  3003    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+              5%  on_antithyroid_medication
+
+
+Time:  secs
+}
+set stdout_Pruning15 [string trim $stdout_Pruning15]
+
+set stdout_Pruning35 {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Pruning confidence level 35%
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = t: negative (4/1)
+            on_antithyroid_medication = f:
+            :...on_thyroxine = f: hypothyroid (131/5)
+                on_thyroxine = t:
+                :...TSH <= 23: negative (3)
+                    TSH > 23: hypothyroid (14/1)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             7   18( 0.6%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           139    12    (a): class hypothyroid
+             6  3006    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+              5%  on_antithyroid_medication
+              5%  on_thyroxine
+
+
+Time:  secs
+
+
+}
+set stdout_Pruning35 [string trim $stdout_Pruning35]
+
+set stdout_PrePrune2 {
+C5.0 [Release 2.07 GPL Edition]
+-------------------------------
+
+    Options:
+        Application `hypothyroid'
+        Tests require 2 branches with >=2 cases
+
+Class specified by attribute `diagnosis'
+
+Read 3163 cases (26 attributes) from hypothyroid.data
+
+Decision tree:
+
+FTI > 64: negative (2926.5/8)
+FTI <= 64:
+:...TSH <= 6: negative (60.3/2.3)
+    TSH > 6:
+    :...TSH_measured = n: negative (24.1/0.7)
+        TSH_measured = y:
+        :...on_antithyroid_medication = f: hypothyroid (148/9)
+            on_antithyroid_medication = t: negative (4/1)
+
+
+Evaluation on training data (3163 cases):
+
+            Decision Tree   
+          ----------------  
+          Size      Errors  
+
+             5   21( 0.7%)   <<
+
+
+           (a)   (b)    <-classified as
+          ----  ----
+           139    12    (a): class hypothyroid
+             9  3003    (b): class negative
+
+
+        Attribute usage:
+
+             92%  FTI
+             13%  TSH_measured
+              6%  TSH
+              5%  on_antithyroid_medication
+
+
+Time:  secs
+}
+set stdout_PrePrune2 [string trim $stdout_PrePrune2]
+
+set c50cmd c5.0
+if [info exists env(C50)] {
+	set ::C50 [file normalize $env(C50)]
+} elseif [file exists ../$c50cmd ] {
+	set ::C50 [file dirname [file normalize ../$c50cmd/__dummy]]
+} elseif [file exists ../../$c50cmd ] {
+	set ::C50 [file dirname [file normalize ../$c50cmd/__dummy]]
+}
+
+set testdata testdata
+
+
+file copy -force $mydir/$testdata/hypothyroid.data $tmpdir
+file copy -force $mydir/$testdata/hypothyroid.names $tmpdir
+
+#lappend ldpath /afs/grid.pfizer.com/apps2/i64f6m13s1l2618c25e/lib
+#if [info exists env(LD_LIBRARY_PATH)] {
+#	lappend ldpath $env(LD_LIBRARY_PATH)]
+#}
+#set env(LD_LIBRARY_PATH) [join $ldpath :]
+
+set readCasesPattern {Read 3163 cases \(26 attributes\) from hypothyroid.data}
+
+#increase the size of expect buffer (for boost output, etc.)
+#match_max 10000
+
+cd $tmpdir
+
+test stdout {stdout test} -body {
+	lassign [cfive -f hypothyroid] status output
+	set res [list $status]
+	set stdout1 [split $stdout1 \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [regexp {FTI > 64: negative \(2926.5/8\)} $output]
+	lappend res [linediff $stdout1 $output]
+	return $res
+} -result [list 0 1 1 {} ]
+
+test nonames {what happens when names file is missing} -body {
+	file rename -force hypothyroid.names hypothyroid.names.hide
+	lassign [cfive -f hypothyroid] status output
+	file rename -force hypothyroid.names.hide hypothyroid.names
+	list $status $output
+} -match glob -result {1*C5.0 \[Release*Options*Application*cannot open file hypothyroid.names*}
+
+test ruleset {ruleset test} -body {
+	lassign [cfive -f hypothyroid -r] status output
+	set res [list $status]
+	set expected [split $stdout_ruleset \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [regexp \
+		{           140    11    \(a\): class hypothyroid} $expected ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 1 {}] 
+
+test ruleset_u4 {ruleset -u 4 test} -body {
+	lassign [cfive -f hypothyroid -r -u 4] status output
+	set res [list $status]
+	set output [cleanout $output]
+	set expected [split $stdout_ruleset_u4 \n]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [regexp {Rule utility ordering \(1/4's\)} $output ]
+	lappend res [regexp {Rule 1: \(2698/8, lift 1.0\)} $output]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 1 1 {}]
+
+test boost {boost test} -body {
+	lassign [cfive -f hypothyroid -b] status output
+	set res [list $status]
+	set expected [split $stdout_boost \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+test winnow {winnow test} -body {
+	lassign [cfive -f hypothyroid -w] status output
+	set res [list $status]
+	set expected [split $stdout_winnow \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+test threshold {threshold test} -body {
+	lassign [cfive -f hypothyroid -p] status output
+	set res [list $status]
+	set expected [split $stdout_threshold \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+test DisableDoublePruning {output with -g option} -body {
+	lassign [cfive -f hypothyroid -g] status output
+	set res [list $status]
+	set expected [split $stdout_DisableDoublePruning \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+test Pruning15 {output with -c 15 option} -body {
+	lassign [cfive -f hypothyroid -c 15] status output
+	set res [list $status]
+	set expected [split $stdout_Pruning15 \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+test Pruning35 {output with -c 35 option} -body {
+	lassign [cfive -f hypothyroid -c 35] status output
+	set res [list $status]
+	set expected [split $stdout_Pruning35 \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+test PrePrune2 {output with -m 2 option} -body {
+	lassign [cfive -f hypothyroid -m 2] status output
+	set res [list $status]
+	set expected [split $stdout_PrePrune2 \n]
+	set output [cleanout $output]
+	lappend res [regexp $readCasesPattern $output ]
+	lappend res [linediff $expected $output]
+	#return $output
+	return $res
+} -result [list 0 1 {}]
+
+cleanupTests

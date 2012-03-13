@@ -1,0 +1,319 @@
+# -*-Mode: tcl -*-
+# site config file, UBC, Imager
+
+# directories in which tmk should NOT check dependencies
+config set DEPEND_EXCLUDE {
+    /usr/include/* 
+    /opt/* 
+    /usr/*
+    /CYGWIN-B20/*
+    /cygwin-b20/*
+    /CYGWIN/*  
+}
+
+# we use the C++ standard library in our projects 
+# (e.g. MIPSpro needs to be configured for that!)
+foreach x {cxx::OPTIONS c::OPTIONS link::OPTIONS} {
+    config variable $x
+    lappend $x std
+}
+
+# --------------------------------------------------------------
+# where are software packages located?
+# special configuration for our test-linux boxes / laptops
+# --------------------------------------------------------------
+
+set pckg /cs/public/lib/pkg/
+set pckg_generic /cs/public/generic/lib/pkg/
+
+set pckg_windows P:/pkg
+
+# this is only temporary for packages not yet installed department wide
+set pckg_wh	/imager/people/heidrich
+
+
+# lex and yacc location for windows
+if {$OSCLASS eq $STR_WINDOWS} {
+    config set ::yacc::YACC         $pckg_windows/bison/bison.exe
+    config set ::yacc::BISON_SIMPLE $pckg_windows/bison/bison.simple
+    config set ::yacc::BISON_HAIRY  $pckg_windows/bison/bison.hairy
+    config set ::lex::LEX           $pckg_windows/flex/flex.exe
+}
+
+# --------------------------------------------------------------
+# X11 (default)
+# --------------------------------------------------------------
+
+namespace eval x11 {
+
+    if {$OSCLASS ne $STR_WINDOWS} {
+	
+	if {$OS eq $STR_LINUX} {
+	    
+	    # find X11
+	    if [info exists PROJECTROOT] {
+		set xpath $PROJECTROOT
+	    } else {
+		regsub /bin/X [exec which X] {} ::xpath
+		if {0 == [file isdirectory $xpath]} {
+		    set xpath /usr/X11R6
+		} else {
+		    set all_x [glob -nocomplain /usr/X11*]
+		    if [llength $all_x] {
+			set xpath [lindex $all_x 0] 
+		    } else {
+			set xpath /usr/X11R6
+		    }
+		}
+	    }
+	    
+	    config set INCPATH $xpath/include
+	    config set LIBPATH $xpath/lib
+	    config set BINDIR  $xpath/bin
+	    config set LIBS   {Xt Xi Xext Xmu X11}
+	
+	} else {
+
+	    # non-Linux
+	    config set INCPATH {}
+	    config set LIBPATH {}
+	    catch {config set BINDIR [file dirname [exec which xterm]]}
+	    config set LIBS    {Xt Xi Xext Xmu X11}
+
+	}
+    }
+}
+
+# --------------------------------------------------------------
+# DGA (direct gfx access) - only on solaris !
+# --------------------------------------------------------------
+namespace eval dga {
+
+    if {$OS eq $STR_SUNOS} {
+	config set LIBPATH /usr/openwin/lib
+	config set LIBS    {dga}
+    } else {
+	config set LIBPATH {}
+	config set LIBS   {}
+    }
+
+}
+
+# --------------------------------------------------------------
+# OpenGL 
+# --------------------------------------------------------------
+namespace eval opengl {
+    
+    # should be in default path
+    config set INCPATH {/usr/local/include}
+    config set LIBPATH {}
+    
+    if {$OSCLASS eq $STR_WINDOWS} {
+	config set LIBS {glu32 opengl32}
+    } else {
+	config set LIBS {GLU GL}
+    }
+    
+    if {$OSCLASS eq $STR_UNIX} {
+	config set DEPEND {dga x11}
+    }
+}
+
+# --------------------------------------------------------------
+# QT 
+# --------------------------------------------------------------
+namespace eval qt {
+
+# !! make windows configuration !
+#    switch $OSCLASS {
+#	$STR_WINDOWS {config set DIR L:/opt/qt}
+#    }
+
+    # !! change to central installation some time !
+    if {$OSCLASS eq $STR_UNIX} {
+	config set INCPATH $pckg/include/Qt
+	config set LIBPATH $pckg/lib/$env(CS_MACH)
+	config set LIBS   {qt}
+	config set DEPEND {opengl gui}
+    }
+
+    # comes with every Linux distribution
+    if {$OS eq $STR_LINUX} {
+	config set INCPATH /usr/lib/qt-3.1/include
+	config set LIBPATH /usr/lib/qt-3.1/lib
+	config set LIBS    {qt}
+	config set DEPEND  {opengl gui}
+	config set DIR	   /usr/lib/qt-3.1
+	# config set INCPATH /usr/lib/qt-2.3.0/include	      #
+	# config set LIBPATH /usr/lib/qt-2.3.0/lib	      #
+	# config set LIBS    {qt}			      #
+	# config set DEPEND  {opengl gui}		      #
+	# config set DIR	   /usr/lib/qt-2.3.0	      #
+    }
+}
+
+# --------------------------------------------------------------
+# QGL (QT's opengl extension)
+# --------------------------------------------------------------
+namespace eval qgl {
+
+    config set LIBS   {}
+    config set DEPEND {qt opengl gui}
+    
+    if {$OSCLASS eq $STR_UNIX} {lappend DEPEND x11} 
+}
+
+
+# --------------------------------------------------------------
+# GLUT
+# current version: 3.7beta
+# --------------------------------------------------------------
+
+namespace eval glut {
+
+    config set DEPEND OPENGL
+
+    # !! windows part not valid
+    if {$OSCLASS eq $STR_WINDOWS} {
+	
+	config set LIBS    {glut32}
+	config set INCPATH $pckg_windows/glut/include
+	config set LIBPATH $pckg_windows/glut/lib
+    } else {
+	
+	config set LIBS {glut}
+	
+	# use central installation of GLUT
+	# (GLUT 3.7 is maintained by Wolfgang Heidrich)
+	config set INCPATH $pckg_generic/glut-3.7/include
+	config set LIBPATH $pckg/glut-3.7/lib
+
+    }
+}
+
+
+# --------------------------------------------------------------
+# GLUI
+# --------------------------------------------------------------
+namespace eval glui {
+    # GLUI V2 is maintained by Wolfgang Heidrich
+    config set INCPATH $pckg_generic/glui-v2/include
+    config set LIBPATH $pckg/glui-v2/lib
+    config set LIBS    {glui}
+    config set DEPEND  {glut}
+}
+
+# --------------------------------------------------------------
+# TIFF
+# --------------------------------------------------------------
+
+namespace eval tiff {
+
+    # should be in standard path on Linux - check for other platforms
+    config set LIBPATH {}
+    config set INCPATH {}
+    config set LIBS    {tiff}
+}
+
+# --------------------------------------------------------------
+# PNG
+# --------------------------------------------------------------
+
+namespace eval png {
+    
+    # should be in standard path on Linux - check for other platforms
+    if {$OSCLASS eq $STR_WINDOWS} {
+	config set INCPATH $pckg_windows/libpng/include
+	config set LIBPATH $pckg_windows/libpng/lib
+	config set LIBS    libpng
+    } else {
+	config set LIBS    png
+    }
+    config set DEPEND  zlib
+}
+
+# --------------------------------------------------------------
+# ZLIB
+# --------------------------------------------------------------
+
+namespace eval zlib {
+    # should be in standard path on Linux - check for other platforms
+    if {$OSCLASS eq $STR_WINDOWS} {
+	config set INCPATH      $pckg_windows/zlib/include
+	config set LIBPATH      $pckg_windows/zlib/lib
+	config set LIBS         {zlib}
+    } else {
+	config set LIBS         {z}
+    }
+}
+
+# --------------------------------------------------------------
+# BZLIB
+# --------------------------------------------------------------
+
+namespace eval bzlib {
+    # should be in standard path on Linux - check for other platforms
+    config set INCPATH {}
+    config set LIBPATH {}
+    config set LIBS    bz2
+}
+
+# --------------------------------------------------------------
+# LUG (not installed in the department currently)
+# --------------------------------------------------------------
+
+#namespace eval lug {
+#    config set INCPATH $pckg/lug/include
+#    config set LIBPATH $pckg/lug/lib
+#    config set LIBS    {lug}
+#}
+
+
+# --------------------------------------------------------------
+# Math library (includes should be set automatically)
+# --------------------------------------------------------------
+if {$OSCLASS ne $STR_WINDOWS} {
+    config set math::LIBS {m}
+} else {
+    config set math::LIBS {}
+}
+
+# pthread library
+namespace eval pthread {
+    config set LIBS {pthread}
+}
+
+# --------------------------------------------------------------
+# OpenCV - Intel's Computer Vision Library
+# --------------------------------------------------------------
+namespace eval opencv {
+#  config set DEPEND {ipl}
+  config set DEPEND {}
+  config set LIBPATH $pckg/opencv-0.0.7/lib
+  config set INCPATH $pckg_generic/opencv-0.0.7/include
+  config set LIBS    {opencv}
+}
+ 
+# --------------------------------------------------------------
+# IPL - Intel's Image Processing Library
+# --------------------------------------------------------------
+namespace eval ipl {
+  config set DEPEND {}
+  config set LIBPATH {}
+  config set INCPATH {}
+  config set LIBS    {iplpx ipla6 iplm6 }
+}
+
+# --------------------------------------------------------------
+# Various stuff
+# --------------------------------------------------------------
+if {$OSCLASS eq $STR_WINDOWS} {
+#    config set g::PCCTS L:/opt/pccts
+} else {
+#    config set g::PCCTS         $pckg/pccts
+#    config set purify::PURIFY   /opt/pure/purify-4.1-irix6/purify
+    catch {config set doxygen::DOXYGEN [exec which doxygen]}
+}
+
+#config set INCPATH /usr/local/include
+#config set LIBPATH $pckg_wh/lib/$env(CS_MACH)

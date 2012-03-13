@@ -1,0 +1,44 @@
+# -*-Mode: tcl -*-
+# ============================================================================
+# $Id: namazu.tmk,v 1.3 2005/04/12 21:28:24 yamauchih Exp $
+# tmk module for namazu (text database search program) http://www.namazu.org/
+# ============================================================================
+# Copyright (C) 2005 Yamauchi Hitoshi
+#
+#   Max-Planck-Institut fuer Informatik
+#   Stuhlsatzenhausweg 85, 66123 Saarbruecken
+#   http:#www.mpi-sb.mpg.de/
+# 
+# This file is originated from doxygen.tmk module.
+# 
+# Creator: hitoshi
+# Email:   hitoshi@mpi-sb.mpg.de
+# ==========================================================================
+# $Revision: 1.3 $
+# $Date: 2005/04/12 21:28:24 $
+# $Author: yamauchih $
+# ==========================================================================
+
+namespace eval ::namazu {}
+
+# if not specified otherwise, use mknmz executable in the search path
+if {![info exists ::namazu::MKNMZ]} {
+    catch {variable ::namazu::MKNMZ [exec which mknmz]}
+}
+if {![info exists ::namazu::MKNMZ]} {	# when fail to which...
+    log_msg "Can not find `mknmz,' plese configure MKNMZ (namazu: www.namazu.org)."
+    set ::namazu::MKNMZ true
+}
+if {![file executable ${::namazu::MKNMZ}]} {
+    # make sure it is executable.
+    log_msg "non executable `mknmz,' plese configure MKNMZ (namazu: www.namazu.org)."
+    set ::namazu::MKNMZ true
+}
+
+# if {![info exists ARCH]} {
+#     exit_msg "doxygen support requires use of \$USE_ARCH / \$ARCH"
+# }
+
+# default values for some doxygen variables
+#   you can set any doxygen variable this way, just call it dxx::...
+# set_ifndef ::dxx::PROJECT_NAME     "[file tail $PROJDIR]"

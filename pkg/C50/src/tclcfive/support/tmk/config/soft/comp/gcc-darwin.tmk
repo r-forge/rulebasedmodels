@@ -1,0 +1,75 @@
+#
+# gcc.tmk 
+# $Id: gcc-darwin.tmk,v 1.1 2005/04/23 20:53:58 yamauchih Exp $
+# configure EGCS / GNU C/C++ compilers for Darwin
+#
+
+config setifndef SOFLAG -dynamiclib
+
+assert {![string compare $OS $STR_DARWIN]}
+
+# additional Mac stuff
+foreach x {FLAGS_PRF FLAGS_DBG FLAGS_STD FLAGS_OPT FLAGS_MAX} {
+    lappend LD$x -lobjc
+}
+
+#anyone who doesn't want these can remove them
+set universal_binary_flags [list -force_cpusubtype_ALL \
+    -mmacosx-version-min=10.4 -arch x86_64 -arch i386 -arch ppc]
+if {[info exists FLAGS]} {
+    config set FLAGS [list {*}$FLAGS {*}$universal_binary_flags]
+} else {
+    config set FLAGS $universal_binary_flags 
+}
+if {[info exists ::link::FLAGS]} {
+    config set ::link::FLAGS [list {*}$::link::FLAGS {*}$universal_binary_flags]
+} else {
+    config set ::link::FLAGS $universal_binary_flags 
+}
+
+# definition for Darwin.
+# link a static lib 
+config proc link_lib {lib obj libspec flags opt} {
+    variable AR
+    # hack: flags are just not passed to AR at all
+    set flags [list {*}$flags {*}[meta_option_flags $opt]]
+    set cmd [list cmd [file nativename $AR] rs $lib]
+	lappend cmd {*}$obj
+    uplevel \#0 $cmd
+    ### use libspec?
+}
+
+# definition for Darwin.
+# link a shared lib
+config proc link_shlib {lib obj export_obj libspec flags opt} {
+    variable EXECUTABLE
+    variable SOFLAG
+    if {$export_obj ne {}} {
+	log_msg "warning (gcc): no support for interface subset export"
+    }
+    if [regexp async $opt] {
+	set async 1
+    } else {
+	set async 0
+    }
+
+    # needed?
+    if [lcontains $opt soname] {
+        # Darwin
+	lappend flags -install_name
+	lappend flags $::PROJROOT/$::SUBDIR/$lib
+	lappend flags -flat_namespace
+	lappend flags -undefined
+	lappend flags suppress
+    }
+    set flags [list {*}$flags {*}[meta_option_flags $opt]]
+    set libs  [make_lib_options $libspec $opt]
+    # Darwin
+    if $async {
+	set cmd [list ::tmk::cmd_thread $lib {*}$EXECUTABLE {*}$SOFLAG]
+    } else {
+	set cmd [list cmd {*}$EXECUTABLE {*}$SOFLAG]
+    }
+    set cmd [list {*}$cmd {*}$flags -o $lib {*}$obj {*}$libs]
+    uplevel \#0 $cmd
+}
