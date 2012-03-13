@@ -1,0 +1,17 @@
+# ===========================================================================
+# $Id: macintosh.tmk,v 1.1 2000/08/01 14:45:51 htschirm Exp $
+# get system information on a Macintosh system
+# ===========================================================================
+# $Log: macintosh.tmk,v $
+# Revision 1.1  2000/08/01 14:45:51  htschirm
+# new config tree structure
+#
+# Revision 1.1  2000/07/20 16:15:54  htschirm
+# towards tmk release 0.9
+#
+# ===========================================================================
+
+puts stderr "*** warning: the macintosh platform is not supported yet ***"
+
+# just try the UNIX code ;-)
+__source $tmk::dir_arch/sysinfo/unix.tmk

@@ -1,0 +1,10 @@
+config proc ::filename_shlib  { shortname } { return "lib${shortname}.dylib" }
+
+# list of available compilers, and preferred default compiler
+config set cxx::COMPILERS { gcc }
+config set cxx::COMPILER  gcc
+config set c::COMPILERS   { gcc }
+config set c::COMPILER    gcc
+
+# currently no config helpers
+config set ::CONFIG_HELPERS {}

@@ -1,0 +1,34 @@
+#! /bin/env tclsh
+
+# Copyright (C) 2011-2012, Nathan Coulter and others 
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 2 of the License.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+module tcl
+
+set_ifndef stubs 1
+variable stubLibName [regsub \
+	{^lib} [file rootname [file tail $::tcl::stubLibPath]] {}]
+variable LibName [regsub {^lib} [file rootname [file tail $::tcl::libPath]] {}]
+variable libtclDir [file dirname $::tcl::libPath]
+lappend ::link::LIBPATH $libtclDir
+
+if {$stubs} {
+	lappend ::c::FLAGS -DUSE_TCL_STUBS
+	lappend ::c::FLAGS -DUSE_TCL_STUBS
+	lappend ::link::FLAGS -Wl,--exclude-lib,[file tail $::tcl::stubLibPath]
+	lappend ::cxx::FLAGS -DUSE_TCL_STUBS
+	lappend ::link::SYSLIBS $stubLibName 
+} else {
+	lappend ::link::SYSLIBS $LibName 
+}

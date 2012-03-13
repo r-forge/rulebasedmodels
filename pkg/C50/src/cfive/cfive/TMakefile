@@ -1,0 +1,129 @@
+#! /bin/env tclsh
+
+#/*************************************************************************/
+#/*									 */
+#/*  Copyright 2010 Rulequest Research Pty Ltd.				 */
+#/*  Copyright 2011 Nathan Coulter and others				 */
+#/*									 */
+#/*  This file is part of C5.0 GPL Edition, a single-threaded version	 */
+#/*  of C5.0 release 2.07.						 */
+#/*									 */
+#/*  C5.0 GPL Edition is free software: you can redistribute it and/or	 */
+#/*  modify it under the terms of the GNU General Public License as	 */
+#/*  published by the Free Software Foundation, either version 3 of the	 */
+#/*  License, or (at your option) any later version.			 */
+#/*									 */
+#/*  C5.0 GPL Edition is distributed in the hope that it will be useful,	 */
+#/*  but WITHOUT ANY WARRANTY; without even the implied warranty of	 */
+#/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU	 */
+#/*  General Public License for more details.				 */
+#/*									 */
+#/*  You should have received a copy of the GNU General Public License	 */
+#/*  (gpl.txt) along with C5.0 GPL Edition.  If not, see 		 */
+#/*									 */
+#/*      <http://www.gnu.org/licenses/>.					 */
+#/*									 */
+#/*************************************************************************/
+
+module c
+module tcl
+module tmkutil
+
+subdir [list tests]
+
+set sources [list \
+	global.c\
+   main.c\
+	construct.c\
+	formtree.c\
+	info.c\
+	discr.c\
+	contin.c\
+	subset.c\
+	prune.c\
+	p-thresh.c\
+	trees.c\
+	siftrules.c\
+	ruletree.c\
+	rules.c\
+	getdata.c\
+	implicitatt.c\
+	mcost.c\
+	confmat.c\
+	sort.c\
+	update.c\
+	attwinnow.c\
+	classify.c\
+	formrules.c\
+	getnames.c\
+	modelfiles.c\
+	utility.c\
+	xval.c \
+]
+
+set sources_objects [lmap $sources {[regsub {.c$} $ITEM .o
+]}]
+set c::DETECT_EXE 0
+set link::MAKE_LIB 0
+set link::MAKE_SHLIB 0
+lappend ::link::OPTIONS lib_in_lib
+lappend link::SYSLIBS stdioctcl
+lappend c::FLAGS -I[file join $PROJROOT $SUBDIR]
+#hopefully, this will be dead last
+lappend c::FLAGS -I[file join $PROJROOT $SUBDIR cfivecheckheader]
+if {[info exists USE_STDIOCTCL_REDEFINE] && $USE_STDIOCTCL_REDEFINE } {
+	lappend c::FLAGS -DUSE_STDIOCTCL_REDEFINE
+	#lappend c::FLAGS -E
+}
+
+#automake values
+lappend PROGRAMS cfive report xval
+lappend HEADERS cfive.h
+lappend LIBRARIES libcfive[info sharedlibext]
+
+build [list cfive report libcfive.a libcfive[info sharedlibext]]
+
+#better to have a no-op target than to EXCLUDE
+#lappend EXCLUDE {*}$sources
+target $sources_objects {} {
+	#a no-op target
+	#prevent per-file compilation of *.c files (using c50gt.c instead)
+}
+
+target c50gt.c [list {*}$sources] {
+	set fhout [open $TARGET w]
+	foreach fname [list defns.i text.i {*}$sources] {
+		set fh [open $fname]
+		fconfigure $fh -translation binary
+		while {[gets $fh line] >= 0} {
+			if {![regexp {defns.i|extern.i|text.i} $line]} {
+				puts $fhout $line
+			}
+		}
+		close $fh
+	}
+	close $fhout
+}
+
+#this makes the real libcfive targets
+link::make_lib libcfive.a c50gt.o
+link::make_shlib libcfive[info sharedlibext] c50gt.o 
+
+
+#this makes c50gt.o target, which must be explicit because c50gt.c is generated
+::c::make_obj c50gt.c 
+
+#this makes the real c50 target
+link::make_exe cfive c50.o
+depend cfive libcfive[info sharedlibext]
+exception cfive {::link::FLAGS ::link::LIBPATH ::link::SYSLIBS} {
+	#TODO: modify tmk so that build-time library directories don't end up in
+	#rpath
+	set link::LIBPATH [linsert $::link::LIBPATH 0 \
+		[file join $PROJROOT $SUBDIR $::ARCH ]]
+	set link::SYSLIBS [linsert $::link::SYSLIBS 0 cfive]
+}
+
+link::make_exe report report.o
+
+depend test cfive

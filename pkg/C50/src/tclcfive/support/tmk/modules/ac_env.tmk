@@ -1,0 +1,72 @@
+#! /bin/env tclsh
+
+# Copyright (C) 2011-2012, Nathan Coulter and others 
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 2 of the License.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+module tmkutil
+
+proc compiler_identify {path} {
+	if {[auto_execok $path] eq {}} {
+		return -code error "could not find $path in $::env(PATH)"
+	}
+	set id [file tail $path] ;#default
+	#\0 is in case the program wants to read stdin 
+	if {![catch {exec $path --version <<\0} res opts]} {
+		if {[regexp -- {\(GCC\)} $res]} {
+			set id $::STR_GCC
+		}
+	}
+	return $id
+}
+
+proc compiler_config {varname_ compiler} {
+	#varname is usually env(CC), env(CXX), etc.
+	upvar $varname_ varname
+	if {[info exists varname] && $varname ne {}} {
+		set cc [lindex $varname 0]
+		set id [compiler_identify $cc]
+		switch $id {
+			$::STR_GCC {
+				set ::${compiler}::COMPILER $::STR_GCC
+				::tmk::set_runmodestat gccexename=$varname
+				#calls a namespace-inscope code block
+				[set ${compiler}::${STR_GCC}::config]
+			} default {
+				set ::${compiler}::COMPILER $id 
+				set ::${compiler}::EXECUTABLE $varname
+			}
+		}
+
+		#decided this was a bad idea, py, 2012-03-02
+		#variable ccargs [lrange $varname 1 end]
+		#if {$ccargs ne {}} {
+		#set ::${compiler}::FLAGS [concat $ccargs [$- ::${compiler}::FLAGS]]
+		#set ::link::FLAGS [concat $ccargs [$- ::${compiler}::FLAGS]]
+		#}
+	}
+}
+
+compiler_config env(CC) c 
+compiler_config env(CXX) cxx 
+
+namespace eval ::link {}
+
+set ::c::FLAGS [concat [$- ::c::FLAGS] [$- env(CPPFLAGS)]]
+set ::cxx::FLAGS [concat [$- ::cxx::FLAGS] [$- env(CPPFLAGS)]]
+
+set ::c::FLAGS [concat [$- ::c::FLAGS] [$- env(CFLAGS)]]
+set ::cxx::FLAGS [concat [$- ::cxx::FLAGS] [$- env(CXXFLAGS)]]
+
+set ::link::FLAGS [concat [$- ::link::FLAGS] [$- env(LDFLAGS)]]
+set ::link::FLAGS [concat [$- ::link::FLAGS] [$- env(LIBS)]]

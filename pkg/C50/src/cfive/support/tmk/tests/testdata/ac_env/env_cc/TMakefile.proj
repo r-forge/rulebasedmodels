@@ -1,0 +1,5 @@
+#! /bin/env tclsh
+
+set env(CC) "[info nameofexecutable] -holy fake -options batman"
+module ac_env
+module c

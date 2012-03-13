@@ -1,0 +1,34 @@
+# ==========================================================================
+# $Id: mswin.tmk,v 1.3 2001/10/29 22:15:10 brabec Exp $
+# architecture-dependent config for Linux
+# ==========================================================================
+# $Log: mswin.tmk,v $
+# Revision 1.3  2001/10/29 22:15:10  brabec
+# ready for Windows2000 and VisualC++
+#
+# Revision 1.2  2001/04/24 10:24:43  brabec
+# cygwin/vc port
+#
+# Revision 1.1  2000/08/01 14:45:49  htschirm
+# new config tree structure
+#
+# Revision 1.4  2000/07/20 16:15:53  htschirm
+# towards tmk release 0.9
+#
+# ==========================================================================
+
+# list of available compilers, default compiler
+# vc -- Microsoft Visual C++
+# bc -- Borland C/C++ (based on the free command line edition 5.5)
+#       - skipped due to some problems . Stefan
+config set cxx::COMPILERS {vc gcc}
+config set cxx::COMPILER  vc
+
+config set c::COMPILERS   {vc gcc}
+config set c::COMPILER    vc 
+
+# what's the standard GUI on Windows called?
+config set gui::DEPEND {win_gui}
+
+# currently no config helpers
+config set ::CONFIG_HELPERS {}
