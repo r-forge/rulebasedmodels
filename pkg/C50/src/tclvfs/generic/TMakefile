@@ -1,4 +1,7 @@
 module c
+namespace eval ::libtcl {
+	variable stubs 0
+}
 module libtcl
 
 set c::DETECT_EXE 0
