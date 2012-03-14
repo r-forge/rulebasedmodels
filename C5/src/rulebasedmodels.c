@@ -207,6 +207,7 @@ void setglobals(int subset, int rules, int bands, int trials, int winnow,
                 int minCases, int fuzzyThreshold)
 {
     // XXX TODO
+    Rprintf("setglobals not implemented yet\n");
 }
 
 void setOf()

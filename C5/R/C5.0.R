@@ -44,7 +44,7 @@ C5.0.default <- function(x, y,
   namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
   dataString <- makeDataFile(x, y)
 
-  Z <- .C("C5.0",
+  Z <- .C("C50",
           as.character(namesString),
           as.character(dataString),
           as.character(costString),
@@ -153,7 +153,7 @@ print.C5.0 <- function(x, ...)
     if(x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
     if(x$control$rules) otherOptions <- c(otherOptions, "rules")
     if(x$control$winnow) otherOptions <- c(otherOptions, "winnowing")
-    if(x$control$globalPruning) otherOptions <- c(otherOptions, "global pruning")
+    if(! x$control$noGlobalPruning) otherOptions <- c(otherOptions, "global pruning")
     if(x$control$CF != 0.25) otherOptions <- c(otherOptions,
                                                paste("confidence level: ", x$control$CF, sep = ""))
     if(x$control$minCases != 2) otherOptions <- c(otherOptions,

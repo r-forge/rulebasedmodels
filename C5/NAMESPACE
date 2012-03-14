@@ -1,3 +1,4 @@
+useDynLib(C50)
 
 import(lattice)
 

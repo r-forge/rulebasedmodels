@@ -201,7 +201,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
 
 // Declare the c50 function
 static const R_CMethodDef cEntries[] = {
-    {"C5.0", (DL_FUNC) &c50, 17, c50_t},
+    {"C50", (DL_FUNC) &c50, 17, c50_t},
     // XXX Not converted yet
     {"predictions", (DL_FUNC) &predictions, 6, predictions_t},
     {NULL, NULL, 0}
