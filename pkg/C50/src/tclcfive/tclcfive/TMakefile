@@ -1,0 +1,16 @@
+#! /bin/env tclsh
+
+set ::link::MAKE_LIB 0
+set ::link::MAKE_SHLIB 0
+
+lappend ::link::OPTIONS lib_in_lib
+lappend ::link::SYSLIBS cfive
+#stdioctcl is only needed by cfive, but add here for scenarios where
+#transitive linking is not possible or undesirable
+lappend ::link::SYSLIBS stdioctcl
+lappend ::LIBRARIES {*}[glob *.tcl] libtclcfive[info sharedlibext]
+
+link::make_shlib libtclcfive[info sharedlibext] [list tclcfive.o] 
+
+build libtclcfive[info sharedlibext]
+depend test libtclcfive[info sharedlibext]

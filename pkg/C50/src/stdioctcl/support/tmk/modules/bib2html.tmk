@@ -1,0 +1,302 @@
+# ===========================================================================
+# BibTeX -> HTML publications list converter for tmk, by Hartmut Schirmacher
+# $Id: bib2html.tmk,v 1.11 2000/09/01 12:37:40 ag4-adm Exp $
+# ===========================================================================
+# $Log: bib2html.tmk,v $
+# Revision 1.11  2000/09/01 12:37:40  ag4-adm
+# namespace etc.
+#
+# Revision 1.10  2000/06/08 10:44:52  ag4-adm
+# empty list for file delete fixed
+#
+# Revision 1.2  2000/04/20 08:17:58  ag4-adm
+# added title extraction from bib file
+# ===========================================================================
+
+set_ifndef BIBSTYLE unsrt
+set_ifndef DOCSTYLE report
+set_ifndef FORCE 0
+set_ifndef EMBED_INTO {}
+
+set_ifndef LATEX  [exec which latex]
+set_ifndef BIBTEX [exec which bibtex]
+set_ifndef L2H    [exec which latex2html]
+set_ifndef L2HFLAGS [list -no_subdir -split 0 -info {""} -address {""} \
+	-no_navigation]
+
+# from BibTeX to HTML
+target *.html {$ROOT.bib} {
+
+    log_msg "creating $ROOT.tex"
+    bib2html::makeTexFile $ROOT.tex 
+
+    log_msg "running LaTeX and BibTeX on $ROOT.tex/$ROOT.bib ..."
+    cmd_quiet $bib2html::LATEX $ROOT
+    cmd_quiet $bib2html::BIBTEX $ROOT
+
+    log_msg "adding title and file links in $ROOT.bbl ..."
+    set title [bib2html::extractTitle $ROOT.bib]
+    bib2html::addFileLinks $ROOT.bbl $title
+
+    log_msg "inserting $ROOT.bbl into $ROOT.tex ..."
+    bib2html::bblIntoTex $ROOT
+
+    log_msg "running LaTeX2HTML on $ROOT.tex ..."
+    catch {exec {*}$bib2html::L2H {*}$bib2html::L2HFLAGS $ROOT.tex} msg
+
+    log_msg "patching $ROOT.html and cleaning up ..."
+    bib2html::removeTags $ROOT.html {HR} {H2}
+    if [llength $bib2html::EMBED_INTO] {
+	bib2html::embed $ROOT.html $bib2html::EMBED_INTO
+    }
+    bib2html::cleanTarget $ROOT
+
+}
+
+# delete tmp files 
+proc cleanTarget {name} {
+    eval file delete -force -- xxx.yyy [lmap "tex aux bbl blg css dvi log" {$name.$ITEM}]
+    eval file delete -force -- xxx.yyy [glob -nocomplain IMG_PARAMS.* *.pl]
+}
+
+# extract title from bib file: line starting with %%TITLE
+proc extractTitle {name} {
+    read_file $name txt
+    
+    set title {}
+    if [regexp -linestop {%%TITLE *(.+)} $txt dummy title] {
+	log_msg "extracted title \[$title\] from $name"
+    }
+
+    return $title
+}
+
+# create the dummy LaTeX file 
+proc makeTexFile {name} {
+
+    append txt \\documentclass{$bib2html::DOCSTYLE}\n
+    append txt \\usepackage{html}\n
+    append txt \\begin{document}\n
+    append txt \\renewcommand{\\newblock}{}\n
+    append txt \\nocite{*}\n
+    append txt \\bibliographystyle{$bib2html::BIBSTYLE}\n
+    append txt \\bibliography{[file rootname $name]}\n
+    append txt \\end{document}\n
+
+    write_file $name txt
+}
+
+# remove certain tags  from the HTML file
+# - stags: single tags, only <tag> will be removed
+# - ptags: pair tags, <tag>...</tag> will be removed
+proc removeTags {file stags ptags} {
+    
+    read_file $file txt
+
+    foreach tag $ptags {
+
+	set result {}
+	set rest $txt
+	set l [string length </$tag>]
+	
+	while {[string length $rest]} {
+	    set p [string first <$tag> $rest]
+	    if {$p != -1} {
+		
+		append result [string range $rest 0 [expr $p - 1]]
+		set rest [string range $rest $p end]
+		
+		set p [string first </$tag> $rest]
+		if {$p != -1} {
+		    
+		    set rest [string range $rest [expr $p + $l] end]
+		    
+		    
+		} else {
+		    puts stderr "warning: no </$tag> found\n"
+		    puts stderr "  after \[[string range $rest 0 70] ...\]"
+		}
+		
+	    } else {
+		
+		append result $rest
+		set rest {}
+		
+	    }
+	}
+
+	# and on to the next tag
+	set txt $result
+	
+    }
+
+    # and now simply replace the singular tags
+    foreach tag $stags {
+	regsub -all "<$tag\[^>\]*>" $txt {} txt
+
+    }
+
+    write_file $file txt
+
+}
+
+# links to .pdf/.ps.gz files that are named just like the citation key
+# will be inserted into the .bbl file
+proc addFileLinks {filename title} {
+
+    read_file $filename rest
+    set result {}
+    if [llength $title] {
+	append result \\section*\{$title\}\n\n
+    }
+    set firstTime 1
+    set itemName {undefined}
+    while {[string length $rest]} {
+
+	set p [string first \n\\bibitem $rest]
+	if {$p != -1} {
+
+	    append result [string range $rest 0 [expr $p - 1]]
+	    set rest [string range $rest $p end]
+
+	    if {!$firstTime} {
+
+		# put the file link for the previous entry here
+		append result [fileLinkText $itemName]
+
+	    }
+
+	    # extract item name (-> file name)
+	    set p1 [string first \{ $rest] 
+	    set p2 [string first \} $rest]
+	    assert {$p1 != -1}
+	    assert {$p2 != -1}
+	    set itemName [string range $rest [expr $p1 +1] [expr $p2 -1]]
+	    append result [string range $rest 0 $p2]
+	    set rest [string range $rest [expr $p2 + 1] end]
+
+	} else {
+
+	    # at end of text, we must look for \end{thebibliography}
+	    assert {!$firstTime}
+	    set p [string first \n\\end{thebibliography} $rest]
+	    assert {$p != -1}
+
+	    append result [string range $rest 0 [expr $p - 1]]
+	    append result [fileLinkText $itemName]
+	    append result [string range $rest $p end]
+	    set rest {}
+	    
+	}
+
+	set firstTime 0
+
+    }
+
+    write_file $filename result
+}
+
+# insert bbl into tex file
+proc bblIntoTex {name} {
+    read_file $name.bbl bbl
+    read_file $name.tex tex
+
+    set search \\bibliography\{$name\}
+    set p [string first $search $tex]
+    assert {$p != -1}
+
+    set result [string range $tex 0 [expr $p -1]]
+    append result $bbl
+    append result [string range $tex [expr $p + [string length $search]] end]
+
+    write_file $name.tex result
+}
+
+# find files and return HTML code for the links
+proc fileLinkText {name} {
+
+    set txt {}
+    set desc(pdf)   PDF
+    set desc(ps)    Postscript
+    set desc(ps.gz) Postscript, gzip
+    set desc(zip)   scanned EPS, zip
+    set desc(html)  HTML
+
+    foreach x [list pdf ps ps.gz zip html] {
+
+	if [file exists $name.$x] {
+	    log_msg "linking $name.$x"
+	    set s [expr [file size $name.$x] / 1024]
+	    append txt "<a href=$name.$x>\[$desc($x), ${s}K\]</a>\n"
+	}
+    }
+
+    if [string length $txt] {
+	
+	set r $txt
+	set txt "\\\\\n\\begin{htmlonly}\n\\begin{rawhtml}\n"
+	append txt "<font size=-1>\n${r}</font>\n"
+	append txt "\\end{rawhtml}\n\\end{htmlonly}\n"
+    }
+    return $txt
+}
+
+# return only the stuff inside <body ...>...</body> of a HTML file
+proc get_html_body {filename} {
+
+    read_file $filename txt
+    set ltxt [string tolower $txt]
+
+    # find first and last char between <body> and </body>
+    set p  [string first <body $ltxt]
+    if {$p == -1} {
+	set p 0
+    } else  {
+	set p [expr $p + [string first > [string range $ltxt $p end]] + 1]
+    }
+    set p2 [string first </body $ltxt]
+    if {$p2 == -1} {
+	set p2 end
+    } else {
+	incr p2 -1
+    }
+
+    # return range
+    return [string range $txt $p $p2]
+}
+
+# replace marker "@@SRC@@" in <frame> by body of <src>
+proc embed {src frame} {
+
+    set str [bib2html::get_html_body $src]
+    read_file $frame txt 
+    
+    if [regsub {@@SRC@@} $txt $str txt] {
+	log_msg "embedded $src into $frame"
+	write_file $src txt
+    } else {
+	log_msg "warning: could not find marker @@SRC@@ in $frame"
+    }
+}
+
+
+# which files are to be built?
+eval_later {
+    set_ifndef BIBFILES [glob -nocomplain *.bib]
+    set_ifndef FILES [lmap $BIBFILES {$IROOT.html}]
+    build $FILES 
+
+    # force building every time until we have a better idea...
+    if $FORCE {
+	foreach x $FILES {depend $x ALWAYS_BUILD}
+    }
+
+    # clean up if desired
+    depend clean clean_l2h
+    target clean_l2h {} {
+	foreach x $BIBFILES {
+	    bib2html::cleanTarget [file rootname $x]
+	}
+    }
+
+}

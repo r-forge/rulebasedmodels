@@ -1,0 +1,10 @@
+#! /bin/env tclsh
+
+subdir [list tests] 
+
+lappend PKGDATA config contrib modules tools
+lappend PKGDATA {*}[glob -dir [file join $PROJDIR] -tails src/*.tmk]
+lappend PKGDATA {*}[glob -dir [file join $PROJDIR] -tails src/*.msg]
+lappend PKGDATA {*}[glob -dir [file join $PROJDIR] -tails src/*.msg]
+lappend PKGDATA {*}[glob -dir [file join $PROJDIR] -tails *.tcl]
+lappend PROGRAMS src/tmk src/tmk.bat src/cygtmk

@@ -1,0 +1,1 @@
+#undef HAVE_SYS_RESOURCE_H

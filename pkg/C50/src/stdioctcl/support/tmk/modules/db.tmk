@@ -1,0 +1,260 @@
+# =========================================================================
+# Copyright (C) 1999,2000  Hartmut Schirmacher, Stefan Brabec
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (LICENSE.TXT); if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# ========================================================================
+# $Id: db.tmk,v 1.9 2000/07/20 16:15:57 htschirm Exp $
+# simple TCL-based database query module for TMK
+# + a simple extension for generating LaTeX 'databases'
+# ========================================================================
+# $Log: db.tmk,v $
+# Revision 1.9  2000/07/20 16:15:57  htschirm
+# towards tmk release 0.9
+#
+# Revision 1.8  2000/04/20 11:38:00  htschirm
+# lots of new names
+#
+# Revision 1.2  1999/11/23 18:37:45  htschirm
+# fixed uplevel evaluation code
+# ========================================================================
+
+# read a database file and return list of records ("database")
+proc read {filename} {
+
+    if [file readable $filename] {
+
+	set __record_list [list]
+	source $filename
+	dbg_msg "[llength $__record_list] records read from $filename"
+	return $__record_list
+
+    } else {
+	exit_msg "db: could not open file $filename"
+    }
+
+}
+
+# select matching records from a database
+proc select {list_of_records match_expr} {
+
+    set found [list]
+    foreach rec $list_of_records {
+	if [with_record_do $rec {return [expr $match_expr]}] {
+	    lappend found $rec
+	}
+    }
+    return $found
+}
+
+# sort list of records according to some sorting expression
+proc sort {list_of_records sort_expr {order inc}} {
+
+    upvar __sort_expr __expr
+    set __expr $sort_expr
+    if {[lrange $order 0 2] eq "inc"} {
+	return [lsort -increasing -command sort_function $list_of_records]
+    } else {
+	return [lsort -decreasing -command sort_function $list_of_records]
+    }
+	
+}
+
+# return record as readable formatted string
+proc format_record {record} { 
+
+    set result \{
+    foreach field $record {
+	append result "\n  [lindex $field 0] = {[lindex $field 1]}"
+    }
+    append result \n\}
+    return $result
+}
+
+# return record in format for writing it to a database file
+proc output_record {record} { 
+
+    set result "record {"
+    foreach field $record {
+	append result "\n    field [lindex $field 0] {[lindex $field 1]}"
+    }
+    append result "\n}"
+    return $result
+}
+
+
+
+# evaluate a record-related script 
+proc with_record_do {__rec __script} {
+
+    # set the field values as variables
+    foreach __field $__rec {
+	set __varname [lindex $__field 0]
+	upvar 1 $__varname $__varname
+	set $__varname [lindex $__field 1]
+    }
+
+    # evaluate the script
+    set __result [uplevel 1 $__script]
+
+    # unset the field variables
+    foreach __field $__rec {
+	unset [lindex $__field 0]
+    }
+
+    return $__result
+}
+
+
+# Init current list of fields; execute record_header script, record 
+#   definition, and record_cons script; append list of fields to list 
+#   of records
+proc record {__defs} {
+
+    upvar __rec_cons    __cons
+    upvar __rec_header  __hdr
+    upvar __record_list __records
+    upvar __field_list  therecord
+
+
+    # evaluate header, record definitions, and constructor
+    set therecord [list]
+    if [info exists __hdr] {
+	eval $__hdr
+    }
+    eval $__defs
+    if [info exists __cons] {
+	eval $__cons
+    }
+
+    # append list of fields to list of records
+    lappend __records $therecord
+}
+
+# store header / constructor code in variable
+proc record_header {defs} {
+    upvar __rec_header hdr
+    set hdr $defs
+}
+proc record_cons {defs} {
+    upvar __rec_cons cons
+    set cons $defs
+}
+
+# append new field to current list of fields
+proc field {name value} {
+    
+    # check if field name is a valid variable name
+    if {[llength $name] != 1} {
+	exit_msg "db: invalid field name $name"
+    }
+
+    # set variable with name of field
+    upvar $name v
+    set v $value
+
+    # don't store the same field name twice!
+    upvar therecord fields
+    set x [lsearch -glob $fields "$name *"]
+    if {$x != -1} {
+	set fields [lreplace $fields $x $x [list $name $value]]
+    } else {
+	lappend fields [list $name $value]
+    }
+}
+
+# function for comparing two records using some ASCII sorting key
+proc sort_function {__recA __recB} {
+    upvar 2 __sort_expr __expr
+    # evaluate the sorting expression for both records
+    set __A [with_record_do $__recA {return [expr $__expr]}]
+    set __B [with_record_do $__recB {return [expr $__expr]}]
+    # return ASCII comparison value
+    return [string compare $__A $__B]
+}
+
+# return value of given field
+proc value {rec fieldname} {
+    foreach f $rec {
+	if {[lindex $f 0] eq $fieldname} {
+	    return [lindex $f 1]
+	}
+    }
+    return {}
+}
+
+###########################################################################
+#
+# create/handle databases for LaTeX (db.sty)
+#
+###########################################################################
+
+# convert special LaTeX characters to ASCII for sorting stuff
+proc tex2ascii {txt} {
+    regsub -all \"a $txt ae txt
+    regsub -all \"o $txt oe txt
+    regsub -all \"u $txt ue txt
+    regsub -all \"A $txt Ae txt
+    regsub -all \"O $txt Oe txt
+    regsub -all \"U $txt Ue txt
+    regsub -all \"s $txt ss txt
+    regsub -all \3  $txt ss txt
+    return $txt
+}
+
+# remove non-alphabetic characters from string in order to obtain a valid 
+#  LaTeX command name
+proc texkey {str} {
+    regsub -all {[^a-z,A-Z]} $str {} str
+    return $str
+}
+
+# read a database file and convert it to LaTeX definitions
+proc gen_texdb {texname dbname sort_key match_expr} {
+
+    # read file, select, sort
+    set db [sort [select [read $dbname] $match_expr] $sort_key]
+
+    # create LaTeX file
+    set f [open $texname w]
+
+    # output record definitions in LaTeX format
+    foreach record $db {
+
+	puts $f "\\def\\dbRecordX[value $record key]\{%"
+	foreach field $record {
+	    puts $f "  \\def\\[lindex $field 0]\{[lindex $field 1]\}%"
+	}
+	puts $f "\}%"
+    
+    }
+
+    # output list in ascending order
+    puts $f "%\n\\def\\AscendingRecordList\{%"
+    foreach record $db {
+	puts $f "  \\dbRecord\{[value $record key]\}%"
+    }
+    puts $f "\}%\n%"
+
+    # output list in descending order
+    set db [sort $db $sort_key decreasing]
+    puts $f "%\n\\def\\DescendingRecordList\{%"
+    foreach record $db {
+	puts $f "  \\dbRecord\{[value $record key]\}%"
+    }
+    puts $f "\}%\n%"
+
+    # close file
+    close $f
+}

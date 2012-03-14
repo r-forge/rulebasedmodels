@@ -1,0 +1,14 @@
+#! /bin/env tclsh
+
+source [file join [file dirname [info script]] common.tcl]
+
+namespace eval ::tmk::test {
+
+	test env_cc {test for env(CC)} -setup  {
+		set mywd [setup1 env_cc]
+	} -body {
+		exec {*}$env(TMK)
+	} -match glob -result {*c compiler: tclsh*c executable: *tclsh*}
+
+	cleanupTests
+}
