@@ -3,7 +3,7 @@ Type: Package
 Title: C5.0 Decision Trees
 Version: 0.0.2
 Date: 2012-01-16
-Author: Max Kuhn, Steve Weston. C code for Cubist by R. Quinlan 
+Author: Max Kuhn, Steve Weston. C code for C5.0 by R. Quinlan 
 Maintainer: Max Kuhn <mxkuhn@gmail.com>
 Description: C5.0 decision trees for pattern recognition
 Depends: lattice, reshape2
