@@ -51,7 +51,14 @@ rulebasedmodels.{c,h}
 
     Defines:
         initglobals
+            Initializes global variables defined in globals.c and
+            declared in externals.h.  This is called at the beginning
+            of the C cubist function in top.c.  It's also called at the
+            end of the cubist function, but that isn't strictly
+            necessary.
         setglobals
+            Set global variables defined in globals.c based on arguments
+            passed by R to the cubist function
         setOf
             -> rbm_fopen
         closeOf
