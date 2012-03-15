@@ -1,0 +1,90 @@
+#! /bin/env tclsh
+
+# Copyright (C) 2011-2012, Nathan Coulter and others 
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 2 of the License.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+module critcl
+
+proc header_cmd {args} {
+}
+
+proc check_unistd_h {} {
+	set res [check_header unistd.h]
+	if {$res} {
+		lappend ::c::FLAGS -DHAVE_UNISTD_H
+		lappend ::cxx::FLAGS -DHAVE_UNISTD_H
+	}
+	return $res
+}
+
+proc check_header {name} {
+    if 0 {
+	description {
+	    does header $name exist on system?
+	}
+	value {
+	    -1 {unknown}
+	    0 {false}
+	    1 {true}
+	}
+    }
+    set script {
+	@includes@
+	int func1 () {
+	}
+    }
+    log_msg "Checking for $name..."
+    set includes "#include <$name>"
+    set script [string map [list @includes@ $includes] $script]
+    set res [::critcl::check $script]
+    if {$res == 0} {
+	log_msg "not found: $name"
+    }
+    return $res
+}
+
+proc check_linkflags {flags} {
+    if 0 {
+	description {
+	    do $options work for linker?
+	    value {
+		    -1 {unknown}
+		    0 {false}
+		    1 {true}
+	    }
+	}
+    }
+    set script {
+	int func1 () {
+	}
+    }
+    if {[info exists ::link::LDFLAGS]} {
+	set ldflags_save $::link::LDFLAGS
+    }
+    lappend ::link::LDFLAGS {*}$flags
+    log_msg "Checking for link flags: $flags"
+    set res [::critcl::checklink $script]
+    if {[info exists ldflags_save]} {
+	set ::link::LDFLAGS $ldflags_save
+    }
+    if {$res == 0} {
+	log_msg "link failed with flags: $flags"
+    }
+    return $res
+}
+
+check_unistd_h
+if {[check_linkflags -header_max_install_names]} {
+    lappend ::link::LDFLAGS -header_max_install_names
+}

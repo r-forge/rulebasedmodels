@@ -1,0 +1,122 @@
+# -*-Mode: tcl -*-
+
+# ===========================================================================
+# qt4.tmk: tmk module for supporting qt4 precompilation with "moc"
+# Copyright (C) 1999-2005 by Hartmut Schirmacher, Stefan Brabec
+#               2006      by Hitoshi Yamauchi for qt4
+# ===========================================================================
+# $Id: qt4.tmk,v 1.2 2007/08/31 08:16:06 cfuchs_sf Exp $
+# ===========================================================================
+
+module {cxx grep}
+
+# don't do uic compilation by default
+set_ifndef ::qt4::AUTO_UIC 0
+
+# options for the precompiler
+set_ifndef MOCFLAGS [list -p [pwd]]
+
+# which files to search for the "QT_OBJECT" keyword
+set_ifndef HDR {*.h *.hh *.H *.hpp *.hxx *.h++}
+
+# where is what?
+eval_later {
+    ifdef ::qt4::DIR {
+	# set MOC and lib/include path dependent on qt4::DIR
+	set_ifndef ::qt4::MOC ${::qt4::DIR}/bin/moc-qt4
+	ifdef ::qt4::INCPATH {} {
+	    lappend ::cxx::FLAGS -I[file nativename $::qt4::DIR/include]
+	}
+	ifdef ::qt4::LIBPATH {} {
+	    lappend ::link::LIBPATH $::qt4::DIR/lib
+	}
+    } {
+	catch {set_ifndef ::qt4::MOC [exec which moc]}
+    }
+}
+
+# generate target for creating a C++ file (.moc.C) from qt4 header file
+# returns target name
+proc make_moc_C {header {target {}}} {
+
+    set troot [file rootname $header]
+    if {$target eq {}} {
+	set target $troot.moc.cc
+    }
+    target $target $header {
+	set cmd [list [file nativename $::qt4::MOC]]
+	lappend cmd {*}$::qt4::MOCFLAGS -o $TARGET $SRC]
+	eval cmd $cmd
+    }
+    return $target
+
+}
+
+# ==========================================================================
+# auto-detect files to be moc'd
+# ==========================================================================
+
+eval_later {
+
+    # only ``moc'' files that contain the Q_OBJECT keyword
+    set_ifndef PATTERNS [grep --files Q_OBJECT \
+	    [eval glob -nocomplain $HDR]]
+
+    # loop over all possible extensions
+    foreach pat $PATTERNS {
+	
+	# get all matching source files and generate targets
+	foreach file [glob -nocomplain $pat] {
+	    ::cxx::make_obj [::qt4::make_moc_C $file]
+	}
+    }
+}
+
+# ==========================================================================
+# auto-detect files to be uic'd (qt4 designer)
+# - stefan
+#
+# Well, yet another quick hack (I hope everything's right :-)
+# We first check for all files *.ui and then generate
+# targets for the header file and the implementation
+# implementation is passed to cxx, header file to moc
+# we also append -I$ARCH so that the user's source files can
+# simply include the generated headers.
+# ==========================================================================
+
+eval_later {
+    if $::qt4::AUTO_UIC {
+	# set UIC dependent on qt4::DIR
+	set_ifndef ::qt4::UIC ${::qt4::DIR}/bin/uic
+	if $USE_ARCH {
+	    lappend cxx::FLAGS -I$ARCH
+	}
+	# loop over all .ui
+	foreach uicfile [glob -nocomplain *.ui] {
+	    target [file rootname $uicfile].h $uicfile {
+		cmd ${::qt4::UIC} -o $TARGET $SRC
+	    }
+	    target [file rootname $uicfile].C $uicfile {
+		cmd ${::qt4::UIC} -o $TARGET -impl [file rootname $SRC].h $SRC
+	    }
+	    depend [file rootname $uicfile].C [file rootname $uicfile].h
+	    cxx::make_obj [file rootname $uicfile].C
+	    ::cxx::make_obj [::qt4::make_moc_C [file rootname $uicfile].h]
+	}
+    }
+}
+
+#
+# if qt module is still used. It is dagerouns to mix them up.
+#
+eval_later {
+
+    if {[lsearch $MODULES qt] >= 0} {
+	puts stderr \n
+	puts stderr "qt4.tmk:----- Warning! -----"
+	puts stderr "qt4.tmk: old qt module (for Qt3) is detected. "
+	puts stderr "qt4.tmk: Mixing up qt module and qt4 module may cause nasty problem."
+	puts stderr "qt4.tmk: remove module qt or qt::mt module from TMakefile."
+	puts stderr "\n"
+    }
+}

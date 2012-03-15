@@ -1,0 +1,39 @@
+#!/bin/sh
+# -*-Mode: tcl -*-
+#\
+exec ${TMK_TCLSH:=tclsh} "$0" "$@"
+
+# fix a bug in old .libspec files, 
+#   or revert that change with -unfix as first argument
+
+proc convert {file} {
+    set txt [exec cat $file]
+
+    if $::UNFIX {
+	set new {::link::libspec create $libpath $syslibs $projlibs $options}
+	set old {::link::libspec create \\\{\$libpath\\\} \\\{\$syslibs\\\} \\\{\$projlibs\\\} \\\{\$options\\\}}
+    } else {
+	set old {::link::libspec create \$libpath \$syslibs \$projlibs \$options}
+	set new {::link::libspec create \{$libpath\} \{$syslibs\} \{$projlibs\} \{$options\}}
+    }
+
+    if [regsub $old $txt $new txt] {
+	puts "fixing $file"
+	set f [open $file "w"]
+	puts $f $txt
+	close $f
+    } else {
+	puts "leaving $file unchanged"
+    }
+}
+
+if {[lindex $argv 0] == "-unfix"} {
+    set argv [lrange $argv 1 end]
+    set UNFIX 1
+} else {
+    set UNFIX 0
+}
+
+foreach file $argv {convert $file}
+
+

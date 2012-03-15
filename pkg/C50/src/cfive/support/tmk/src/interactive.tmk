@@ -1,0 +1,54 @@
+# =========================================================================
+# Copyright (C) 1999,2000  Hartmut Schirmacher, Stefan Brabec
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (LICENSE.TXT); if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# ===========================================================================
+# $Id: interactive.tmk,v 1.1 2000/07/20 16:15:59 htschirm Exp $
+# tmk's interactive mode 
+# ===========================================================================
+# $Log: interactive.tmk,v $
+# Revision 1.1  2000/07/20 16:15:59  htschirm
+# towards tmk release 0.9
+#
+# ===========================================================================
+
+uplevel \#0 {
+    set __icmd {}
+    while {![eof stdin]} {
+	if {$__icmd != {}} {
+	    puts -nonewline stdout "> "
+	} else {
+	    puts -nonewline stdout "tmk> "
+	}
+	flush stdout
+	gets stdin __cmdline
+	append __icmd $__cmdline
+	if [info complete $__icmd] {
+	    if [catch $__icmd msg] {
+		puts stderr $msg
+	    } else {
+		if {$msg != ""} {
+		    puts $msg
+		}
+	    }
+	    set __icmd {}
+	}
+    }
+    if {$__icmd == {}} {
+	log_msg "leaving tmk's interactive mode (end-of-file)"
+    } else {
+	log_msg "end-of-file before command was completed!"
+    }
+}
