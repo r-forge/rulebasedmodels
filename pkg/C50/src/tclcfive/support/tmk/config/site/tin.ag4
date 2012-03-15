@@ -1,8 +1,0 @@
-
-
-
-namespace eval cgal {
-    config set INCPATH { /HPS/usr/brabec/Projects/CGAL/include/CGAL/config/i686_Linux-2.4.19-16mdk_g++-3.2.0/ /HPS/usr/brabec/Projects/CGAL/include }
-    config set LIBPATH /HPS/usr/brabec/Projects/CGAL/lib/i686_Linux-2.4.19-16mdk_g++-3.2.0
-    config set LIBS { CGAL }
-}

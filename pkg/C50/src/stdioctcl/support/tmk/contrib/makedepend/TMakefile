@@ -1,6 +1,0 @@
-
-
-module cxx
-lappend CFLAGS -DOBJSUFFIX=\"[FileName_StaticObj "" ]\"  
-set PROGRAMS mkdep 
-
