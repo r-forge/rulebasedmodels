@@ -1,0 +1,90 @@
+# ==========================================================================
+# $Id: qtresexpand.tmk,v 1.4 2005/11/01 15:39:56 yamauchih Exp $
+# qtresexpand module
+# ==========================================================================
+# Copyright (C) 2005 Yamauchi Hitoshi
+#
+#   Max-Planck-Institut fuer Informatik
+#   Stuhlsatzenhausweg 85, 66123 Saarbruecken
+#   http://www.mpi-sb.mpg.de/
+#
+# ==========================================================================
+# $Revision: 1.4 $
+# $Date: 2005/11/01 15:39:56 $
+# $Author: yamauchih $
+# ==========================================================================
+
+# for qtresexpand module
+namespace eval ::qtresexpand {}
+
+#------------------------------------------------------------
+# module options (user can define in TMakefile)
+#------------------------------------------------------------
+set_ifndef ::qtresexpand::EXCLUDE           {}
+set_ifndef ::qtresexpand::FLAGS             {}
+
+# ------------------------------------------------------------
+# module main
+# ------------------------------------------------------------
+# [eval exec which $_executablename]
+
+# find ruby.
+catch {set ::qtresexpand::RUBYEXE [exec which ruby]}
+if {![info exists ::qtresexpand::RUBYEXE]} {
+    log_msg "Can not find `ruby' executable. qtresexpand.rb needs ruby."
+    set ::qtresexpand::QTRESEXPAND true
+}
+
+# if not specified QTRESEXPAND, try to find in path or in base project dir.
+if {![info exists ::qtresexpand::QTRESEXPAND]} {
+    catch {variable ::qtresexpand::QTRESEXPAND [exec which qtresexpand.rb]}
+}
+
+if {![info exists ::qtresexpand::QTRESEXPAND]} {
+    # when which is failed, try to find the base dir
+    set __qtresbasepath $PROJROOT/base/QtWidgets/qtresexpand.rb
+    if {[file exists $__qtresbasepath]} {
+	if {[file executable $__qtresbasepath]} {
+	    set ::qtresexpand::QTRESEXPAND $__qtresbasepath
+	    # log_msg "configure ::qtresexpand::QTRESEXPAND $::qtresexpand::QTRESEXPAND."
+	}
+    }
+}
+
+eval_later {
+    # when fail to which...
+    if {![info exists ::qtresexpand::QTRESEXPAND]} {	
+	log_msg "Can not find `qtresexpand.rb', plese configure QTRESEXPAND."
+	set ::qtresexpand::QTRESEXPAND true
+    }
+    # make sure it is executable.
+    if {![file executable $::qtresexpand::QTRESEXPAND]} {
+	log_msg "non executable `qtresexpand.rb', plese configure QTRESEXPAND."
+	set ::qtresexpand::QTRESEXPAND true
+    }
+}
+
+#
+# detect source files
+#
+set ::qtresexpand::QTRESINFILES [glob -nocomplain *.qtres.in]
+
+#
+# read module and TMakefile, then next is evaluated. Otherwise,
+# EXCULDE, which is in TMakefile, does not detected.
+#
+eval_later {
+    set ::qtresexpand::QTRESINFILES [lminus $::qtresexpand::QTRESINFILES $::qtresexpand::EXCLUDE]
+    # puts "EXCLUDE = $::qtresexpand::EXCLUDE"
+    # puts "EXCLUDEED = $::qtresexpand::QTRESINFILES"
+
+    foreach qtresin $::qtresexpand::QTRESINFILES {
+
+	set qtresout [file rootname $qtresin]
+	# puts $qtresout
+	target $qtresout $qtresin {
+	    eval cmd [list $::qtresexpand::QTRESEXPAND] $::qtresexpand::FLAGS [list $SRC] -o $TAIL
+	}
+	build $qtresout
+    }
+}

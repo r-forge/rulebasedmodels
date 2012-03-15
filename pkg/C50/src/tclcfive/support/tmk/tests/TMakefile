@@ -1,0 +1,7 @@
+#! /bin/env tclsh
+
+exception test {} {
+	set env(TMK) $::TMK
+	set env(ARCH) $ARCH
+	exec [info nameofexecutable] all.tcl >@stdout 2>@stderr
+}

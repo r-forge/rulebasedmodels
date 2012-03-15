@@ -1,0 +1,28 @@
+# ===========================================================================
+# $Id: macintosh.tmk,v 1.1 2000/08/01 14:45:50 htschirm Exp $
+# standard configuration for all Macintosh systems
+# ===========================================================================
+
+config proc ::filename_lib    {shortname} {return "lib${shortname}.a"}
+config proc ::filename_shlib  {shortname} {return "lib${shortname}.so"}
+config proc ::filename_obj    {shortname} {return "${shortname}.o"}
+config proc ::filename_shobj  {shortname} {return "${shortname}.so"}
+config proc ::filename_exe    {shortname} {return "${shortname}"}
+
+# ====================================================================
+# determine directory for temporary system files
+#   this is just stolen from unix -- how does it work for macintosh?
+# ====================================================================
+
+config set ::TMPDIR [file join ${::tmk::PrivDir} tmp]
+foreach x {/usr/tmp /var/tmp /tmp} {
+    if [file isdirectory $x] {
+	config set ::TMPDIR $x 
+	break
+    }
+}
+if {![file exists $::TMPDIR]} {
+    if {![catch {file mkdir -force $::TMPDIR} msg]} {
+	dbg_msg "could not create temporary directory:\n  $msg"
+    }
+}

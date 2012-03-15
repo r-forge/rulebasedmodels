@@ -1,0 +1,44 @@
+% package for outputting formatted database records
+% by Hartmut Schirmacher
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% user commands 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% specify the database 
+\def\dbFile#1{\input{#1.db}}
+
+% set the format for outputting the records of a database
+\long\def\dbRecordFormat#1{\long\def\@OutputFormattedRecord{#1}}
+
+% output a single record
+\def\dbRecord#1{{%
+    \def\recname{#1}\relax
+    \edef\varname{dbRecordX\recname}\relax
+    \@ifundefined{\varname}{\relax
+      \@latex@warning{(db.sty) record [\recname] not found}}{\relax
+      \csname dbRecordX\recname\endcsname\relax
+      \@OutputFormattedRecord\relax
+      }}}
+
+% output list of records in ascending order
+\def\dbAscendingList{\AscendingRecordList}
+
+% output list of records in descending order
+\def\dbDescendingList{\DescendingRecordList}
+
+% default output format
+\def\@OutputFormattedRecord{\relax
+  \@latex@warning{(db.sty) must use dbRecordFormat before using any
+    record data}}
+
+% output something depending of whether a field is empty or not
+\long\def\dbifempty#1#2#3{\relax
+  \def\fieldname{#1}
+  \def\content{\csname #1\endcsname}\relax
+  \if\content\empty\relax#2\else{}#3\fi\relax
+}
+    
+
+

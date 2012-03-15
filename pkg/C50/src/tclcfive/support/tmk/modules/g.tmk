@@ -1,0 +1,104 @@
+# -*-Mode: tcl -*-
+
+# =============================================================================
+# g.tmk: tmk module for supporting pccts parsers
+# (C)opyright 1999 by Hartmut Schirmacher (hartmut@acm.org)
+# =============================================================================
+# $Id: g.tmk,v 1.18 2000/09/14 15:33:31 ag4-adm Exp $
+# =============================================================================
+# $Log: g.tmk,v $
+# Revision 1.18  2000/09/14 15:33:31  ag4-adm
+# fixed g.tmk for new cmd structure
+#
+# Revision 1.17  2000/08/04 12:11:14  ag4-adm
+# converting AG4 proj
+#
+# Revision 1.16  2000/08/01 14:23:44  brabec
+# fixed for new tmk
+#
+# Revision 1.15  2000/08/01 12:41:21  brabec
+# fixed g and dlg
+#
+# Revision 1.14  2000/04/25 10:08:41  brabec
+# C -> cxx
+#
+# Revision 1.13  2000/04/22 16:23:36  htschirm
+# new names for user-visible function
+#
+# Revision 1.12  2000/04/20 11:38:00  htschirm
+# lots of new names
+#
+# Revision 1.11  1999/10/03 11:58:58  brabec
+# fixed bug in find_in_pathlist (list of patterns)
+#
+# =============================================================================
+# default values for some variables; should only be set if variable does not
+#   already exist
+# =============================================================================
+
+# force loading of 
+module cxx
+module dlg
+
+# -mrhoist off
+set_ifndef PCCTS              /HPS/opt/pckg/pccts133mr
+set_ifndef ANTLRFLAGS         {-gl -CC -mrhoist off}
+set_ifndef ANTLR_GRAMMARS     {.g }
+set_ifndef ANTLR              $PCCTS/bin/antlr
+set_ifndef ANTLR_H            $PCCTS/h
+set_ifndef ANTLR_LEXER_NAME   DLGLexer
+
+eval_later {
+    lappend cxx::FLAGS -I$g::ANTLR_H
+    if $USE_ARCH {
+	lappend cxx::FLAGS -I$ARCH
+    } else {
+	lappend cxx::FLAGS -I.
+    }
+}
+
+# =============================================================================
+# auto targets & dependencies
+# only generate rules for the extensions which have been found
+# =============================================================================
+
+# loop over all possible extensions
+foreach ext $g::ANTLR_GRAMMARS {
+    
+    # get all matching source files
+    set src [glob -nocomplain *$ext]
+   
+    if {[ llength $src ] > 1} {
+	exit_msg "sorry, multiple grammar files not supported yet:\n   ($src)"
+    }
+
+    foreach file $src {
+	
+	set groot [file rootname $file]
+
+	target $groot.cpp $file {
+	    # generate rule, register targets
+	    eval [list cmd $g::ANTLR] $g::ANTLRFLAGS [list -o $ARCH -fl $g::ANTLR_LEXER_NAME.dlg $SRC]
+	    
+	}
+ 	target $g::ANTLR_LEXER_NAME.dlg $file {
+ 	    # generate rule, register targets
+ 	    eval [list cmd $::g::ANTLR] $g::ANTLRFLAGS [list -o $ARCH -fl $g::ANTLR_LEXER_NAME.dlg $SRC]
+ 	}
+
+	if {[info exists ANTLR_PARSER_CLASS] == 0} {
+	    exit_msg "class variable \$g::ANTLR_PARSER_CLASS not set !"
+	} else {
+	    target $g::ANTLR_PARSER_CLASS.cpp $file {
+		# generate rule, register targets
+		eval [list cmd $g::ANTLR] $g::ANTLRFLAGS [list -o $ARCH -fl $g::ANTLR_LEXER_NAME.dlg $SRC]
+	    }
+	    cxx::make_obj ${g::ANTLR_PARSER_CLASS}.cpp
+	}
+
+ 	depend $groot.o $g::ANTLR_LEXER_NAME.cpp
+	depend $g::ANTLR_PARSER_CLASS.o $g::ANTLR_LEXER_NAME.cpp
+	cxx::make_obj $groot.cpp
+	cxx::make_obj ${g::ANTLR_LEXER_NAME}.cpp
+    }
+}
