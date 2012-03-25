@@ -151,3 +151,25 @@ transform.h and redefine.h to avoid writing to files, etc.
     update.c
     utility.c
     xval.c
+
+------------------------------------------------------------------------
+
+Registering "files":
+
+The rbm_register function is called from c50 as a way of simulating file
+creation.  Then, when the C5.0 code opens a file, it finds it.  The
+files are actually pointers to STRBUF structs, and rbm_register saves
+these pointers in the static variable strbufv, which is a hash table
+that is defined in redefine.c and initialized by rbm_init.  It does that
+by calling:
+
+    ht_setvoid(strbufv, filename, sb);
+
+You could verify that a STRBUF has been added to the hash table by
+executing:
+
+    ht_lookup(strbufv, filename);
+
+which should return the STRBUF associated with that name.  For example:
+
+    (gdb) call ht_lookup(strbufv, "undefined.names")
