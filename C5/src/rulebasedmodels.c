@@ -203,11 +203,24 @@ void initglobals(void)
  * Set global variables in preparation for creating a model
  */
 void setglobals(int subset, int rules, int bands, int trials, int winnow,
-                double sample, int seed, int noGlobalPruning, double CF,
+                double sample, int seed, int noGlobalPruning, double cf,
                 int minCases, int fuzzyThreshold)
 {
     // XXX TODO
     Rprintf("setglobals not implemented yet\n");
+
+    SUBSET = subset != 0 ? true : false;                     /* Logical */
+    RULES = rules != 0 ? true : false;                       /* Logical */
+    // BANDS = bands;                                        /* Int */
+    TRIALS = trials;                                         /* Int */
+    WINNOW = winnow != 0 ? true : false;                     /* Logical */
+    SAMPLE = sample;                                         /* Real */
+    KRInit = seed;                                           /* Int */
+    // NOGLOBALPRUNING = noGlobalPruning;                    /* Int */
+    CF = cf;                                                 /* Real */
+    // XXX Does minCases get assigned to MINITEMS?
+    // MINCASES = minCases;                                  /* Int */
+    // FUZZYTHRESHOLD = fuzzyThreshold != 0 ? true : false;  /* Logical */
 }
 
 void setOf()
