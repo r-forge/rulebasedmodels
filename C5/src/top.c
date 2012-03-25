@@ -78,30 +78,34 @@ static void c50(char **namesv,
 
         Rprintf("c50main finished\n");
 
-        // Get the contents of the the tree file
-        STRBUF *treebuf = rbm_lookup("undefined.tree");
-        if (treebuf != NULL) {
-            char *treeString = strbuf_getall(treebuf);
-            char *tree = R_alloc(strlen(treeString) + 1, 1);
-            strcpy(tree, treeString);
+        if (*rules == 0) {
+            // Get the contents of the the tree file
+            STRBUF *treebuf = rbm_lookup("undefined.tree");
+            if (treebuf != NULL) {
+                char *treeString = strbuf_getall(treebuf);
+                char *treeObj = R_alloc(strlen(treeString) + 1, 1);
+                strcpy(treeObj, treeString);
 
-            // I think the previous value of *treev will be garbage collected
-            *treev = tree;
+                // I think the previous value of *treev will be garbage collected
+                *treev = treeObj;
+            } else {
+                // XXX Should *treev be assigned something in this case?
+                // XXX Throw an error?
+            }
         } else {
-            // XXX Should *treev be assigned something in this case?
-        }
+            // Get the contents of the the rules file
+            STRBUF *rulesbuf = rbm_lookup("undefined.rules");
+            if (rulesbuf != NULL) {
+                char *rulesString = strbuf_getall(rulesbuf);
+                char *rulesObj = R_alloc(strlen(rulesString) + 1, 1);
+                strcpy(rulesObj, rulesString);
 
-        // Get the contents of the the rules file
-        STRBUF *rulesbuf = rbm_lookup("undefined.rules");
-        if (rulesbuf != NULL) {
-            char *rulesString = strbuf_getall(rulesbuf);
-            char *rules = R_alloc(strlen(rulesString) + 1, 1);
-            strcpy(rules, rulesString);
-
-            // I think the previous value of *rulesv will be garbage collected
-            *rulesv = rules;
-        } else {
-            // XXX Should *rulesv be assigned something in this case?
+                // I think the previous value of *rulesv will be garbage collected
+                *rulesv = rulesObj;
+            } else {
+                // XXX Should *rulesv be assigned something in this case?
+                // XXX Throw an error?
+            }
         }
     } else {
         Rprintf("c50 code called exit with value %d\n", val - JMP_OFFSET);
