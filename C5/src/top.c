@@ -123,9 +123,9 @@ static void c50(char **namesv,
 
 static void predictions(char **casev,
                         char **namesv,
-                        char **datav,
-                        char **modelv,
-                        double *predv,
+                        char **treev,
+                        char **rulesv,
+                        double *predv,  /* XXX predictions are character */
                         char **outputv)
 {
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
@@ -149,13 +149,13 @@ static void predictions(char **casev,
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
     rbm_register(sb_names, "undefined.names", 1);
 
-    STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
-    /* XXX why is sb_datav copied? */
-    rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
+    STRBUF *sb_treev = strbuf_create_full(*treev, strlen(*treev));
+    /* XXX should sb_treev be copied? */
+    rbm_register(sb_treev, "undefined.tree", 1);
 
-    STRBUF *sb_modelv = strbuf_create_full(*modelv, strlen(*modelv));
-    /* XXX should sb_modelv be copied? */
-    rbm_register(sb_modelv, "undefined.model", 1);
+    STRBUF *sb_rulesv = strbuf_create_full(*rulesv, strlen(*rulesv));
+    /* XXX should sb_rulesv be copied? */
+    rbm_register(sb_rulesv, "undefined.rules", 1);
 
     /*
      * We need to initialize rbm_buf before calling any code that
@@ -202,21 +202,19 @@ static R_NativePrimitiveArgType c50_t[] = {
     STRSXP    // outputv
 };
 
-// Declare the type of each of the arguments to the c50 function
-// XXX Using the cubist version of predictions still
+// Declare the type of each of the arguments to the predictions function
 static R_NativePrimitiveArgType predictions_t[] = {
     STRSXP,   // casev
     STRSXP,   // namesv
-    STRSXP,   // datav
-    STRSXP,   // modelv
+    STRSXP,   // treev
+    STRSXP,   // rulesv
     REALSXP,  // predv
     STRSXP    // outputv
 };
 
-// Declare the c50 function
+// Declare the c50 and predictions functions
 static const R_CMethodDef cEntries[] = {
     {"C50", (DL_FUNC) &c50, 17, c50_t},
-    // XXX Not converted yet
     {"predictions", (DL_FUNC) &predictions, 6, predictions_t},
     {NULL, NULL, 0}
 };
@@ -233,7 +231,7 @@ void R_init_C50(DllInfo *dll)
     // This should help prevent people from accidentally accessing
     // any of our global variables, or any functions that are not
     // intended to be called from R.  Only the functions "c50"
-    // and predictions  can be accessed, since they're the only ones
+    // and "predictions" can be accessed, since they're the only ones
     // we registered.
     R_useDynamicSymbols(dll, FALSE);
 }

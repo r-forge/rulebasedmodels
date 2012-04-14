@@ -65,6 +65,13 @@ extern void FreeGlobals();
 /*									 */
 /*************************************************************************/
 
+/*
+ * XXX This needs to be modified to put the predicted values
+ * into the outputv array rather than writing them to stdout.
+ * Also, the predictions should be character, not numeric as in Cubist,
+ * so the declaration of outputv is wrong.
+ */
+
 int samplemain(double *outputv)
 /*  ----  */
 {
@@ -115,11 +122,6 @@ int samplemain(double *outputv)
 	}
     }
 
-    /*  Close the classifier file and reset the file variable  */
-    
-    fclose(TRf);
-    TRf = 0;
-
     /*  Set global default class for boosting  */
 
     Default = ( RULES ? RuleSet[0]->SDefault : Pruned[0]->Leaf );
@@ -135,18 +137,18 @@ int samplemain(double *outputv)
 	    if ( (o = strlen(ClassName[c])) > MaxClassLen ) MaxClassLen = o;
 	}
 
-	printf("%-15s %*s   [Predicted]%s\n\n",
-	       "Case", -MaxClassLen, "Class",
-	       ( RULESUSED ? "   Rules" : "" ));
+//	printf("%-15s %*s   [Predicted]%s\n\n",
+//	       "Case", -MaxClassLen, "Class",
+//	       ( RULESUSED ? "   Rules" : "" ));
 
 	StartList = 16 + MaxClassLen + 3 +
 		    ( MaxClassLen > 9 ? MaxClassLen + 2 : 11 ) + 3;
     }
     else
     {
-	printf("Case\t\tGiven\t\tPredicted%s\n %s\t\tClass\t\tClass\n\n",
-		( RULESUSED ? "\t\t    Rules" : "" ),
-		( LabelAtt ? "ID" : "No" ));
+//	printf("Case\t\tGiven\t\tPredicted%s\n %s\t\tClass\t\tClass\n\n",
+//		( RULESUSED ? "\t\t    Rules" : "" ),
+//		( LabelAtt ? "ID" : "No" ));
 
 	StartList = 60;
     }
@@ -164,40 +166,42 @@ int samplemain(double *outputv)
 
 	Predict = Classify(Case);
 
+        /* XXX prediction is ClassName[Predict]? */
+
 	/*  Print either case label or number  */
 
-	if ( LabelAtt )
-	{
-	    printf("%-15.15s ", (String) (IgnoredVals + SVal(Case,LabelAtt)));
-	}
-	else
-	{
-	    printf("%4d\t\t", ++CaseNo);
-	}
-
+//      if ( LabelAtt )
+//      {
+//          printf("%-15.15s ", (String) (IgnoredVals + SVal(Case,LabelAtt)));
+//      }
+//      else
+//      {
+//          printf("%4d\t\t", ++CaseNo);
+//      }
+//
 	/*  Print the result for this case in alternative formats  */
+//
+//      if ( XRefForm )
+//      {
+//          printf("%*s", -MaxClassLen, ClassName[Class(Case)]);
+//          CurrentPosition = 16 + MaxClassLen;
+//
+//          if ( Class(Case) != Predict )
+//          {
+// 		printf("   [%s]", ClassName[Predict]);
+// 		CurrentPosition += 5 + strlen(ClassName[Predict]);
+// 	    }
+// 	}
+// 	else
+// 	{
+// 	    printf("%-15.15s %-15.15s [%.2f]",
+// 		    ClassName[Class(Case)], ClassName[Predict], Confidence);
+// 	    CurrentPosition = 54;
+// 	}
 
-	if ( XRefForm )
-	{
-	    printf("%*s", -MaxClassLen, ClassName[Class(Case)]);
-	    CurrentPosition = 16 + MaxClassLen;
+// 	if ( RULESUSED ) ShowRules(StartList - CurrentPosition);
 
-	    if ( Class(Case) != Predict )
-	    {
-		printf("   [%s]", ClassName[Predict]);
-		CurrentPosition += 5 + strlen(ClassName[Predict]);
-	    }
-	}
-	else
-	{
-	    printf("%-15.15s %-15.15s [%.2f]",
-		    ClassName[Class(Case)], ClassName[Predict], Confidence);
-	    CurrentPosition = 54;
-	}
-
-	if ( RULESUSED ) ShowRules(StartList - CurrentPosition);
-
-	printf("\n");
+// 	printf("\n");
 
 	/*  Free the memory used by this case  */
 
@@ -206,7 +210,6 @@ int samplemain(double *outputv)
 
     /*  Close the case file and free allocated memory  */
     
-    fclose(F);
     FreeGlobals();
     
     return 0;

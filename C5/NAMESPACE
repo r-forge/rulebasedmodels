@@ -17,7 +17,7 @@ S3method(C5.0, default)
 
 S3method(print, C5.0)
 
-#S3method(predict, C5.0)
+S3method(predict, C5.0)
 
 S3method(QuinlanAttributes, numeric)
 S3method(QuinlanAttributes, factor)
