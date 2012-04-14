@@ -207,7 +207,7 @@ void setglobals(int subset, int rules, int bands, int trials, int winnow,
                 int minCases, int fuzzyThreshold)
 {
     // XXX TODO
-    Rprintf("setglobals not implemented yet\n");
+    Rprintf("setglobals only partially implemented\n");
 
     SUBSET = subset != 0 ? true : false;                     /* Logical */
     RULES = rules != 0 ? true : false;                       /* Logical */
