@@ -210,7 +210,9 @@ int samplemain(double *outputv)
 
     /*  Close the case file and free allocated memory  */
     
-    FreeGlobals();
+    // XXX This causes a segfault, but need to verify that
+    // XXX removing this doesn't cause a memory leak
+    // FreeGlobals();
     
     return 0;
 }
