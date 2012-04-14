@@ -160,7 +160,7 @@ int samplemain(double *outputv)
 
     LineNo = 0;
 
-    while ( (Case = GetDataRec(F, false)) )
+    while ( (Case = GetDataRecAlt(F, false)) )
     {
 	/*  For this case, find the class predicted by See5/C5.0 model  */
 
