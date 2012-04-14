@@ -5,7 +5,8 @@ predict.C5.0 <- function (object, newdata = NULL, ...)
   if(is.null(newdata)) stop("newdata must be non-null")
   
   ## check order of data to make sure that it is the same
-  newdata <- newdata[, object$vars$all,drop = FALSE]
+  ## XXX Not implemented yet
+  # newdata <- newdata[, object$vars$all,drop = FALSE]
 
 
   ## make cases file
