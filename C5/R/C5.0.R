@@ -88,12 +88,15 @@ C5.0.default <- function(x, y,
   out <- list(data = dataString,
               names = namesString,
               cost = costString,
+              costMatrix = costs,
               caseWeights = !is.null(weights),
               control = control,
               trials = trials,
               costs = costs,
               dims = dim(x),
               call = funcCall,
+              levels = levels(y),
+              output = Z$output,
               tree = Z$tree,
               rules = Z$rules)
 
@@ -177,19 +180,6 @@ print.C5.0 <- function(x, ...)
         cat("Cost Matrix:\n")
         print(x$cost)
       }    
-
-    if (!is.null(x$tree))
-      {
-        cat("Tree:\n")
-        cat(x$tree, "\n", sep="")
-      }
-
-    if (!is.null(x$rules))
-      {
-        cat("Rules:\n")
-        cat(x$rules, "\n", sep="")
-      }
-
     cat("\n")
   }
 
