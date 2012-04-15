@@ -175,11 +175,22 @@ print.C5.0 <- function(x, ...)
       }
     
 
-    if(!is.null(x$cost) || x$costs == "")
+    if(!is.null(x$cost) || x$costs != "")
       {
         cat("Cost Matrix:\n")
         print(x$costMatrix)
-      }    
+      }
+    
+    output <- strsplit(x$output, "\n")[[1]]
+    sizeIndex <- grep("^\t.*Size", output)
+    if(length(sizeIndex) > 0 & FALSE)
+      {
+        out <- strsplit(output[sizeIndex+2], " ")[[1]]
+        out <- out[!(out %in% c("\t", ""))]
+        out <- out[!grepl("[[:punct:]]", out)]
+        if(length(out) > 0) cat("Tree Size: ", out, "\n")
+      }
+    
     cat("\n")
   }
 
@@ -222,6 +233,25 @@ truncateText <- function(x)
       }
 
     paste(out, collapse = "\n")
+  }
+
+varImp.C5.0 <- function(object, ...)
+  {
+    browser()
+    object$output <- strsplit( object$output, "\n")[[1]]
+    usageIndex <- grep("Attribute usage:", object$output, fixed = TRUE)
+    if(length(usageIndex) == 0) stop("Error in parsing model output")
+    object$output <- object$output[usageIndex:length(object$output)]
+    usageData <- grep("%", object$output, fixed = TRUE, value = TRUE)
+
+    usageData <- strsplit(usageData, "%", fixed = TRUE)
+    if(!all(unlist(lapply(usageData, length)) == 2)) stop("Error in parsing model output")
+
+    usageData <- lapply(usageData, function(x) gsub("[[:blank:]]", "", x))
+    usageData <- as.data.frame(do.call("rbind", usageData))
+    out <- data.frame(Overall =  as.numeric(as.character(usageData$V1)))
+    rownames(out) <-  usageData$V2
+    out
   }
 
 
