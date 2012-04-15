@@ -1,7 +1,7 @@
 
-predict.C5.0 <- function (object, newdata = NULL, ...) 
+predict.C5.0 <- function (object, newdata = NULL, type = "class", ...) 
 {
-  
+  if(!(type %in% c("class", "prob"))) stop("type should be either 'class' or 'prob'")
   if(is.null(newdata)) stop("newdata must be non-null")
   
   ## check order of data to make sure that it is the same
@@ -20,7 +20,7 @@ predict.C5.0 <- function (object, newdata = NULL, ...)
           as.character(object$names),
           as.character(object$tree),
           as.character(object$rules),
-          pred = integer(nrow(newdata)),  # XXX should this be character?
+          pred = integer(nrow(newdata)), 
           output = character(1),
           PACKAGE = "C50"
           )
@@ -28,5 +28,9 @@ predict.C5.0 <- function (object, newdata = NULL, ...)
   ## for testing
   cat(Z$output, '\n')
 
-  Z$pred
+  if(type == "class")
+    {
+      out <- factor(object$levels[Z$pred], levels = object$levels)
+    } else out <- NULL  ## add model confidence for type = "prob"
+  out
 }
