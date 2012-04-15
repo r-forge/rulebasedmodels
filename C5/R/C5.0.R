@@ -175,10 +175,10 @@ print.C5.0 <- function(x, ...)
       }
     
 
-    if(!is.null(x$cost))
+    if(!is.null(x$cost) || x$costs == "")
       {
         cat("Cost Matrix:\n")
-        print(x$cost)
+        print(x$costMatrix)
       }    
     cat("\n")
   }
