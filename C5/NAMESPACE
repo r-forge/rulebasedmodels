@@ -9,8 +9,8 @@ export(C5.0Control,
 
 S3method(C5.0, default)
 
-#S3method(summary, C5.0)
-#S3method(print, summary.C5.0)
+S3method(summary, C5.0)
+S3method(print, summary.C5.0)
 
 #S3method(dotplot, C5.0)
 #S3method(coef, C5.0)
