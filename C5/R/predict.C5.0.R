@@ -20,7 +20,7 @@ predict.C5.0 <- function (object, newdata = NULL, ...)
           as.character(object$names),
           as.character(object$tree),
           as.character(object$rules),
-          pred = double(nrow(newdata)),  # XXX predictions are character
+          pred = integer(nrow(newdata)),  # XXX should this be character?
           output = character(1),
           PACKAGE = "C50"
           )

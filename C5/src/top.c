@@ -125,7 +125,7 @@ static void predictions(char **casev,
                         char **namesv,
                         char **treev,
                         char **rulesv,
-                        double *predv,  /* XXX predictions are character */
+                        int *predv,  /* XXX predictions are character */
                         char **outputv)
 {
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
@@ -208,7 +208,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
     STRSXP,   // namesv
     STRSXP,   // treev
     STRSXP,   // rulesv
-    REALSXP,  // predv
+    INTSXP,   // predv
     STRSXP    // outputv
 };
 

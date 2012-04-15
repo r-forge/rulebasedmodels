@@ -65,15 +65,8 @@ extern void FreeGlobals();
 /*									 */
 /*************************************************************************/
 
-/*
- * XXX This needs to be modified to put the predicted values
- * into the outputv array rather than writing them to stdout.
- * Also, the predictions should be character, not numeric as in Cubist,
- * so the declaration of outputv is wrong.
- */
-
-int samplemain(double *outputv)
-/*  ----  */
+int samplemain(int *outputv)
+/*  ----------  */
 {
     FILE		*F;
     DataRec		Case;
@@ -82,6 +75,7 @@ int samplemain(double *outputv)
     ClassNo		Predict, c;
     Boolean		XRefForm=false;
     void		ShowRules(int);
+    int                 i;
 
     /*  Read information on attribute names, values, and classes  */
 
@@ -160,6 +154,8 @@ int samplemain(double *outputv)
 
     LineNo = 0;
 
+    i = 0;  // XXX added this at least temporarily
+
     while ( (Case = GetDataRecAlt(F, false)) )
     {
 	/*  For this case, find the class predicted by See5/C5.0 model  */
@@ -167,6 +163,7 @@ int samplemain(double *outputv)
 	Predict = Classify(Case);
 
         /* XXX prediction is ClassName[Predict]? */
+        outputv[i] = Predict;  // XXX add one?
 
 	/*  Print either case label or number  */
 
@@ -206,6 +203,8 @@ int samplemain(double *outputv)
 	/*  Free the memory used by this case  */
 
 	FreeLastCase(Case);
+
+        i++;
     }
 
     /*  Close the case file and free allocated memory  */
