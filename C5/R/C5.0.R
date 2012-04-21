@@ -41,9 +41,13 @@ C5.0.default <- function(x, y,
     stop("case weights must be numeric")
   
   ## TODO: add case weights to these files when needed
-  namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
-  dataString <- makeDataFile(x, y)
+  cat("Making names file\n")
+  print(system.time(namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)))
+  cat("Making data file\n")
+  print(system.time(dataString <- makeDataFile(x, y)))
 
+  cat("Calling C code\n")
+  print(system.time(
   Z <- .C("C50",
           as.character(namesString),
           as.character(dataString),
@@ -82,6 +86,7 @@ C5.0.default <- function(x, y,
           output = character(1),           # get output that normally goes to screen
           PACKAGE = "C50"
           )
+                    ))
 
 
   
