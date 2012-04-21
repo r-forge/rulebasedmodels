@@ -47,7 +47,8 @@ C5.0.default <- function(x, y,
   print(system.time(dataString <- makeDataFile(x, y)))
 
   cat("Calling C code\n")
-  print(system.time(
+  starting <- proc.time()
+  
   Z <- .C("C50",
           as.character(namesString),
           as.character(dataString),
@@ -86,10 +87,9 @@ C5.0.default <- function(x, y,
           output = character(1),           # get output that normally goes to screen
           PACKAGE = "C50"
           )
-                    ))
+  ending <- proc.time()
+  print(ending-starting)
 
-
-  
   out <- list(data = dataString,
               names = namesString,
               cost = costString,
