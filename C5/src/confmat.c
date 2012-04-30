@@ -181,7 +181,10 @@ void PrintUsageInfo(CaseNo *Usage)
 	    if ( Usage[Att] > Usage[Best] ) Best = Att;
 	}
 
-	if ( ! Best || Usage[Best] < 0.01 * Tests ) break;
+	/* MK edit; lower the bar for printing attribute usage */
+	/* so that there is more consistency between which predictors */
+	/* were used in the tree and shown in the table */
+	if ( ! Best || Usage[Best] < 0.00001 * Tests ) break; 
 
 	if ( First )
 	{
@@ -189,8 +192,10 @@ void PrintUsageInfo(CaseNo *Usage)
 	    First = false;
 	}
 
-	fprintf(Of, "\t%7d%%  %s\n",
-	    (int) ((100 * Usage[Best]) / Tests + 0.5), AttName[Best]);
+	/* MK edit; print a percentage with 2 decimal places for */
+	/* higher resolution on the numbers */
+        fprintf(Of, "\t%3.2f%%\t%s\n",
+	    (100 * Usage[Best]) / Tests + 0.5, AttName[Best]);
 
 	Usage[Best] = 0;
     }
