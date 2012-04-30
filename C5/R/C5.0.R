@@ -242,7 +242,6 @@ truncateText <- function(x)
 
 varImp.C5.0 <- function(object, ...)
   {
-    browser()
     object$output <- strsplit( object$output, "\n")[[1]]
     usageIndex <- grep("Attribute usage:", object$output, fixed = TRUE)
     if(length(usageIndex) == 0) stop("Error in parsing model output")
