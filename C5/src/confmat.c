@@ -194,8 +194,12 @@ void PrintUsageInfo(CaseNo *Usage)
 
 	/* MK edit; print a percentage with 2 decimal places for */
 	/* higher resolution on the numbers */
+	/* Also, I eliminated adding 0.5 to everything below. There
+	/* is likely some really good reason to do this, but I think 
+	/* the above line with Tests = Max(1, MaxCase+1); should
+	/* eliminate teh chances of divide by zero. We'll see! */
         fprintf(Of, "\t%3.2f%%\t%s\n",
-	    (100 * Usage[Best]) / Tests + 0.5, AttName[Best]);
+	    (100 * Usage[Best]) / Tests, AttName[Best]);
 
 	Usage[Best] = 0;
     }
