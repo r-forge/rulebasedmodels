@@ -41,14 +41,9 @@ C5.0.default <- function(x, y,
     stop("case weights must be numeric")
   
   ## TODO: add case weights to these files when needed
-  cat("Making names file\n")
-  print(system.time(namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)))
-  cat("Making data file\n")
-  print(system.time(dataString <- makeDataFile(x, y)))
+  namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
+  dataString <- makeDataFile(x, y)
 
-  cat("Calling C code\n")
-  starting <- proc.time()
-  
   Z <- .C("C50",
           as.character(namesString),
           as.character(dataString),
@@ -87,9 +82,6 @@ C5.0.default <- function(x, y,
           output = character(1),           # get output that normally goes to screen
           PACKAGE = "C50"
           )
-  ending <- proc.time()
-  print(ending-starting)
-
   out <- list(data = dataString,
               names = namesString,
               cost = costString,
@@ -153,6 +145,8 @@ print.C5.0 <- function(x, ...)
   {
     cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
 
+    if(x$control$rules) cat("Rule-Based Model\n") else cat("Classificaiton Tree\n")
+    
     cat("Number of samples:", x$dims[1],
         "\nNumber of predictors:", x$dims[2],
         "\n\n")
@@ -161,7 +155,6 @@ print.C5.0 <- function(x, ...)
 
     otherOptions <- NULL
     if(x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
-    if(x$control$rules) otherOptions <- c(otherOptions, "rules")
     if(x$control$winnow) otherOptions <- c(otherOptions, "winnowing")
     if(! x$control$noGlobalPruning) otherOptions <- c(otherOptions, "global pruning")
     if(x$control$CF != 0.25) otherOptions <- c(otherOptions,
@@ -180,7 +173,7 @@ print.C5.0 <- function(x, ...)
       }
     
 
-    if(!is.null(x$cost) || x$costs != "")
+    if(x$cost != "")
       {
         cat("Cost Matrix:\n")
         print(x$costMatrix)
@@ -195,8 +188,6 @@ print.C5.0 <- function(x, ...)
         out <- out[!grepl("[[:punct:]]", out)]
         if(length(out) > 0) cat("Tree Size: ", out, "\n")
       }
-    
-    cat("\n")
   }
 
 
