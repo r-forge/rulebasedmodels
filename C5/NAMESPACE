@@ -1,10 +1,9 @@
 useDynLib(C50)
 
-import(lattice, caret)
+import(caret)
 
 export(C5.0Control,
        C5.0,
-#       exportC5.0Files,
        C5.0.default,
        predict.C5.0,
        summary.C5.0,
