@@ -1,12 +1,12 @@
 Package: C50
 Type: Package
 Title: C5.0 Decision Trees
-Version: 0.0.3
-Date: 2012-03-15
+Version: 0.0.4
+Date: 2012-04-30
 Author: Max Kuhn, Steve Weston. C code for C5.0 by R. Quinlan 
 Maintainer: Max Kuhn <mxkuhn@gmail.com>
 Description: C5.0 decision trees for pattern recognition
-Depends: lattice, reshape2
+Depends: reshape2, caret
 Suggests: mlbench
 License: GPL-3
 LazyLoad: yes
