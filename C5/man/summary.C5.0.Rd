@@ -51,7 +51,7 @@ Max Kuhn and Steve Weston
 
 
 \seealso{
-\code{\link{C5.0}}, \code{\link{C5.0Control}}, \code{\link{summary.C5.0}},  \code{\link{varImp.C5.0}}
+\code{\link{C5.0}}, \code{\link{C5.0Control}}, \code{\link{summary.C5.0}},  \code{\link{C5imp}}
 }
 \examples{
 data(churn)

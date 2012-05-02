@@ -231,23 +231,79 @@ truncateText <- function(x)
     paste(out, collapse = "\n")
   }
 
-varImp.C5.0 <- function(object, ...)
+C5imp <- function(object, metric = "usage", ...)
   {
-    object$output <- strsplit( object$output, "\n")[[1]]
-    usageIndex <- grep("Attribute usage:", object$output, fixed = TRUE)
-    if(length(usageIndex) == 0) stop("Error in parsing model output")
-    object$output <- object$output[usageIndex:length(object$output)]
-    usageData <- grep("%", object$output, fixed = TRUE, value = TRUE)
+    if(!(metric %in% c("usage", "splits"))) stop("metric should be either 'usage' or 'splits'")
+    allVar <- getOriginalVars(object)
+    if(metric == "usage")
+      {
+        object$output <- strsplit( object$output, "\n")[[1]]
+        usageIndex <- grep("Attribute usage:", object$output, fixed = TRUE)
+        if(length(usageIndex) == 0) stop("Error in parsing model output")
+        object$output <- object$output[usageIndex:length(object$output)]
+        usageData <- grep("%", object$output, fixed = TRUE, value = TRUE)
 
-    usageData <- strsplit(usageData, "%", fixed = TRUE)
-    if(!all(unlist(lapply(usageData, length)) == 2)) stop("Error in parsing model output")
+        usageData <- strsplit(usageData, "%", fixed = TRUE)
+        if(!all(unlist(lapply(usageData, length)) == 2)) stop("Error in parsing model output")
 
-    usageData <- lapply(usageData, function(x) gsub("[[:blank:]]", "", x))
-    usageData <- as.data.frame(do.call("rbind", usageData))
-    out <- data.frame(Overall =  as.numeric(as.character(usageData$V1)))
-    rownames(out) <-  usageData$V2
-    out
+        usageData <- lapply(usageData, function(x) gsub("[[:blank:]]", "", x))
+        usageData <- as.data.frame(do.call("rbind", usageData), stringsAsFactors = FALSE)
+        elim <- allVar[!(allVar %in% usageData$V2)]
+        if(length(elim) > 0)
+          {
+            elimVars <- data.frame(V1 = 0, V2 = elim, stringsAsFactors = FALSE)
+            usageData <- rbind(usageData, elimVars) 
+          }
+        out <- data.frame(Overall =  as.numeric(as.character(usageData$V1)))
+        rownames(out) <-  usageData$V2
+      } else {
+        varData <- getAtt(getVars(object))
+        varData <- as.data.frame(table(varData), stringsAsFactors = FALSE)
+        elim <- allVar[!(allVar %in% varData$varData)]
+        if(length(elim) > 0)
+          {
+            elimVars <- data.frame(varData = elim, Freq = 0, stringsAsFactors = FALSE)
+            varData <- rbind(varData, elimVars) 
+          }
+        out <- data.frame(Overall =  as.numeric(as.character(varData$Freq)))
+        out$Overall <- out$Overall/sum(out$Overall)*100
+        rownames(out) <-  varData$varData
+      }
+    out[order(out$Overall, decreasing = TRUE),,drop = FALSE]
   }
+
+getOriginalVars <- function(x)
+  {
+     treeDat <- strsplit(x$names, "\n")[[1]]
+     varStart <- grep(paste(x$control$label, ":", sep = ""),
+                      treeDat)
+     if(length(varStart) == 0) stop("cannot parse names file")
+     treeDat <- treeDat[(varStart+1):length(treeDat)]
+     treeDat <- strsplit(treeDat, ":")
+     unlist(lapply(treeDat, function(x) x[1]))
+  }
+
+getVars <- function(x)
+{
+  ## One of these is always ""
+  treeDat <- paste(x$tree, x$rules)
+  treeDat <- strsplit(treeDat, "\n")[[1]]
+  treeDat <- grep("att=", treeDat, value = TRUE)
+  treeDat
+  
+}
+getAtt <- function(x)
+  {
+    strt <- regexpr("att=", x)
+    if(length(strt) == 0) stop("cannot parse model file")
+    strt <- strt + 5
+    stp <- regexpr("(forks=)|(cut=)|(val=)", x)
+    if(length(stp) == 0) stop("cannot parse model file")
+    stp <- stp -3
+    substring(x, strt, stp)
+  }
+
+C5predictors <- function(x, ...) unique(getAtt(getVars(x)))
 
 
 if(FALSE)
