@@ -6,7 +6,5 @@ Date: 2012-04-30
 Author: Max Kuhn, Steve Weston. C code for C5.0 by R. Quinlan 
 Maintainer: Max Kuhn <mxkuhn@gmail.com>
 Description: C5.0 decision trees for pattern recognition
-Depends: reshape2, caret
-Suggests: mlbench
 License: GPL-3
 LazyLoad: yes
