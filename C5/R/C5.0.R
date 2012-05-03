@@ -82,8 +82,7 @@ C5.0.default <- function(x, y,
           output = character(1),           # get output that normally goes to screen
           PACKAGE = "C50"
           )
-  out <- list(data = dataString,
-              names = namesString,
+  out <- list(names = namesString,
               cost = costString,
               costMatrix = costs,
               caseWeights = !is.null(weights),
