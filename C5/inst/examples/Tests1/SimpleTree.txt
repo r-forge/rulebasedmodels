@@ -1,0 +1,100 @@
+
+C5.0 [Release 2.07 GPL Edition]  	Mon May  7 14:03:47 2012
+-------------------------------
+
+    Options:
+	Application `churnTestCase'
+	Random seed 1
+
+Class specified by attribute `churn'
+
+Read 3333 cases (20 attributes) from churnTestCase.data
+
+Decision tree:
+
+total_day_minutes > 264.4:
+:...voice_mail_plan = yes:
+:   :...international_plan = no: no (45/1)
+:   :   international_plan = yes: yes (8/3)
+:   voice_mail_plan = no:
+:   :...total_eve_minutes > 187.7:
+:       :...total_night_minutes > 126.9: yes (94/1)
+:       :   total_night_minutes <= 126.9:
+:       :   :...total_day_minutes <= 277: no (4)
+:       :       total_day_minutes > 277: yes (3)
+:       total_eve_minutes <= 187.7:
+:       :...total_eve_charge <= 12.26: no (15/1)
+:           total_eve_charge > 12.26:
+:           :...total_day_minutes <= 277:
+:               :...total_night_minutes <= 224.8: no (13)
+:               :   total_night_minutes > 224.8: yes (5/1)
+:               total_day_minutes > 277:
+:               :...total_night_minutes > 151.9: yes (18)
+:                   total_night_minutes <= 151.9:
+:                   :...account_length <= 123: no (4)
+:                       account_length > 123: yes (2)
+total_day_minutes <= 264.4:
+:...number_customer_service_calls > 3:
+    :...total_day_minutes <= 160.2:
+    :   :...total_eve_charge <= 19.83: yes (79/3)
+    :   :   total_eve_charge > 19.83:
+    :   :   :...total_day_minutes <= 120.5: yes (10)
+    :   :       total_day_minutes > 120.5: no (13/3)
+    :   total_day_minutes > 160.2:
+    :   :...total_eve_charge > 12.05: no (130/24)
+    :       total_eve_charge <= 12.05:
+    :       :...total_eve_calls <= 125: yes (16/2)
+    :           total_eve_calls > 125: no (3)
+    number_customer_service_calls <= 3:
+    :...international_plan = yes:
+        :...total_intl_calls <= 2: yes (51)
+        :   total_intl_calls > 2:
+        :   :...total_intl_minutes <= 13.1: no (173/7)
+        :       total_intl_minutes > 13.1: yes (43)
+        international_plan = no:
+        :...total_day_minutes <= 223.2: no (2221/60)
+            total_day_minutes > 223.2:
+            :...total_eve_charge <= 20.5: no (295/22)
+                total_eve_charge > 20.5:
+                :...voice_mail_plan = yes: no (20)
+                    voice_mail_plan = no:
+                    :...total_night_minutes > 174.2: yes (50/8)
+                        total_night_minutes <= 174.2:
+                        :...total_day_minutes <= 246.6: no (12)
+                            total_day_minutes > 246.6:
+                            :...total_day_charge <= 43.33: yes (4)
+                                total_day_charge > 43.33: no (2)
+
+
+Evaluation on training data (3333 cases):
+
+	    Decision Tree   
+	  ----------------  
+	  Size      Errors  
+
+	    27  136( 4.1%)   <<
+
+
+	   (a)   (b)    <-classified as
+	  ----  ----
+	   365   118    (a): class yes
+	    18  2832    (b): class no
+
+
+	Attribute usage:
+
+	100.50%	total_day_minutes
+	94.17%	number_customer_service_calls
+	88.23%	international_plan
+	21.23%	total_eve_charge
+	9.47%	voice_mail_plan
+	8.51%	total_intl_calls
+	6.98%	total_intl_minutes
+	6.83%	total_night_minutes
+	5.24%	total_eve_minutes
+	1.07%	total_eve_calls
+	0.68%	account_length
+	0.68%	total_day_charge
+
+
+Time: 0.0 secs
