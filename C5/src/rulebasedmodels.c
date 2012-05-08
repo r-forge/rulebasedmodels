@@ -216,7 +216,7 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     WINNOW = winnow != 0 ? true : false;                     /* Logical */
     SAMPLE = sample;                                         /* Real */
     KRInit = seed;                                           /* Int */
-    // NOGLOBALPRUNING = noGlobalPruning;                    /* Int */
+    GLOBAL = noGlobalPruning != 0 ? false : true;             /* Logical */
     CF = cf;                                                 /* Real */
     // XXX Does minCases get assigned to MINITEMS?
     // MINCASES = minCases;                                  /* Int */
