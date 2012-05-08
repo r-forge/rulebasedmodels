@@ -1,4 +1,5 @@
 library(C50)
+data(churn)
 
 if(FALSE)
   {
