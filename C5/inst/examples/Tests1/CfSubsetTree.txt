@@ -1,5 +1,5 @@
 
-C5.0 [Release 2.07 GPL Edition]  	Mon May  7 19:05:01 2012
+C5.0 [Release 2.07 GPL Edition]  	Tue May  8 19:02:26 2012
 -------------------------------
 
     Options:
@@ -99,4 +99,4 @@ Evaluation on training data (3333 cases):
 	0.68%	total_day_charge
 
 
-Time: 0.0 secs
+Time: 0.1 secs
