@@ -157,6 +157,153 @@ CfSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
                       control = C5.0Control(seed = 1,
                         CF = .75,
                         subset = TRUE))
+#####
+
+## ./c5.0 -f churnTestCase -r -I 1            -g > GlobalRule.txt
+GlobalRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(seed = 1, rules = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -s         -g > GlobalSubsetRule.txt
+GlobalSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(seed = 1, rules = TRUE, subset = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w         -g > GlobalWinnowRule.txt
+GlobalWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(seed = 1, rules = TRUE, winnow = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w -s      -g > GlobalWinnowSubsetRule.txt
+GlobalWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                          control = C5.0Control(seed = 1, rules = TRUE, winnow = TRUE, subset = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1       -u 3 -g > GlobalBandedRule.txt
+GlobalBandedRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(
+                      seed = 1, rules = TRUE,
+                      bands = 3, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -s    -u 3 -g > GlobalBandedSubsetRule.txt
+GlobalBandedSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                          control = C5.0Control(
+                            seed = 1, rules = TRUE,
+                            subset = TRUE,
+                            bands = 3, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w    -u 3 -g > GlobalBandedWinnowRule.txt
+GlobalBandedWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                          control = C5.0Control(
+                            seed = 1, rules = TRUE,
+                            winnow = TRUE,
+                            bands = 3, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w -s -u 3 -g > GlobalBandedWinnowSubsetRule.txt
+GlobalBandedWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                                control = C5.0Control(
+                                  seed = 1, rules = TRUE,
+                                  winnow = TRUE, subset = TRUE,
+                                  bands = 3, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1            -c .75 -g > GlobalCfRule.txt
+GlobalCfRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                control = C5.0Control(
+                  seed = 1, rules = TRUE,
+                  CF = .75,
+                  bands = 3, noGlobalPruning = TRUE))
+## ./c5.0 -f churnTestCase -r -I 1 -s         -c .75 -g > GlobalCfSubsetRule.txt
+GlobalCfSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                      control = C5.0Control(
+                        seed = 1, rules = TRUE,
+                        subset = TRUE,
+                        CF = .75, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w         -c .75 -g > GlobalCfWinnowRule.txt
+GlobalCfWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                      control = C5.0Control(
+                        seed = 1, rules = TRUE,
+                        winnow = TRUE, 
+                        CF = .75, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w -s      -c .75 -g > GlobalCfWinnowSubsetRule.txt
+GlobalCfWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                            control = C5.0Control(
+                              seed = 1, rules = TRUE,
+                              winnow = TRUE, subset = TRUE,
+                              CF = .75, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1       -u 3 -c .75 -g > GlobalCfBandedRule.txt
+GlobalCfBandedRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                      control = C5.0Control(
+                        seed = 1, rules = TRUE,
+                        CF = .75,
+                        bands = 3, noGlobalPruning = TRUE))
+## ./c5.0 -f churnTestCase -r -I 1 -s    -u 3 -c .75 -g > GlobalCfBandedSubsetRule.txt
+GlobalCfBandedSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                            control = C5.0Control(
+                              seed = 1, rules = TRUE,
+                              subset = TRUE,
+                              CF = .75,
+                              bands = 3, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -r -I 1 -w    -u 3 -c .75 -g > GlobalCfBandedWinnowRule.txt
+GlobalCfBandedWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                            control = C5.0Control(
+                              seed = 1, rules = TRUE,
+                              winnow = TRUE, 
+                              CF = .75,
+                              bands = 3, noGlobalPruning = TRUE))
+## ./c5.0 -f churnTestCase -r -I 1 -w -s -u 3 -c .75 -g > GlobalCfBandedWinnowSubsetRule.txt
+GlobalCfBandedWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                                  control = C5.0Control(
+                                    seed = 1, rules = TRUE,
+                                    winnow = TRUE, subset = TRUE,
+                                    CF = .75,
+                                    bands = 3, noGlobalPruning = TRUE))
+
+
+## ./c5.0 -f churnTestCase -I 1              -g > GlobalTree.txt
+GlobalTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(seed = 1, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -I 1 -w           -g > GlobalWinnowTree.txt
+GlobalWinnowTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(seed = 1, winnow = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -I 1 -w -s        -g > GlobalWinnowSubsetTree.txt
+GlobalWinnowSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                          control = C5.0Control(seed = 1,
+                            winnow = TRUE,
+                            subset = TRUE, noGlobalPruning = TRUE))
+
+
+## ./c5.0 -f churnTestCase -I 1    -s        -g > GlobalSubsetTree.txt
+GlobalSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                    control = C5.0Control(seed = 1,
+                      subset = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -I 1       -c .75 -g > GlobalCfTree.txt
+GlobalCfTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                control = C5.0Control(seed = 1,
+                  CF = .75))
+
+## ./c5.0 -f churnTestCase -I 1 -w    -c .75 -g > GlobalCfWinnowTree.txt
+GlobalCfWinnowTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                      control = C5.0Control(seed = 1,
+                        CF = .75,
+                        winnow = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -I 1 -w -s -c .75 -g > GlobalCfWinnowSubsetTree.txt
+GlobalCfWinnowSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                            control = C5.0Control(seed = 1,
+                              CF = .75,
+                              winnow = TRUE,
+                              subset = TRUE, noGlobalPruning = TRUE))
+
+## ./c5.0 -f churnTestCase -I 1    -s -c .75 -g > GlobalCfSubsetTree.txt
+GlobalCfSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
+                      control = C5.0Control(seed = 1,
+                        CF = .75,
+                        subset = TRUE, noGlobalPruning = TRUE))
+
+
 
 trimOutput <- function(x)
   {
@@ -185,7 +332,7 @@ testCaseList <- grep("(Tree)|(Rule)", list.files(pattern = ".txt"), value = TRUE
 for(i in seq(along = testCaseList))
   {
     prefix <- testCaseList[i]
-    expected <- getTestCase(paste("~/Code/C50clean/", prefix, sep =""))
+    expected <- getTestCase(prefix)
     obs <- trimOutput(get(gsub(".txt", "R", testCaseList[i], fixed = TRUE))$output)
 
     cat("Testing", testCaseList[i], "\n") 
