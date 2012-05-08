@@ -14,7 +14,7 @@ static void c50(char **namesv,
                 char **costv,
                 int *subset,
                 int *rules,
-                int *bands,
+                int *utility,
                 int *trials,
                 int *winnow,
                 double *sample,
@@ -35,10 +35,11 @@ static void c50(char **namesv,
     // Initialize the globals to the values that the c50
     // program would have at the start of execution
     initglobals();
+    Rprintf("Calling setOf\n");
 
     // Set globals based on the arguments.  This is analogous
     // to parsing the command line in the c50 program.
-    setglobals(*subset, *rules, *bands, *trials, *winnow, *sample,
+    setglobals(*subset, *rules, *utility, *trials, *winnow, *sample,
                *seed, *noGlobalPruning, *CF, *minCases, *fuzzyThreshold);
 
     // Handles the strbufv data structure
@@ -188,7 +189,7 @@ static R_NativePrimitiveArgType c50_t[] = {
     STRSXP,   // costv
     LGLSXP,   // subset
     LGLSXP,   // rules
-    INTSXP,   // bands
+    INTSXP,   // utility
     INTSXP,   // trials
     LGLSXP,   // winnow
     REALSXP,  // sample

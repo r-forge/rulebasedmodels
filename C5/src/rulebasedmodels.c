@@ -202,7 +202,7 @@ void initglobals(void)
 /*
  * Set global variables in preparation for creating a model
  */
-void setglobals(int subset, int rules, int bands, int trials, int winnow,
+void setglobals(int subset, int rules, int utility, int trials, int winnow,
                 double sample, int seed, int noGlobalPruning, double cf,
                 int minCases, int fuzzyThreshold)
 {
@@ -211,7 +211,7 @@ void setglobals(int subset, int rules, int bands, int trials, int winnow,
 
     SUBSET = subset != 0 ? true : false;                     /* Logical */
     RULES = rules != 0 ? true : false;                       /* Logical */
-    // BANDS = bands;                                        /* Int */
+    UTILITY = utility;                                        /* Int */
     TRIALS = trials;                                         /* Int */
     WINNOW = winnow != 0 ? true : false;                     /* Logical */
     SAMPLE = sample;                                         /* Real */
