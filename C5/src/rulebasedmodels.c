@@ -36,6 +36,10 @@ void initglobals(void)
     WINNOW=0;		/* attribute winnowing */
     GLOBAL=1;		/* use global pruning for trees */
 
+    /* This was set in C5's main(), but we do it here. 
+     This value may be over-ridden by the R seed option */
+    KRInit = time(0) & 07777;
+    
     /* Added for sample.c */
     RULESUSED=0;    	/* list applicable rules */
 
@@ -213,6 +217,7 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     RULES = rules != 0 ? true : false;                        /* Logical */
     UTILITY = utility;                                       /* Int */
     TRIALS = trials;                                         /* Int */
+    BOOST = trials > 1 ? true : false;                        /* Logical */    
     WINNOW = winnow != 0 ? true : false;                      /* Logical */
     SAMPLE = sample;                                         /* Real */
     KRInit = seed;                                           /* Int */
