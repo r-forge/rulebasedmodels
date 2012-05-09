@@ -209,18 +209,18 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     // XXX TODO
     Rprintf("setglobals only partially implemented\n");
 
-    SUBSET = subset != 0 ? true : false;                     /* Logical */
-    RULES = rules != 0 ? true : false;                       /* Logical */
-    UTILITY = utility;                                        /* Int */
+    SUBSET = subset != 0 ? true : false;                      /* Logical */
+    RULES = rules != 0 ? true : false;                        /* Logical */
+    UTILITY = utility;                                       /* Int */
     TRIALS = trials;                                         /* Int */
-    WINNOW = winnow != 0 ? true : false;                     /* Logical */
+    WINNOW = winnow != 0 ? true : false;                      /* Logical */
     SAMPLE = sample;                                         /* Real */
     KRInit = seed;                                           /* Int */
     GLOBAL = noGlobalPruning != 0 ? false : true;             /* Logical */
     CF = cf;                                                 /* Real */
     // XXX Does minCases get assigned to MINITEMS?
     // MINCASES = minCases;                                  /* Int */
-    // FUZZYTHRESHOLD = fuzzyThreshold != 0 ? true : false;  /* Logical */
+    PROBTHRESH = fuzzyThreshold != 0 ? true : false;          /* Logical */
 }
 
 void setOf()
