@@ -1,5 +1,5 @@
 
-C5.0 [Release 2.07 GPL Edition]  	Tue May  8 19:02:25 2012
+C5.0 [Release 2.07 GPL Edition]  	Tue May  8 22:07:27 2012
 -------------------------------
 
     Options:
@@ -7,7 +7,7 @@ C5.0 [Release 2.07 GPL Edition]  	Tue May  8 19:02:25 2012
 	Rule-based classifiers
 	Random seed 1
 	Winnow attributes
-	Pruning confidence level 0.75%
+	Pruning confidence level 75%
 
 Class specified by attribute `churn'
 
@@ -16,13 +16,13 @@ Read 3333 cases (20 attributes) from churnTestCase.data
 4 attributes winnowed
 Estimated importance of remaining attributes:
 
-     53%  total_day_minutes
-     42%  international_plan
+     51%  total_day_minutes
+     40%  international_plan
      32%  total_eve_charge
-     26%  voice_mail_plan
-     23%  number_customer_service_calls
+     25%  voice_mail_plan
+     22%  number_customer_service_calls
      20%  total_intl_calls
-     19%  total_intl_minutes
+     18%  total_intl_minutes
      16%  total_day_charge
       9%  total_eve_minutes
      <1%  state

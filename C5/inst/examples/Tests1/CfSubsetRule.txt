@@ -1,5 +1,5 @@
 
-C5.0 [Release 2.07 GPL Edition]  	Tue May  8 19:02:25 2012
+C5.0 [Release 2.07 GPL Edition]  	Tue May  8 22:07:27 2012
 -------------------------------
 
     Options:
@@ -7,7 +7,7 @@ C5.0 [Release 2.07 GPL Edition]  	Tue May  8 19:02:25 2012
 	Rule-based classifiers
 	Random seed 1
 	Tests on discrete attribute groups
-	Pruning confidence level 0.75%
+	Pruning confidence level 75%
 
 Class specified by attribute `churn'
 
