@@ -51,8 +51,14 @@ int c50main()
     CaseNo		SaveMaxCase;
     Attribute		Att;
 
-    KRInit = time(0) & 07777;
-
+    /* The original C code set the seed here in main(). The c50
+     function in top.c calls setglobals(), which sets the seed.
+     If KRInit is created here, it will over-write the value
+     specificed in R     
+     */
+    
+    //KRInit = time(0) & 07777;
+    
     PrintHeader("");
 
     if ( UTILITY && BOOST )
