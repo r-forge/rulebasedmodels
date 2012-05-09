@@ -9,7 +9,8 @@ makeOptions <- function(x, base = ".")
     opt <- ifelse(x$rules,  paste(opt, "-r"), opt)
     opt <- ifelse(x$fuzzy,  paste(opt, "-p"), opt)
     opt <- ifelse(x$noGlobal, paste(opt, "-g"), opt)
-
+    opt <- ifelse(x$trials > 1, paste(opt, "-b -t", x$trials), opt)
+    opt <- ifelse(x$sample > 0, paste(opt, "-S", x$sample*100), opt)    
     call <- paste(base, "/c5.0 -f churnTestCase ", opt, sep = "")
     call
   }
@@ -20,6 +21,7 @@ makeControl <- function(x)
                 winnow = x$winnow, subset = x$subset,
                 rules = x$rules, fuzzyThreshold = x$fuzzy,
                 noGlobalPruning = x$noGlobal,
+                sample = x$sample,
                 CF = x$cf, bands = x$bands)
   }
 
@@ -43,6 +45,8 @@ makeHeader <- function(x, i = "")
         ifelse(x$noGlobalPruning, "no global pruning, ", ""),
         ifelse(x$bands > 0, "bands, ", ""),
         ifelse(x$cf != 0.25, "CF 0.75, ", ""),
+        ifelse(x$trials > 1, "boosting, ", ""),
+        ifelse(x$sample > 0, "sampling, ", ""),        
         "\n", sep = "")
   }
 
@@ -59,7 +63,9 @@ combos <- expand.grid(bands = c(0, 3),
                       subset = c(TRUE, FALSE),
                       rules = c(TRUE, FALSE),
                       fuzzy = c(TRUE, FALSE),
-                      noGlobal = c(TRUE, FALSE))
+                      noGlobal = c(TRUE, FALSE),
+                      trials = c(1, 12),
+                      sample = c(0, .50))
                       
 throwOut <- combos$bands & !combos$rules
 combos <- combos[!throwOut,]
@@ -72,13 +78,16 @@ for(i in 1:nrow(combos))
     makeHeader(combos[i,], i)
     cat("   ", makeOptions(combos[i,], c50Path), "\n")
     expected <- system(makeOptions(combos[i,], c50Path), intern = TRUE)
-    expected <- trimOutput(expected, split = FALSE)
     fit <- C5.0(churnTrain[,-20], churnTrain$churn,
+                trials = combos[i,"trials"],
                 control = makeControl(combos[i,]))
+    outputs[[i]] <- list(expected = expected, observed = strsplit(fit$output, "\n")[[1]])
+
     obs <- trimOutput(fit$output)
+    expected <- trimOutput(expected, split = FALSE)
+    
     results <- all.equal(obs, expected)
 
-    outputs[[i]] <- list(expected = expected, observed = obs)
     if(!is.logical(results) || !results)
       {
         if(length(expected) == length(obs) && grepl("string mismatches", results))
