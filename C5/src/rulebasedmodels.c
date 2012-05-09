@@ -210,9 +210,6 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
                 double sample, int seed, int noGlobalPruning, double cf,
                 int minCases, int fuzzyThreshold)
 {
-    // XXX TODO
-    Rprintf("setglobals only partially implemented\n");
-
     SUBSET = subset != 0 ? true : false;                      /* Logical */
     RULES = rules != 0 ? true : false;                        /* Logical */
     UTILITY = utility;                                       /* Int */
@@ -223,8 +220,7 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     KRInit = seed;                                           /* Int */
     GLOBAL = noGlobalPruning != 0 ? false : true;             /* Logical */
     CF = cf;                                                 /* Real */
-    // XXX Does minCases get assigned to MINITEMS?
-    // MINCASES = minCases;                                  /* Int */
+    MINITEMS = minCases;                                     /* Int */
     PROBTHRESH = fuzzyThreshold != 0 ? true : false;          /* Logical */
 }
 

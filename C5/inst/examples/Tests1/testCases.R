@@ -10,7 +10,8 @@ makeOptions <- function(x, base = ".")
     opt <- ifelse(x$fuzzy,  paste(opt, "-p"), opt)
     opt <- ifelse(x$noGlobal, paste(opt, "-g"), opt)
     opt <- ifelse(x$trials > 1, paste(opt, "-b -t", x$trials), opt)
-    opt <- ifelse(x$sample > 0, paste(opt, "-S", x$sample*100), opt)    
+    opt <- ifelse(x$sample > 0, paste(opt, "-S", x$sample*100), opt)
+    opt <- ifelse(x$minCases > 2, paste(opt, "-m", x$minCases), opt)      
     call <- paste(base, "/c5.0 -f churnTestCase ", opt, sep = "")
     call
   }
@@ -22,6 +23,7 @@ makeControl <- function(x)
                 rules = x$rules, fuzzyThreshold = x$fuzzy,
                 noGlobalPruning = x$noGlobal,
                 sample = x$sample,
+                minCases = x$minCases,
                 CF = x$cf, bands = x$bands)
   }
 
@@ -46,7 +48,8 @@ makeHeader <- function(x, i = "")
         ifelse(x$bands > 0, "bands, ", ""),
         ifelse(x$cf != 0.25, "CF 0.75, ", ""),
         ifelse(x$trials > 1, "boosting, ", ""),
-        ifelse(x$sample > 0, "sampling, ", ""),        
+        ifelse(x$sample > 0, "sampling, ", ""),
+        ifelse(x$minCases > 2, "min. cases, ", ""),         
         "\n", sep = "")
   }
 
@@ -65,6 +68,7 @@ combos <- expand.grid(bands = c(0, 3),
                       fuzzy = c(TRUE, FALSE),
                       noGlobal = c(TRUE, FALSE),
                       trials = c(1, 12),
+                      minCases = c(2, 10),
                       sample = c(0, .50))
                       
 throwOut <- combos$bands & !combos$rules
