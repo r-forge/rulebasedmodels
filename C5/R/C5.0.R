@@ -115,8 +115,8 @@ C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset t
   {
     if(CF < 0 | CF > 1)
       stop("confidence level must between 0 and 1")
-    if(sample < 0.0 | sample > 99.9)
-      stop("sampling percentage must be between 0.0 and 99.9")
+    if(sample < 0.0 | sample > .999)
+      stop("sampling percentage must be between 0.0 and .999")
 
     if(bands > 2 & !rules)
       {
@@ -134,7 +134,7 @@ C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset t
          CF = CF,
          minCases = minCases,
          fuzzyThreshold = fuzzyThreshold,
-         sample = sample / 100,
+         sample = sample,
          label = label,
          seed = seed %% 4096L)
   }

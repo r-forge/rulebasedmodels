@@ -45,7 +45,7 @@ an integer for the smallest number of samples that must be put in at least two o
 A logical toggle to evaluate possible advanced splits of the data. See Quinlan (1993) for details and examples. 
 }
   \item{sample}{
-A value between (0, 99.9) that specifies the random percentage of the data should be used to train the model. By default, all the samples are used for model training. Samples not used for training are used to evaluate the accuracy of the model in the printed output.
+A value between (0, .999) that specifies the random proportion of the data should be used to train the model. By default, all the samples are used for model training. Samples not used for training are used to evaluate the accuracy of the model in the printed output.
 }
   \item{seed}{
 An integer for the random number seed within the C code.
