@@ -1,312 +1,32 @@
-library(C50)
-data(churn)
 
-if(FALSE)
+makeOptions <- function(x, base = ".")
   {
+    opt <- rep("-I 1", nrow(x))
+    opt <- ifelse(x$bands, paste(opt, "-u", x$bands), opt)
+    opt <- ifelse(x$cf != .25, paste(opt, "-c", x$cf*100), opt)
+    opt <- ifelse(x$winnow, paste(opt, "-w"), opt)
+    opt <- ifelse(x$subset, paste(opt, "-s"), opt)
+    opt <- ifelse(x$rules,  paste(opt, "-r"), opt)
+    opt <- ifelse(x$fuzzy,  paste(opt, "-p"), opt)
+    opt <- ifelse(x$noGlobal, paste(opt, "-g"), opt)
 
-    churnNames <- C50:::makeNamesFile(churnTrain[,-ncol(churnTrain)],
-                                      churnTrain$churn,
-                                      label = "churn")
-    cat(churnNames[2], file = "~/tmp/churnTestCase.names")
-
-    churnData <- C50:::makeDataFile(churnTrain[,-ncol(churnTrain)],
-                                    churnTrain$churn)
-    cat(churnData, file = "~/tmp/churnTestCase.data")
+    call <- paste(base, "/c5.0 -f churnTestCase ", opt, sep = "")
+    call
   }
 
-## ./c5.0 -f churnTestCase -r -I 1            > SimpleRule.txt
-SimpleRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, rules = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -s         > SubsetRule.txt
-SubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, rules = TRUE, subset = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w         > WinnowRule.txt
-WinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, rules = TRUE, winnow = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w -s      > WinnowSubsetRule.txt
-WinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(seed = 1, rules = TRUE, winnow = TRUE, subset = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1       -u 3 > BandedRule.txt
-BandedRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(
-                      seed = 1, rules = TRUE,
-                      bands = 3))
-
-## ./c5.0 -f churnTestCase -r -I 1 -s    -u 3 > BandedSubsetRule.txt
-BandedSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(
-                            seed = 1, rules = TRUE,
-                            subset = TRUE,
-                            bands = 3))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w    -u 3 > BandedWinnowRule.txt
-BandedWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(
-                            seed = 1, rules = TRUE,
-                            winnow = TRUE,
-                            bands = 3))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w -s -u 3 > BandedWinnowSubsetRule.txt
-BandedWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                                control = C5.0Control(
-                                  seed = 1, rules = TRUE,
-                                  winnow = TRUE, subset = TRUE,
-                                  bands = 3))
-
-## ./c5.0 -f churnTestCase -r -I 1            -c 75 > CfRule.txt
-CfRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                control = C5.0Control(
-                  seed = 1, rules = TRUE,
-                  CF = .75))
-## ./c5.0 -f churnTestCase -r -I 1 -s         -c 75 > CfSubsetRule.txt
-CfSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(
-                        seed = 1, rules = TRUE,
-                        subset = TRUE,
-                        CF = .75))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w         -c 75 > CfWinnowRule.txt
-CfWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(
-                        seed = 1, rules = TRUE,
-                        winnow = TRUE, 
-                        CF = .75))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w -s      -c 75 > CfWinnowSubsetRule.txt
-CfWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(
-                              seed = 1, rules = TRUE,
-                              winnow = TRUE, subset = TRUE,
-                              CF = .75))
-
-## ./c5.0 -f churnTestCase -r -I 1       -u 3 -c 75 > CfBandedRule.txt
-CfBandedRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(
-                        seed = 1, rules = TRUE,
-                        CF = .75,
-                        bands = 3))
-## ./c5.0 -f churnTestCase -r -I 1 -s    -u 3 -c 75 > CfBandedSubsetRule.txt
-CfBandedSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(
-                              seed = 1, rules = TRUE,
-                              subset = TRUE,
-                              CF = .75,
-                              bands = 3))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w    -u 3 -c 75 > CfBandedWinnowRule.txt
-CfBandedWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(
-                              seed = 1, rules = TRUE,
-                              winnow = TRUE, 
-                              CF = .75,
-                              bands = 3))
-## ./c5.0 -f churnTestCase -r -I 1 -w -s -u 3 -c 75 > CfBandedWinnowSubsetRule.txt
-CfBandedWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                                  control = C5.0Control(
-                                    seed = 1, rules = TRUE,
-                                    winnow = TRUE, subset = TRUE,
-                                    CF = .75,
-                                    bands = 3))
-
-
-## ./c5.0 -f churnTestCase -I 1              > SimpleTree.txt
-SimpleTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1))
-
-## ./c5.0 -f churnTestCase -I 1 -w           > WinnowTree.txt
-WinnowTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, winnow = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1 -w -s        > WinnowSubsetTree.txt
-WinnowSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(seed = 1,
-                            winnow = TRUE,
-                            subset = TRUE))
-
-
-## ./c5.0 -f churnTestCase -I 1    -s        > SubsetTree.txt
-SubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1,
-                      subset = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1       -c 75 > CfTree.txt
-CfTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                control = C5.0Control(seed = 1,
-                  CF = .75))
-
-## ./c5.0 -f churnTestCase -I 1 -w    -c 75 > CfWinnowTree.txt
-CfWinnowTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(seed = 1,
-                        CF = .75,
-                        winnow = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1 -w -s -c 75 > CfWinnowSubsetTree.txt
-CfWinnowSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(seed = 1,
-                              CF = .75,
-                              winnow = TRUE,
-                              subset = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1    -s -c 75 > CfSubsetTree.txt
-CfSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(seed = 1,
-                        CF = .75,
-                        subset = TRUE))
-#####
-
-## ./c5.0 -f churnTestCase -r -I 1            -g > GlobalRule.txt
-GlobalRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, rules = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -s         -g > GlobalSubsetRule.txt
-GlobalSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, rules = TRUE, subset = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w         -g > GlobalWinnowRule.txt
-GlobalWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, rules = TRUE, winnow = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w -s      -g > GlobalWinnowSubsetRule.txt
-GlobalWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(seed = 1, rules = TRUE, winnow = TRUE, subset = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1       -u 3 -g > GlobalBandedRule.txt
-GlobalBandedRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(
-                      seed = 1, rules = TRUE,
-                      bands = 3, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -s    -u 3 -g > GlobalBandedSubsetRule.txt
-GlobalBandedSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(
-                            seed = 1, rules = TRUE,
-                            subset = TRUE,
-                            bands = 3, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w    -u 3 -g > GlobalBandedWinnowRule.txt
-GlobalBandedWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(
-                            seed = 1, rules = TRUE,
-                            winnow = TRUE,
-                            bands = 3, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w -s -u 3 -g > GlobalBandedWinnowSubsetRule.txt
-GlobalBandedWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                                control = C5.0Control(
-                                  seed = 1, rules = TRUE,
-                                  winnow = TRUE, subset = TRUE,
-                                  bands = 3, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1            -c 75 -g > GlobalCfRule.txt
-GlobalCfRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                control = C5.0Control(
-                  seed = 1, rules = TRUE,
-                  CF = .75,
-                  noGlobalPruning = TRUE))
-## ./c5.0 -f churnTestCase -r -I 1 -s         -c 75 -g > GlobalCfSubsetRule.txt
-GlobalCfSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(
-                        seed = 1, rules = TRUE,
-                        subset = TRUE,
-                        CF = .75, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w         -c 75 -g > GlobalCfWinnowRule.txt
-GlobalCfWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(
-                        seed = 1, rules = TRUE,
-                        winnow = TRUE, 
-                        CF = .75, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w -s      -c 75 -g > GlobalCfWinnowSubsetRule.txt
-GlobalCfWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(
-                              seed = 1, rules = TRUE,
-                              winnow = TRUE, subset = TRUE,
-                              CF = .75, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1       -u 3 -c 75 -g > GlobalCfBandedRule.txt
-GlobalCfBandedRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(
-                        seed = 1, rules = TRUE,
-                        CF = .75,
-                        bands = 3, noGlobalPruning = TRUE))
-## ./c5.0 -f churnTestCase -r -I 1 -s    -u 3 -c 75 -g > GlobalCfBandedSubsetRule.txt
-GlobalCfBandedSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(
-                              seed = 1, rules = TRUE,
-                              subset = TRUE,
-                              CF = .75,
-                              bands = 3, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -r -I 1 -w    -u 3 -c 75 -g > GlobalCfBandedWinnowRule.txt
-GlobalCfBandedWinnowRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(
-                              seed = 1, rules = TRUE,
-                              winnow = TRUE, 
-                              CF = .75,
-                              bands = 3, noGlobalPruning = TRUE))
-## ./c5.0 -f churnTestCase -r -I 1 -w -s -u 3 -c 75 -g > GlobalCfBandedWinnowSubsetRule.txt
-GlobalCfBandedWinnowSubsetRuleR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                                  control = C5.0Control(
-                                    seed = 1, rules = TRUE,
-                                    winnow = TRUE, subset = TRUE,
-                                    CF = .75,
-                                    bands = 3, noGlobalPruning = TRUE))
-
-
-## ./c5.0 -f churnTestCase -I 1              -g > GlobalTree.txt
-GlobalTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1 -w           -g > GlobalWinnowTree.txt
-GlobalWinnowTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1, winnow = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1 -w -s        -g > GlobalWinnowSubsetTree.txt
-GlobalWinnowSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                          control = C5.0Control(seed = 1,
-                            winnow = TRUE,
-                            subset = TRUE, noGlobalPruning = TRUE))
-
-
-## ./c5.0 -f churnTestCase -I 1    -s        -g > GlobalSubsetTree.txt
-GlobalSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                    control = C5.0Control(seed = 1,
-                      subset = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1       -c 75 -g > GlobalCfTree.txt
-GlobalCfTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                control = C5.0Control(seed = 1,
-                  CF = .75, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1 -w    -c 75 -g > GlobalCfWinnowTree.txt
-GlobalCfWinnowTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(seed = 1,
-                        CF = .75,
-                        winnow = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1 -w -s -c 75 -g > GlobalCfWinnowSubsetTree.txt
-GlobalCfWinnowSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                            control = C5.0Control(seed = 1,
-                              CF = .75,
-                              winnow = TRUE,
-                              subset = TRUE, noGlobalPruning = TRUE))
-
-## ./c5.0 -f churnTestCase -I 1    -s -c 75 -g > GlobalCfSubsetTree.txt
-GlobalCfSubsetTreeR <- C5.0(churnTrain[,-ncol(churnTrain)], churnTrain$churn,
-                      control = C5.0Control(seed = 1,
-                        CF = .75,
-                        subset = TRUE, noGlobalPruning = TRUE))
-
-
-
-trimOutput <- function(x)
+makeControl <- function(x)
   {
-    x <- strsplit(x, "\n")[[1]]
+    C5.0Control(seed = 1, 
+                winnow = x$winnow, subset = x$subset,
+                rules = x$rules, fuzzyThreshold = x$fuzzy,
+                noGlobalPruning = x$noGlobal,
+                CF = x$cf, bands = x$bands)
+  }
+
+
+trimOutput <- function(x, split = TRUE)
+  {
+    if(split) x <- strsplit(x, "\n")[[1]]
     bottomIndex <- grep("^Read", x)
     x <- x[-(1:bottomIndex)]    
     topIndex <- grep("^\tAttribute usage", x)
@@ -314,28 +34,51 @@ trimOutput <- function(x)
     x
   }
 
-getTestCase <- function(file, trim = TRUE)
+makeHeader <- function(x, i = "")
   {
-    raw <- read.table(file, sep = "\n", stringsAsFactors = FALSE,
-                      blank.lines.skip = FALSE)[,1]
-    raw <- paste(raw, collapse = "\n")
-    if(trim) raw <- trimOutput(raw)
-    raw
-
+    cat("\nTest Case ", i, ": ", ifelse(x$rules, "rules, ", ""),
+        ifelse(x$subset, "subsetting, ", ""),
+        ifelse(x$winnow, "winnowing, ", ""),
+        ifelse(x$fuzzyThreshold, "fuzzy thresholds, ", ""),
+        ifelse(x$noGlobalPruning, "no global pruning, ", ""),
+        ifelse(x$bands > 0, "bands, ", ""),
+        ifelse(x$cf != 0.25, "CF 0.75, ", ""),
+        "\n", sep = "")
   }
 
+
+library(C50)
 data(churn)
+setwd(system.file("examples", "Tests1", package = "C50"))
+## path to command line version
+c50Path <- "~/Code/C50clean"
 
-testCaseList <- grep("(Tree)|(Rule)", list.files(pattern = ".txt"), value = TRUE)
+combos <- expand.grid(bands = c(0, 3),
+                      cf = c(.25, .75),
+                      winnow = c(TRUE, FALSE),
+                      subset = c(TRUE, FALSE),
+                      rules = c(TRUE, FALSE),
+                      fuzzy = c(TRUE, FALSE),
+                      noGlobal = c(TRUE, FALSE))
+                      
+throwOut <- combos$bands & !combos$rules
+combos <- combos[!throwOut,]
 
-for(i in seq(along = testCaseList))
+outputs <- vector(mode = "list", length = nrow(combos))
+
+
+for(i in 1:nrow(combos))
   {
-    prefix <- testCaseList[i]
-    expected <- getTestCase(prefix)
-    obs <- trimOutput(get(gsub(".txt", "R", testCaseList[i], fixed = TRUE))$output)
+    makeHeader(combos[i,], i)
+    cat("   ", makeOptions(combos[i,], c50Path), "\n")
+    expected <- system(makeOptions(combos[i,], c50Path), intern = TRUE)
+    expected <- trimOutput(expected, split = FALSE)
+    fit <- C5.0(churnTrain[,-20], churnTrain$churn,
+                control = makeControl(combos[i,]))
+    obs <- trimOutput(fit$output)
+    results <- all.equal(obs, expected)
 
-    cat("Testing", testCaseList[i], "\n") 
-    results <- all.equal(expected, obs)
+    outputs[[i]] <- list(expected = expected, observed = obs)
     if(!is.logical(results) || !results)
       {
         if(length(expected) == length(obs) && grepl("string mismatches", results))
@@ -349,9 +92,10 @@ for(i in seq(along = testCaseList))
 
           } else {
             cat("failed! - output different lengths")
-            tmp <- cbind(expected, obs)
-            colnames(tmp) <- c("expected", "observed")
-            print(tmp)
+            cat("\nExpected:\n")
+            print(expected)
+            cat("\nObserved:\n")
+            print(obs)
             cat("\n")
           }
 
@@ -359,11 +103,9 @@ for(i in seq(along = testCaseList))
     if(is.logical(results) && results) cat("passed!")
     cat("\n\n")
 
-    rm(obs, expected, prefix, results)
+    rm(obs, expected, fit, results)
+
+    cat("\n\n")
+
 
   }
-
-
-
-
-
