@@ -1,0 +1,169 @@
+
+C5.0 [Release 2.07 GPL Edition]  	Tue May  8 22:07:28 2012
+-------------------------------
+
+    Options:
+	Application `churnTestCase'
+	Rule-based classifiers
+	Random seed 1
+	Winnow attributes
+	Do not use global tree pruning
+
+Class specified by attribute `churn'
+
+Read 3333 cases (20 attributes) from churnTestCase.data
+
+4 attributes winnowed
+Estimated importance of remaining attributes:
+
+     51%  total_day_minutes
+     40%  international_plan
+     32%  total_eve_charge
+     25%  voice_mail_plan
+     22%  number_customer_service_calls
+     20%  total_intl_calls
+     18%  total_intl_minutes
+     16%  total_day_charge
+      9%  total_eve_minutes
+     <1%  state
+     <1%  account_length
+     <1%  area_code
+     <1%  total_eve_calls
+     <1%  total_night_minutes
+     <1%  total_night_calls
+
+Rules:
+
+Rule 1: (64, lift 6.8)
+	total_day_minutes <= 160.2
+	total_eve_charge <= 19.83
+	total_night_minutes <= 239.8
+	number_customer_service_calls > 3
+	->  class yes  [0.985]
+
+Rule 2: (66, lift 6.8)
+	voice_mail_plan = no
+	total_day_minutes > 277
+	total_eve_charge > 12.26
+	total_night_minutes > 151.9
+	->  class yes  [0.985]
+
+Rule 3: (60, lift 6.8)
+	international_plan = yes
+	total_intl_calls <= 2
+	->  class yes  [0.984]
+
+Rule 4: (57, lift 6.8)
+	international_plan = yes
+	total_intl_minutes > 13.1
+	->  class yes  [0.983]
+
+Rule 5: (54, lift 6.8)
+	area_code <= 415
+	total_day_minutes <= 160.2
+	total_eve_charge <= 19.83
+	number_customer_service_calls > 3
+	->  class yes  [0.982]
+
+Rule 6: (94/1, lift 6.8)
+	voice_mail_plan = no
+	total_day_minutes > 264.4
+	total_eve_minutes > 187.7
+	total_night_minutes > 126.9
+	->  class yes  [0.979]
+
+Rule 7: (32, lift 6.7)
+	total_day_minutes <= 120.5
+	number_customer_service_calls > 3
+	->  class yes  [0.971]
+
+Rule 8: (48/1, lift 6.6)
+	voice_mail_plan = no
+	total_day_minutes > 264.4
+	total_eve_charge > 12.26
+	total_night_minutes > 224.8
+	->  class yes  [0.960]
+
+Rule 9: (23, lift 6.6)
+	account_length > 123
+	voice_mail_plan = no
+	total_day_minutes > 277
+	->  class yes  [0.960]
+
+Rule 10: (43/2, lift 6.4)
+	international_plan = no
+	voice_mail_plan = no
+	total_day_minutes > 246.6
+	total_eve_charge > 20.5
+	->  class yes  [0.933]
+
+Rule 11: (28/2, lift 6.2)
+	total_day_minutes <= 264.4
+	total_eve_calls <= 125
+	total_eve_charge <= 12.05
+	number_customer_service_calls > 3
+	->  class yes  [0.900]
+
+Rule 12: (78/8, lift 6.1)
+	voice_mail_plan = no
+	total_day_minutes > 223.2
+	total_eve_charge > 20.5
+	total_night_minutes > 174.2
+	->  class yes  [0.888]
+
+Rule 13: (102/13, lift 6.0)
+	total_day_minutes <= 160.2
+	number_customer_service_calls > 3
+	->  class yes  [0.865]
+
+Rule 14: (45/1, lift 1.1)
+	international_plan = no
+	voice_mail_plan = yes
+	total_day_minutes > 264.4
+	->  class no  [0.957]
+
+Rule 15: (149/9, lift 1.1)
+	total_eve_minutes <= 187.7
+	total_eve_charge > 12.26
+	total_night_minutes <= 151.9
+	->  class no  [0.934]
+
+Rule 16: (3122/356, lift 1.0)
+	total_day_minutes <= 264.4
+	->  class no  [0.886]
+
+Default class: no
+
+
+Evaluation on training data (3333 cases):
+
+	        Rules     
+	  ----------------
+	    No      Errors
+
+	    16  124( 3.7%)   <<
+
+
+	   (a)   (b)    <-classified as
+	  ----  ----
+	   373   110    (a): class yes
+	    14  2836    (b): class no
+
+
+	Attribute usage:
+
+	99.18%	total_day_minutes
+	12.44%	total_eve_charge
+	12.05%	total_night_minutes
+	7.79%	total_eve_minutes
+	7.43%	voice_mail_plan
+	6.47%	international_plan
+	4.04%	number_customer_service_calls
+	2.30%	total_intl_calls
+	2.21%	total_intl_minutes
+	2.12%	area_code
+	1.34%	total_eve_calls
+	1.19%	account_length
+
+
+Time: 0.1 secs
