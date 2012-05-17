@@ -73,8 +73,8 @@ int samplemain(int *outputv)
     int			CaseNo=0, MaxClassLen=5, o, TotalRules=0,
 			StartList, CurrentPosition;
     ClassNo		Predict, c;
-    Boolean		XRefForm=false;
-    void		ShowRules(int);
+//    Boolean		XRefForm=false;
+//    void		ShowRules(int);
     int                 i;
 
     /*  Read information on attribute names, values, and classes  */
@@ -98,10 +98,10 @@ int samplemain(int *outputv)
 	    TotalRules += RuleSet[Trial]->SNRules;
 	}
 
-	if ( RULESUSED )
-	{
-	    RulesUsed = Alloc(TotalRules + TRIALS, RuleNo);
-	}
+//	if ( RULESUSED )
+//	{
+//	    RulesUsed = Alloc(TotalRules + TRIALS, RuleNo);
+//	}
 
 	MostSpec = Alloc(MaxClass+1, CRule);
     }
@@ -124,28 +124,28 @@ int samplemain(int *outputv)
 	This has the same format as a .data file except that
 	the class can be "?" to indicate that it is unknown.  */
 
-    if ( XRefForm )
-    {
-	ForEach(c, 1, MaxClass)
-	{
-	    if ( (o = strlen(ClassName[c])) > MaxClassLen ) MaxClassLen = o;
-	}
-
+//    if ( XRefForm )
+//    {
+//	ForEach(c, 1, MaxClass)
+//	{
+//	    if ( (o = strlen(ClassName[c])) > MaxClassLen ) MaxClassLen = o;
+//	}
+//
 //	printf("%-15s %*s   [Predicted]%s\n\n",
 //	       "Case", -MaxClassLen, "Class",
 //	       ( RULESUSED ? "   Rules" : "" ));
-
-	StartList = 16 + MaxClassLen + 3 +
-		    ( MaxClassLen > 9 ? MaxClassLen + 2 : 11 ) + 3;
-    }
-    else
-    {
+//
+//	StartList = 16 + MaxClassLen + 3 +
+//		    ( MaxClassLen > 9 ? MaxClassLen + 2 : 11 ) + 3;
+//    }
+//    else
+//    {
 //	printf("Case\t\tGiven\t\tPredicted%s\n %s\t\tClass\t\tClass\n\n",
 //		( RULESUSED ? "\t\t    Rules" : "" ),
 //		( LabelAtt ? "ID" : "No" ));
 
 	StartList = 60;
-    }
+//    }
 
     if ( ! (F = GetFile(".cases", "r")) ) Error(NOFILE, Fn, "");
 
