@@ -1,5 +1,5 @@
 
-predict.C5.0 <- function (object, newdata = NULL, type = "class", ...) 
+predict.C5.0 <- function (object, newdata = NULL, trials = object$trials, type = "class", ...) 
 {
   if(!(type %in% c("class", "prob"))) stop("type should be either 'class' or 'prob'")
   if(is.null(newdata)) stop("newdata must be non-null")
@@ -13,8 +13,9 @@ predict.C5.0 <- function (object, newdata = NULL, type = "class", ...)
   caseString <- makeDataFile(x = newdata, y = NULL)
   
   ## for testing
-  cat(caseString, '\n')
+  ##cat(caseString, '\n')
 
+  ## Add trials (not object$trials) as an argument
   Z <- .C("predictions",
           as.character(caseString),
           as.character(object$names),
@@ -26,7 +27,7 @@ predict.C5.0 <- function (object, newdata = NULL, type = "class", ...)
           )
 
   ## for testing
-  cat(Z$output, '\n')
+  ##cat(Z$output, '\n')
 
   if(type == "class")
     {
