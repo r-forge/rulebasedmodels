@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ <id>urn:iweb:A5B0E836-7F90-4541-9ED7-A748E2AE11C7</id>
+ <title>Page list Atom feed</title>
+ <updated>2012-05-18T22:32:20-04:00</updated>
+ <link rel="self" href="feed.xml"/>
+ <generator>iWeb</generator>
+ <author>
+  <name>iWeb</name>
+ </author>
+ <entry>
+  <id>urn:iweb:873FD5CD-D35C-475F-9BD9-58171447BEA6</id>
+  <title>Rule-Based Models</title>
+  <title xmlns="urn:iweb:">Rule-Based Models</title>
+  <in-navbar xmlns="urn:iweb:">873FD5CD-D35C-475F-9BD9-58171447BEA6</in-navbar>
+  <link rel="alternate" href="Rule-Based_Models.html"/>
+  <updated>2012-05-18T22:32:20.001-04:00</updated>
+  <content>Rule-Based Models</content>
+ </entry>
+</feed>
