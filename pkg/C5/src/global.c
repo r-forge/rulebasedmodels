@@ -56,6 +56,8 @@ Boolean		SUBSET=0,	/* subset tests allowed */
 		WINNOW=0,	/* attribute winnowing */
 		GLOBAL=1;	/* use global pruning for trees */
 
+enum mode {m_build ,m_predict} MODE = m_build;
+
 /* Added for sample.c */
 Boolean         RULESUSED=0;    /* list applicable rules */
 
@@ -136,6 +138,8 @@ float		Confidence,	/* set by classify() */
 		**NCost=0,	/* normalised MCost used for rules */
 		*WeightMul=0;	/* prior adjustment factor */
 
+float		*Confidences;	/* new feature: show all confidences */
+
 CRule		*MostSpec=0;	/* most specific rule for each class */
 
 Boolean		UnitWeights=1,	/* all weights are 1.0 */
@@ -151,8 +155,9 @@ double		*ClassFreq=0,	/* ClassFreq[c] = # cases of class c */
 
 float		*Gain=0,	/* Gain[a] = info gain by split on att a */
 		*Info=0,	/* Info[a] = max info from split on att a */
-		*EstMaxGR=0,	/* EstMaxGR[a] = est max GR from folit on a */
-		*ClassSum=0;	/* class weights during classification */
+		*EstMaxGR=0;	/* EstMaxGR[a] = est max GR from folit on a */
+
+double		*ClassSum=0;	/* class weights during classification */
 
 ContValue	*Bar=0;		/* Bar[a]  = best threshold for contin att a */
 
@@ -178,7 +183,8 @@ RuleNo		NRules,		/* number of rules */
 		RuleSpace;	/* space currently allocated for rules */
 
 /* Added for sample.c */
-RuleNo		*RulesUsed=Nil; /* list of all rules used */
+RuleNo		*RulesUsed=Nil, /* list of all rules used */
+		NRulesUsed;    /* number ditto */
 
 CRuleSet	*RuleSet=0;	/* rulesets */
 
@@ -217,4 +223,3 @@ FILE		*TRf=0;		/* file pointer for tree and rule i/o */
 char		Fn[500];	/* file name */
 
 FILE  		*Of=0;		/* output file */
-

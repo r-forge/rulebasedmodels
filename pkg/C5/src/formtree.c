@@ -119,7 +119,7 @@ void InitialiseTreeData()
     }
 
     ClassFreq = AllocZero(MaxClass+1, double);
-    ClassSum  = Alloc(MaxClass+1, float);
+    ClassSum  = Alloc(MaxClass+1, double);
 
     if ( BOOST )
     {

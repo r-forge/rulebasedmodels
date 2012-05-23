@@ -3,11 +3,12 @@
 #include <R_ext/Rdynload.h>
 
 #include "rulebasedmodels.h"
+#include "rsample.h"
 #include "strbuf.h"
 #include "redefine.h"
 
 extern void c50main();
-extern void samplemain(double *outputv);
+extern void sample(double *outputv);
 
 static void c50(char **namesv,
                 char **datav,
@@ -127,6 +128,7 @@ static void predictions(char **casev,
                         char **treev,
                         char **rulesv,
                         int *predv,  /* XXX predictions are character */
+			int *trials,
                         char **outputv)
 {
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
@@ -150,13 +152,19 @@ static void predictions(char **casev,
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
     rbm_register(sb_names, "undefined.names", 1);
 
-    STRBUF *sb_treev = strbuf_create_full(*treev, strlen(*treev));
-    /* XXX should sb_treev be copied? */
-    rbm_register(sb_treev, "undefined.tree", 1);
+    if (strlen(*treev)) {
+	STRBUF *sb_treev = strbuf_create_full(*treev, strlen(*treev));
+	/* XXX should sb_treev be copied? */
+	rbm_register(sb_treev, "undefined.tree", 1);
+    } else if (strlen(*rulesv))  {
+	STRBUF *sb_rulesv = strbuf_create_full(*rulesv, strlen(*rulesv));
+	/* XXX should sb_rulesv be copied? */
+	rbm_register(sb_rulesv, "undefined.rules", 1);
+	setrules(1);
+    } else {
+	/* TODO: raise an error here */
+    }
 
-    STRBUF *sb_rulesv = strbuf_create_full(*rulesv, strlen(*rulesv));
-    /* XXX should sb_rulesv be copied? */
-    rbm_register(sb_rulesv, "undefined.rules", 1);
 
     /*
      * We need to initialize rbm_buf before calling any code that
@@ -164,12 +172,12 @@ static void predictions(char **casev,
      */
     if ((val = setjmp(rbm_buf)) == 0) {
         // Real work is done here
-        Rprintf("Calling samplemain\n");
-        samplemain(predv);
+        Rprintf("Calling rpredictmain\n");
+        rpredictmain(trials ,predv);
 
-        Rprintf("samplemain finished\n");
+        Rprintf("predict finished\n");
     } else {
-        Rprintf("sample code called exit with value %d\n", val - JMP_OFFSET);
+        Rprintf("predict code called exit with value %d\n", val - JMP_OFFSET);
     }
 
     // Close file object "Of", and return its contents via argument outputv
@@ -210,13 +218,14 @@ static R_NativePrimitiveArgType predictions_t[] = {
     STRSXP,   // treev
     STRSXP,   // rulesv
     INTSXP,   // predv
+    INTSXP,   // trials
     STRSXP    // outputv
 };
 
 // Declare the c50 and predictions functions
 static const R_CMethodDef cEntries[] = {
     {"C50", (DL_FUNC) &c50, 17, c50_t},
-    {"predictions", (DL_FUNC) &predictions, 6, predictions_t},
+    {"predictions", (DL_FUNC) &predictions, 7, predictions_t},
     {NULL, NULL, 0}
 };
 

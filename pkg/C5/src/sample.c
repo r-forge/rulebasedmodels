@@ -56,6 +56,7 @@
 
 #include "defns.h"
 #include "extern.h"
+#include "redefine.h"
 
 static void		ShowRules(int);
 extern void		FreeGlobals();
@@ -72,7 +73,7 @@ extern void		FreeGlobals();
 #define MAIN Zmain
 #endif
 
-int MAIN(int Argc, char *Argv[])
+int predictmain(int Argc, char *Argv[])
 /*  ----  */
 {
     FILE		*F;
@@ -83,9 +84,11 @@ int MAIN(int Argc, char *Argv[])
     Boolean		XRefForm=false;
     extern String	OptArg, Option;
 
+    MODE = m_predict;
+
     /*  Process options  */
 
-    while ( (o = ProcessOption(Argc, Argv, "f+xrR")) )
+    while ( (o = PredictProcessOption(Argc, Argv, "f+xrR")) )
     {
 	switch (o)
 	{
@@ -108,18 +111,18 @@ int MAIN(int Argc, char *Argv[])
 
     GetNames(F);
 
-    /*  Read the appropriate classifier file.  Call CheckFile() to
+    /*  Read the appropriate classifier file.  Call PredictCheckFile() to
 	determine the number of trials, then allocate space for
 	trees or rulesets  */
 
     if ( RULES )
     {
-	CheckFile(".rules", false);
+	PredictCheckFile(".rules", false);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    RuleSet[Trial] = GetRules(".rules");
+	    RuleSet[Trial] = PredictGetRules(".rules");
 	    TotalRules += RuleSet[Trial]->SNRules;
 	}
 
@@ -132,12 +135,12 @@ int MAIN(int Argc, char *Argv[])
     }
     else
     {
-	CheckFile(".tree", false);
+	PredictCheckFile(".tree", false);
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    Pruned[Trial] = GetTree(".tree");
+	    Pruned[Trial] = PredictGetTree(".tree");
 	}
     }
 
@@ -179,16 +182,16 @@ int MAIN(int Argc, char *Argv[])
 
     if ( ! (F = GetFile(".cases", "r")) ) Error(NOFILE, Fn, "");
 
-    ClassSum = AllocZero(MaxClass+1, float);   /* used in classification */
+    ClassSum = AllocZero(MaxClass+1, double);   /* used in classification */
     Vote     = AllocZero(MaxClass+1, float);   /* used with boosting */
 
     LineNo = 0;
 
-    while ( (Case = GetDataRec(F, false)) )
+    while ( (Case = PredictGetDataRec(F, false)) )
     {
 	/*  For this case, find the class predicted by See5/C5.0 model  */
 
-	Predict = Classify(Case);
+	Predict = PredictClassify(Case);
 
 	/*  Print either case label or number  */
 

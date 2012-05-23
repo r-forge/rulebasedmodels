@@ -92,6 +92,29 @@ char ProcessOption(int Argc, char *Argv[], char *Options)
     return '?';
 }
 
+char PredictProcessOption(int Argc, char *Argv[], char *Options)
+/*   -------------  */
+{
+    int		i;
+    static int	OptNo=1;
+
+    if ( OptNo >= Argc ) return '\00';
+
+    if ( *(Option = Argv[OptNo++]) != '-' ) return '?';
+
+    for ( i = 0 ; Options[i] ; i++ )
+    {
+	if ( Options[i] == Option[1] )
+	{
+	    OptArg = (char *) ( Options[i+1] != '+' ? Nil :
+				Option[2] ? Option+2 :
+				OptNo < Argc ? Argv[OptNo++] : "0" );
+	    return Option[1];
+	}
+    }
+
+    return '?';
+}
 
 
 /*************************************************************************/
@@ -114,6 +137,10 @@ void *Pmalloc(size_t Bytes)
 
     Error(NOMEM, "", "");
 
+#ifdef WIN32
+    return Nil;
+#endif
+
 }
 
 
@@ -134,6 +161,9 @@ void *Prealloc(void *Present, size_t Bytes)
 
     Error(NOMEM, "", "");
 
+#ifdef WIN32
+    return Nil;
+#endif
 }
 
 
@@ -149,6 +179,10 @@ void *Pcalloc(size_t Number, unsigned int Size)
     }
 
     Error(NOMEM, "", "");
+
+#ifdef WIN32
+    return Nil;
+#endif
 
 }
 
@@ -235,6 +269,12 @@ void FreeLastCase(DataRec Case)
 }
 
 
+void PredictFreeLastCase(DataRec DVec)
+/*   ------------  */
+{
+    free(&DVec[-1]);
+    IValsOffset = 0;
+}
 
 /*************************************************************************/
 /*									 */
@@ -317,6 +357,27 @@ void Error(int ErrNo, String S1, String S2)
     Boolean	Quit=false, WarningOnly=false;
     char	Buffer[10000], *Msg=Buffer;
 
+#ifdef WIN32
+    if ( ErrNo == NOMEM )
+    {
+	MessageBox(NULL, "Cannot allocate sufficient memory", "Fatal Error",
+			 MB_ICONERROR | MB_OK);
+	Goodbye(1);
+    }
+    else
+    if ( ErrNo == MODELFILE )
+    {
+	if ( ! ErrMsgs )
+	{
+	    sprintf(Msg, "File %s is incompatible with .names file\n(%s `%s')",
+			 Fn, S1, S2);
+	    MessageBox(NULL, Msg, "Cannot Load Classifier",
+		       MB_ICONERROR | MB_OK);
+	}
+	ErrMsgs++;
+	return;
+    }
+#endif
 
     if ( Of ) fprintf(Of, "\n");
 
@@ -471,16 +532,51 @@ void Error(int ErrNo, String S1, String S2)
 	    sprintf(Msg, "    (%s `%s')\n", S1, S2);
 	    Quit = true;
 	    break;
+
+	case BADTRIALS:
+	    sprintf(Msg, S1 ,S2);
+	    Quit = true;
+	    break;
+
+	case BADOPTION:
+	    sprintf(Msg, S1 ,S2);
+	    Quit = true;
+	    break;
+
+	case OLDFORMAT:
+	    sprintf(Msg, S1 ,S2);
+	    Quit = true;
+	    break;
+	    
     }
 
+#ifdef WIN32
+    if ( Of )
+    {
+	fprintf(Of, Buffer);
+    }
+    else
+    if ( ErrMsgs <= 10 )
+    {
+	MessageBox(NULL, Buffer, ( WarningOnly ? "Warning" : "Error" ), MB_OK);
+    }
+#else
     fprintf(Of, Buffer);
+#endif
 	
     if ( ! WarningOnly ) ErrMsgs++;
 
     if ( ErrMsgs == 10 )
     {
+#if defined WIN32 && ! defined _CONSOLE
+	MessageBox(NULL, T_ErrorLimit, "Too many errors!", MB_OK);
+#else
 	fprintf(Of,  T_ErrorLimit);
-	MaxCase--;
+#endif
+	/* hooks.c/Error did not decrement MaxCase */
+	if (MODE == m_build) {
+	    MaxCase--;
+	}
 	Quit = true;
     }
 
@@ -839,6 +935,56 @@ void Check(float Val, float Low, float High)
 }
 
 
+/*************************************************************************/
+/*									 */
+/*	Deallocate the space used to perform classification		 */
+/*									 */
+/*************************************************************************/
+
+
+void FreeGlobals()
+/*   -----------  */
+{
+    /*  Free memory allocated for classifier  */
+
+    if ( RULES )
+    {
+	ForEach(Trial, 0, TRIALS-1)
+	{
+	     FreeRules(RuleSet[Trial]);
+	}
+	free(RuleSet);
+
+	classifyfreeglobals();
+	FreeUnlessNil(RulesUsed);
+	FreeUnlessNil(MostSpec);
+    }
+    else
+    {
+	ForEach(Trial, 0, TRIALS-1)
+	{
+	     FreeTree(Pruned[Trial]);
+	}
+	free(Pruned);
+    }
+
+    modelfilesfreeglobals();
+
+    /*  Free memory allocated for cost matrix  */
+
+    if ( MCost )
+    {
+        FreeVector((void **) MCost, 1, MaxClass);
+    }
+
+    /*  Free memory for names etc  */
+
+    FreeNames();
+    FreeUnlessNil(IgnoredVals);
+
+    free(ClassSum);
+    free(Vote);
+}
 
 
 
@@ -879,8 +1025,7 @@ void Cleanup()
     FreeUnlessNil(Split);				Split = Nil;
     FreeUnlessNil(Used);				Used = Nil;
 
-    FreeUnlessNil(PropVal);				PropVal = Nil;
-							PropValSize = 0;
+    modelfilesfreeglobals();
 
     if ( RULES )
     {
@@ -930,8 +1075,7 @@ void Cleanup()
 
     FreeTreeData();
 
-    FreeUnlessNil(Active);				Active = Nil;
-							ActiveSpace = 0;
+    classifyfreeglobals();
 
     FreeUnlessNil(UtilErr);				UtilErr = Nil;
     FreeUnlessNil(UtilBand);				UtilBand = Nil;

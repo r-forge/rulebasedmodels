@@ -1,275 +1,190 @@
+/*************************************************************************/
+/*									 */
+/*	Source code for use with See5/C5.0 Release 2.09			 */
+/*	-----------------------------------------------			 */
+/*		      Copyright RuleQuest Research 2012			 */
+/*									 */
+/*	This code is provided "as is" without warranty of any kind,	 */
+/*	either express or implied.  All use is at your own risk.	 */
+/*									 */
+/*************************************************************************/
+
 #include "defns.h"
 #include "extern.h"
 
-extern char *PropVal;
-extern RuleNo *Active;
+/* ReadName was identical to getnames.c/ReadName */
 
-/*************************************************************************/
-/*									 */
-/*	Deallocate the space used to perform classification		 */
-/*									 */
-/*************************************************************************/
+/* modified getnames.c/GetNames to recognize predict mode */
 
+/* modified getnames.c/Explicitatt to recognize predict mode */
 
-void FreeGlobals()
-/*   -----------  */
-{
-    /*  Free memory allocated for classifier  */
+/* Which was identical to getnames.c/Which */
 
-    if ( RULES )
-    {
-	ForEach(Trial, 0, TRIALS-1)
-	{
-	     FreeRules(RuleSet[Trial]);
-	}
-	free(RuleSet);
+/* InChar was identical to getnames.c/InChar */
 
-	FreeUnlessNil(Active);
-	FreeUnlessNil(RulesUsed);
-	FreeUnlessNil(MostSpec);
-    }
-    else
-    {
-	ForEach(Trial, 0, TRIALS-1)
-	{
-	     FreeTree(Pruned[Trial]);
-	}
-	free(Pruned);
-    }
+/* moved GetDataRec to getdata.c/PredictGetDataRec */
 
-    FreeUnlessNil(PropVal);
+/* StoreIVal was identical to getdata.c/StoreIVal */
 
-    /*  Free memory allocated for cost matrix  */
+/* CheckValue was identical to getdata.c/CheckValue */
 
-    if ( MCost )
-    {
-        FreeVector((void **) MCost, 1, MaxClass);
-    }
+/* ImplicitAtt was identical to implicitatt.c/ImplicitAtt */
 
-    /*  Free memory for names etc  */
+/* ReadDefinition was identical to implicitatt.c/ReadDefinition" */
 
-    FreeNames();
-    FreeUnlessNil(IgnoredVals);
+/* Append was identical to implictatt.c/Append */
 
-    free(ClassSum);
-    free(Vote);
-}
+/* Expression was identical to implicitatt.c/Expression */
 
+/* Conjunct was identical to implicitatt.c/Conjunct */
 
-/*************************************************************************/
-/*									 */
-/*  Read a raw case from file Df.					 */
-/*									 */
-/*  For each attribute, read the attribute value from the file.		 */
-/*  If it is a discrete valued attribute, find the associated no.	 */
-/*  of this attribute value (if the value is unknown this is 0).	 */
-/*									 */
-/*  Returns the array of attribute values.				 */
-/*									 */
-/*************************************************************************/
+/* SExpression was identical to implicitatt.c/SExpression */
 
+/* AExpression was identical to implicitatt.c/AExpression */
 
-#define XError(a,b,c)	Error(a,b,c)
+/* Term was identical to implicitatt.c/Term */
 
+/* Factor was identical to implicitatt.c/Factor */
 
-DataRec GetDataRecAlt(FILE *Df, Boolean Train)
-/*      -------------  */
-{
-    Attribute	Att;
-    char	Name[1000], *EndName;
-    int		Dv;
-    DataRec	Dummy, DVec;
-    ContValue	Cv;
-    Boolean	FirstValue=true;
+/* Primary was identical to implicitatt.c/Primary */
 
+/* Atom was identical to implicitatt.c/Atom */
 
-    if ( ReadName(Df, Name, 1000, '\00') )
-    {
-	Dummy = AllocZero(MaxAtt+2, AttValue);
-	DVec = &Dummy[1];
-	ForEach(Att, 1, MaxAtt)
-	{
-	    if ( AttDef[Att] )
-	    {
-		DVec[Att] = EvaluateDef(AttDef[Att], DVec);
+/* Find was identical to implicitatt.c/Find */
 
-		if ( Continuous(Att) )
-		{
-		    CheckValue(DVec, Att);
-		}
+/* FindOne was identical to implicitatt.c/FindOne */
 
-		if ( SomeMiss )
-		{
-		    SomeMiss[Att] |= Unknown(DVec, Att);
-		    SomeNA[Att]   |= NotApplic(DVec, Att);
-		}
+/* FindAttName was identical to implicitatt.c/FindAttName */
 
-		continue;
-	    }
+/* DefSyntaxError was identical to implicitatt.c/DefSyntaxError */
 
-	    /*  Get the attribute value if don't already have it  */
+/* DefSemanticsError was identical to implicitatt.c/DefSemanticsError */
 
-	    if ( ! FirstValue && ! ReadName(Df, Name, 1000, '\00') )
-	    {
-		XError(HITEOF, AttName[Att], "");
-		FreeLastCase(DVec);
-		return Nil;
-	    }
-	    FirstValue = false;
+/* Dump was identical to implicitatt.c/Dump */
 
-	    if ( Exclude(Att) )
-	    {
-		if ( Att == LabelAtt )
-		{
-		    /*  Record the value as a string  */
+/* DumpOp was identical to implicitatt.c/DumpOp */
 
-		    SVal(DVec,Att) = StoreIVal(Name);
-		}
-	    }
-	    else
-	    if ( ! strcmp(Name, "?") )
-	    {
-		/*  Set marker to indicate missing value  */
+/* UPdateTStack was identical to implicitatt.c/UpdateTStack */
 
-		DVal(DVec, Att) = UNKNOWN;
-		if ( SomeMiss ) SomeMiss[Att] = true;
-	    }
-	    else
-	    if ( Att != ClassAtt && ! strcmp(Name, "N/A") )
-	    {
-		/*  Set marker to indicate not applicable  */
+/*EvaluateDef was identical to implicitatt.c/EvaluateDef */
 
-		DVal(DVec, Att) = NA;
-		if ( SomeNA ) SomeNA[Att] = true;
-	    }
-	    else
-	    if ( Discrete(Att) )
-	    {
-		/*  Discrete attribute  */
+/* moved ReadFilePrefix to modelfiles.c/PredictReadFilePrefix */
 
-		Dv = Which(Name, AttValName[Att], 1, MaxAttVal[Att]);
-		if ( ! Dv )
-		{
-		    if ( StatBit(Att, DISCRETE) )
-		    {
-			if ( Train )
-			{
-			    /*  Add value to list  */
+/* moved ReadHeader to modelfiles.c/PredictReadHeader */
 
-			    if ( MaxAttVal[Att] >= (long) AttValName[Att][0] )
-			    {
-				XError(TOOMANYVALS, AttName[Att],
-					 (char *) AttValName[Att][0] - 1);
-				Dv = MaxAttVal[Att];
-			    }
-			    else
-			    {
-				Dv = ++MaxAttVal[Att];
-				AttValName[Att][Dv]   = strdup(Name);
-				AttValName[Att][Dv+1] = "<other>"; /* no free */
-			    }
-			}
-			else
-			{
-			    /*  Set value to "<other>"  */
+/* moved GetTree to modelfiles.c/PredictGetTree */
 
-			    Dv = MaxAttVal[Att] + 1;
-			}
-		    }
-		    else
-		    {
-			XError(BADATTVAL, AttName[Att], Name);
-			Dv = UNKNOWN;
-		    }
-		}
-		DVal(DVec, Att) = Dv;
-	    }
-	    else
-	    {
-		/*  Continuous value  */
+/* moved InTree to modelfiles.c/PredictInTree */
 
-		if ( TStampVal(Att) )
-		{
-		    CVal(DVec, Att) = Cv = TStampToMins(Name);
-		    if ( Cv >= 1E9 )	/* long time in future */
-		    {
-			XError(BADTSTMP, AttName[Att], Name);
-			DVal(DVec, Att) = UNKNOWN;
-		    }
-		}
-		else
-		if ( DateVal(Att) )
-		{
-		    CVal(DVec, Att) = Cv = DateToDay(Name);
-		    if ( Cv < 1 )
-		    {
-			XError(BADDATE, AttName[Att], Name);
-			DVal(DVec, Att) = UNKNOWN;
-		    }
-		}
-		else
-		if ( TimeVal(Att) )
-		{
-		    CVal(DVec, Att) = Cv = TimeToSecs(Name);
-		    if ( Cv < 0 )
-		    {
-			XError(BADTIME, AttName[Att], Name);
-			DVal(DVec, Att) = UNKNOWN;
-		    }
-		}
-		else
-		{
-		    CVal(DVec, Att) = strtod(Name, &EndName);
-		    if ( EndName == Name || *EndName != '\0' )
-		    {
-			XError(BADATTVAL, AttName[Att], Name);
-			DVal(DVec, Att) = UNKNOWN;
-		    }
-		}
+/* moved GetRules to modelfiles.c/PredictGetRules */
 
-		CheckValue(DVec, Att);
-	    }
-	}
+/* InRules was identical to modelfiles.c/InRules */
 
-	if ( ClassAtt )
-	{
-	    if ( Discrete(ClassAtt) )
-	    {
-		Class(DVec) = XDVal(DVec, ClassAtt);
-	    }
-	    else
-	    if ( Unknown(DVec, ClassAtt) || NotApplic(DVec, ClassAtt) )
-	    {
-		Class(DVec) = 0;
-	    }
-	    else
-	    {
-		/*  Find appropriate segment using class thresholds  */
+/* InRule was identical to modelfiles.c/InRule */
 
-		Cv = CVal(DVec, ClassAtt);
+/* InCondition was identical to modelfiles.c/InCondition */
 
-		for ( Dv = 1 ; Dv < MaxClass && Cv > ClassThresh[Dv] ; Dv++ )
-		    ;
+/* ConstructRuleTree was identical to ruletree.c/ConstructRuleTree */
 
-		Class(DVec) = Dv;
-	    }
-	}
-	else
-	{
-	    if ( ! ReadName(Df, Name, 1000, '\00') )
-	    {
-		XError(HITEOF, Fn, "");
-		FreeLastCase(DVec);
-		return Nil;
-	    }
+/* SetTestIndex was identical to ruletree.c/SetTestIndex */
 
-	    Class(DVec) = Dv = Which(Name, ClassName, 1, MaxClass);
-	}
+/* GrowRT was identical to ruletree.c/GrowRT */
 
-	return DVec;
-    }
-    else
-    {
-	return Nil;
-    }
-}
+/* DesiredOutcome was identical to ruletree.c/DesiredOutcome */
+
+/* SelectTest was identical to ruletree.c/SelectTest */
+
+/* ReadProp was identical to ruletree.c/ReadProp */
+
+/* RemoveQuotes was identical to ruletree.c/RemoveQuotes */
+
+/* MakeSubset was identical to ruletree.c/MakeSubset */
+
+/* moved BinRecoverDiscreteName to modelfiles.c */
+
+/* moved BinInTree to modelfiles.c */
+
+/* moved BinInRules to modelfiles.c */
+
+/* moved StreamIn to modelfiles.c */
+
+/* Leaf was identical to trees.c/Leaf */
+
+/* moved GetMCosts to mcost.c/PredictGetMCosts */
+
+/* moved TreeClassify to classify.c/PredictTreeClassify */
+
+/* moved FollowAllBranches to classify.c/PredictFollowAllBranches */
+
+/* moved FindLeaf to classify.c/PredictFindLeaf */
+
+/* moved FindLeafGen to classify.c */
+
+/* moved RuleClassify to classify.c/PredictRuleClassify */
+
+/* FindOutcome was identical to classify.c/FindOutcome */
+
+/* Satisfies was identical to classify.c/Satisfies */
+
+/* Matches was identical to classify.c/Matches */
+
+/* CheckActiveSpace was identical to classify.c/CheckActiveSpace */
+
+/* MarkActive was identical to classify.c/MarkActive */
+
+/* moved BoostClassify to classify.c/PredictBoostClassify */
+
+/* moved SelectClass to classify.c/PredictSelectClass */
+
+/* moved SelectClassGen to classify.c */
+
+/* moved MisclassCost to classify.c */
+
+/* moved Classify to classify.c/PredictClassify */
+
+/* moved Interpolate to classify.c/PredictInterpolate */
+
+/* GetFile was identical to utility.c/GetFile */
+
+/* moved CheckFile to modelfiles.c/PredictCheckFile */
+
+/* moved ProcessOption to utility.c/PredictProcesssOption */
+
+/* modified utility.c/Pmalloc to be identical to Pmalloc */
+
+/* modified utility.c/Prealloc to be identical to Prealloc */
+
+/* modified utility.c/Pcalloc to be identical to Pcalloc */
+
+/* modified utility.c/Error to include functionality from Error when in predict
+   mode */
+
+/* Denominator was identical to utility.c/Denominator */
+
+/* GetInt was identical to utility.c/GetInt */
+
+/* DateToDay was identical to utility.c/DateToDay */
+
+/* TimeToSecs was identical to utility.c/TimeToSecs */
+
+/* SetTSBase was identical to utility.c/SetTSBase */
+
+/* TStampToMins was identical to utility.c/TStampToMins */
+
+/* moved FreeLastCase to utility.c/PredictFreeLastCase */
+
+/* moved FreeGlobals to utility.c */
+
+/* moved Predict to utility.c */
+
+/* modified getnames.c/FreeNames to recognize predict mode */
+
+/* FreeTree was identical to trees.c/FreeTree */
+
+/* FreeRule was identical to rules.c/FreeRule */
+
+/* FreeRuleTree was identical to ruletree.c/FreeRuleTree */
+
+/* FreeRules was identical to rules.c/FreeRules */
+
+/* FreeVector was identical to rules.c/FreeVector */

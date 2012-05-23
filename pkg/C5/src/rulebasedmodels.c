@@ -201,6 +201,9 @@ void initglobals(void)
     Fn[0] = '\0';	/* file name */
 
     Of=0;		/* output file */
+    MODE = m_build;
+
+    modelfilesinit();
 }
 
 /*
@@ -222,6 +225,10 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     CF = cf;                                                 /* Real */
     MINITEMS = minCases;                                     /* Int */
     PROBTHRESH = fuzzyThreshold != 0 ? true : false;          /* Logical */
+}
+
+void setrules (int val) {
+    RULES = val;
 }
 
 void setOf()

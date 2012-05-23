@@ -65,7 +65,7 @@ extern void FreeGlobals();
 /*									 */
 /*************************************************************************/
 
-int samplemain(int *outputv)
+int rpredictmain (int *trials ,int *outputv)
 /*  ----------  */
 {
     FILE		*F;
@@ -76,6 +76,8 @@ int samplemain(int *outputv)
 //    Boolean		XRefForm=false;
 //    void		ShowRules(int);
     int                 i;
+
+    MODE = m_predict;
 
     /*  Read information on attribute names, values, and classes  */
 
@@ -89,12 +91,17 @@ int samplemain(int *outputv)
 
     if ( RULES )
     {
-	CheckFile(".rules", false);
+	PredictCheckFile(".rules", false);
+	if (*trials > TRIALS) {
+	    Error(BADOPTION , "trials option too high" ,"should be less than $TRIALS (.rules)");
+	} else {
+	    TRIALS = *trials;
+	}
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    RuleSet[Trial] = GetRules(".rules");
+	    RuleSet[Trial] = PredictGetRules(".rules");
 	    TotalRules += RuleSet[Trial]->SNRules;
 	}
 
@@ -107,12 +114,17 @@ int samplemain(int *outputv)
     }
     else
     {
-	CheckFile(".tree", false);
+	PredictCheckFile(".tree", false);
+	if (*trials > TRIALS) {
+	    Error(NOFILE , "trials option too high" ,"should be less than $TRIALS (.tree)");
+	} else {
+	    TRIALS = *trials;
+	}
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    Pruned[Trial] = GetTree(".tree");
+	    Pruned[Trial] = PredictGetTree(".tree");
 	}
     }
 
@@ -149,18 +161,18 @@ int samplemain(int *outputv)
 
     if ( ! (F = GetFile(".cases", "r")) ) Error(NOFILE, Fn, "");
 
-    ClassSum = AllocZero(MaxClass+1, float);   /* used in classification */
+    ClassSum = AllocZero(MaxClass+1, double);   /* used in classification */
     Vote     = AllocZero(MaxClass+1, float);   /* used with boosting */
 
     LineNo = 0;
 
     i = 0;  // XXX added this at least temporarily
 
-    while ( (Case = GetDataRecAlt(F, false)) )
+    while ( (Case = PredictGetDataRec(F, false)) )
     {
 	/*  For this case, find the class predicted by See5/C5.0 model  */
 
-	Predict = Classify(Case);
+	Predict = PredictClassify(Case);
 
         /* XXX prediction is ClassName[Predict]? */
         outputv[i] = Predict;  // XXX add one?

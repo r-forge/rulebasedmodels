@@ -80,6 +80,8 @@ int MAIN(int Argc, char *Argv[])
 
     setrlimit(RLIMIT_STACK, &RL);
 
+    MODE = m_build;
+
 
     /*  Check for output to be saved to a file  */
 
