@@ -77,6 +77,13 @@ int rpredictmain (int *trials ,int *outputv)
 //    void		ShowRules(int);
     int                 i;
 
+    /* TRIALS is a global variable that is derived from the rule/tree
+     file and is the value specified at the time of the model build. 
+     The integer inside *trials is the value that was used when calling 
+     predict.C5.0. That R code passes a value of zero if the default 
+     value of trials is used */ 
+    
+    
     MODE = m_predict;
 
     /*  Read information on attribute names, values, and classes  */
@@ -95,7 +102,7 @@ int rpredictmain (int *trials ,int *outputv)
 	if (*trials > TRIALS) {
 	    Error(BADOPTION , "trials option too high" ,"should be less than $TRIALS (.rules)");
 	} else {
-	    TRIALS = *trials;
+	    if(*trials > 0) TRIALS = *trials;
 	}
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
@@ -118,7 +125,7 @@ int rpredictmain (int *trials ,int *outputv)
 	if (*trials > TRIALS) {
 	    Error(NOFILE , "trials option too high" ,"should be less than $TRIALS (.tree)");
 	} else {
-	    TRIALS = *trials;
+	    if(*trials > 0) TRIALS = *trials;
 	}
 	Pruned = AllocZero(TRIALS+1, Tree);
 
