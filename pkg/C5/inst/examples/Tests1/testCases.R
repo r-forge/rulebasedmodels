@@ -16,6 +16,14 @@ makeOptions <- function(x, base = ".")
     call
   }
 
+makePredictOptions <- function(x , c50predict) {
+    opt <- "-f churnTestCase"
+    opt <- ifelse(x$rules,  paste(opt, "-r"), opt)
+    call <-paste(c50predict , opt)
+    call
+}
+
+
 makeControl <- function(x)
   {
     C5.0Control(seed = 1, 
@@ -58,7 +66,9 @@ library(C50)
 data(churn)
 setwd(system.file("examples", "Tests1", package = "C50"))
 ## path to command line version
-c50Path <- "~/Code/C50clean"
+c50Path <- "/Users/yorick/C50_original"
+#c50Path <- "~/Code/C50clean"
+c50Predict <- "/Users/yorick/C50_original/tmp1/sample"
 
 combos <- expand.grid(bands = c(0, 3),
                       cf = c(.25, .75),
@@ -116,9 +126,48 @@ for(i in 1:nrow(combos))
     if(is.logical(results) && results) cat("passed!")
     cat("\n\n")
 
-    rm(obs, expected, fit, results)
-
     cat("\n\n")
 
+    cat("   ", makePredictOptions(combos[i,], c50Predict), "\n")
+
+    expected <- system(makePredictOptions(combos[i,], c50Predict), intern = TRUE)
+    print(churnTrain$churn)
+    fit <- predict.C5.0(churnTrain[,-20], churnTrain$churn,
+                trials = combos[i,"trials"],
+                control = makeControl(combos[i,]))
+
+    #obs <- trimOutput(fit$output)
+    #expected <- trimOutput(expected, split = FALSE)
+    #
+    #results <- all.equal(obs, expected)
+
+    #if(!is.logical(results) || !results)
+    #  {
+    #    if(length(expected) == length(obs) && grepl("string mismatches", results))
+    #      {
+    #        cat("Differences:\n")
+    #        tmp <- cbind(expected[expected != obs],
+    #                     obs[expected != obs])
+    #        colnames(tmp) <- c("expected", "observed")
+    #        print(tmp)
+    #        cat("\n")
+
+    #      } else {
+    #        cat("failed! - output different lengths")
+    #        cat("\nExpected:\n")
+    #        print(expected)
+    #        cat("\nObserved:\n")
+    #        print(obs)
+    #        cat("\n")
+    #      }
+
+    #  }
+    #if(is.logical(results) && results) cat("passed!")
+    #cat("\n\n")
+
+    #cat("\n\n")
+
+    #rm(obs, expected, fit, results)
 
   }
+
