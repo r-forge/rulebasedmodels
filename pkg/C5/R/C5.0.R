@@ -94,6 +94,7 @@ C5.0.default <- function(x, y,
               levels = levels(y),
               output = Z$output,
               tree = Z$tree,
+              predictors = colnames(x),
               rules = Z$rules)
 
   class(out) <- "C5.0"
