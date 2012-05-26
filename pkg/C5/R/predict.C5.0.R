@@ -1,5 +1,5 @@
 
-predict.C5.0 <- function (object, newdata = NULL, trials = object$trials, type = "class", ...) 
+predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual"], type = "class", ...) 
 {
   if(!(type %in% c("class", "prob"))) stop("type should be either 'class' or 'prob'")
   if(is.null(newdata)) stop("newdata must be non-null")
@@ -8,7 +8,7 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials, type =
   newdata <- newdata[, object$predictors, drop = FALSE]
 
   if(length(trials) > 1) stop("only one value of trials is allowed")
-  if(trials > object$trials) stop(paste("'trials' must be <=", object$trials, "for this object"))
+  if(trials > object$trials["Actual"]) warning(paste("'trials' should be <=", object$trials["Actual"], "for this object. Predictions generated using", object$trials["Actual"], "trials"))
 
   ## make cases file
   caseString <- makeDataFile(x = newdata, y = NULL)
@@ -20,7 +20,7 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials, type =
   ## zero if the original version of trails is used
 
   if(trials <= 0) stop("'trials should be a positive integer")
-  if(trials == object$trials) trials <- 0
+  if(trials == object$trials["Actual"]) trials <- 0
 
   ## Add trials (not object$trials) as an argument
   Z <- .C("predictions",

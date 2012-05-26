@@ -75,19 +75,33 @@ C5.0.default <- function(x, y,
 
           as.logical(control$fuzzyThreshold),
                                             # -p "use the Fuzzy thresholds option" var name: PROBTHRESH     
-          
+          as.logical(control$earlyStopping), # toggle C5.0 to check to see if we should stop boosting early
           ## the model is returned in 2 files: .rules and .tree
           tree = character(1),             # pass back C5.0 tree as a string
           rules = character(1),            # pass back C5.0 rules as a string
           output = character(1),           # get output that normally goes to screen
           PACKAGE = "C50"
           )
+
+  ## Figure out how may trials were actually used. We should really
+  ## return this in Z, but for now...
+  output <- strsplit(Z$output, "\n")[[1]]
+  stopped <- grepl("*** boosting reduced", output, fixed = TRUE)
+  if(any(stopped))
+    {
+      output <- gsub("*** boosting reduced to ", "", output[stopped], fixed = TRUE)
+      output <- strsplit(output, " ")[[1]]
+      actual <- as.numeric(output[1])
+    } else actual <- trials
+
+  
+  
   out <- list(names = namesString,
               cost = costString,
               costMatrix = costs,
               caseWeights = !is.null(weights),
               control = control,
-              trials = trials,
+              trials = c(Requested = trials, Actual = actual),
               costs = costs,
               dims = dim(x),
               call = funcCall,
@@ -112,6 +126,7 @@ C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset t
                         fuzzyThreshold = FALSE,
                         sample = 0.0,
                         seed = sample.int(4096, size=1) - 1L,
+                        earlyStopping = TRUE,
                         label = "outcome")
   {
     if(CF < 0 | CF > 1)
@@ -136,6 +151,7 @@ C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset t
          minCases = minCases,
          fuzzyThreshold = fuzzyThreshold,
          sample = sample,
+         earlyStopping = earlyStopping,
          label = label,
          seed = seed %% 4096L)
   }
@@ -151,7 +167,17 @@ print.C5.0 <- function(x, ...)
         "\nNumber of predictors:", x$dims[2],
         "\n\n")
 
-    if(x$trials > 1) cat("Number of boosting iterations:", x$trials, "\n\n")
+    if(x$trials["Requested"] > 1)
+      {
+        if(x$trials[1] == x$trials[2])
+          {
+            cat("Number of boosting iterations:", x$trials["Requested"], "\n\n")
+          } else {
+            cat("Number of boosting iterations:", x$trials["Requested"],
+                "requested but", x$trials["Actual"],
+                "used due to early stopping\n\n")
+          }
+      }
 
     otherOptions <- NULL
     if(x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
@@ -164,8 +190,9 @@ print.C5.0 <- function(x, ...)
     if(x$control$fuzzyThreshold) otherOptions <- c(otherOptions, "fuzzy thresholds")    
     if(x$control$bands > 0) otherOptions <- c(otherOptions,
                                               paste(x$control$bands, " utility bands", sep = ""))
+    if(x$control$earlyStopping) otherOptions <- c(otherOptions, "early stopping for boosting")
     if(x$control$sample > 0) otherOptions <- c(otherOptions,
-                                               paste(round(100*x$control$sample, 1), "% sub-sampling", sep = ""))
+                                               paste(round(100*x$control$sample, 1), "% sub-sampling", sep = ""))    
     if(!is.null(otherOptions))
       {
         cat(truncateText(paste("Other options:", paste(otherOptions, collapse = ", "))))
