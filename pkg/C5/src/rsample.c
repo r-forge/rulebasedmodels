@@ -71,7 +71,7 @@ int rpredictmain (int *trials ,int *outputv)
     FILE		*F;
     DataRec		Case;
     int			CaseNo=0, MaxClassLen=5, o, TotalRules=0,
-			StartList, CurrentPosition;
+			StartList, CurrentPosition, RealTrials;
     ClassNo		Predict, c;
 //    Boolean		XRefForm=false;
 //    void		ShowRules(int);
@@ -83,6 +83,7 @@ int rpredictmain (int *trials ,int *outputv)
      predict.C5.0. That R code passes a value of zero if the default 
      value of trials is used */ 
     
+
     
     MODE = m_predict;
 
@@ -96,14 +97,26 @@ int rpredictmain (int *trials ,int *outputv)
 	determine the number of trials, then allocate space for
 	trees or rulesets  */
 
+
     if ( RULES )
     {
 	PredictCheckFile(".rules", false);
-	if (*trials > TRIALS) {
-	    Error(BADOPTION , "trials option too high" ,"should be less than $TRIALS (.rules)");
-	} else {
-	    if(*trials > 0) TRIALS = *trials;
-	}
+        /* If the user allowed early stopping of boosting, the interal 
+         value for TRIALS may be less than the one specificed by the
+         the user at prediction time. If this is the case, we reset
+         TRIALS to the internal value, which is the largest value 
+         possible. */
+        
+        RealTrials = TRIALS;
+        
+//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+//                RealTrials, TRIALS, *trials);
+        
+        if(*trials > 0) TRIALS = *trials;
+        if(TRIALS > RealTrials) TRIALS = RealTrials;
+            
+//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+//                RealTrials, TRIALS, *trials);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
 	ForEach(Trial, 0, TRIALS-1)
@@ -122,11 +135,22 @@ int rpredictmain (int *trials ,int *outputv)
     else
     {
 	PredictCheckFile(".tree", false);
-	if (*trials > TRIALS) {
-	    Error(NOFILE , "trials option too high" ,"should be less than $TRIALS (.tree)");
-	} else {
-	    if(*trials > 0) TRIALS = *trials;
-	}
+        /* If the user allowed early stopping of boosting, the interal 
+         value for TRIALS may be less than the one specificed by the
+         the user at prediction time. If this is the case, we reset
+         TRIALS to the internal value, which is the largest value 
+         possible. */
+        
+        RealTrials = TRIALS;
+        
+//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+//                RealTrials, TRIALS, *trials);
+        
+        if(*trials > 0) TRIALS = *trials;
+        if(TRIALS > RealTrials) TRIALS = RealTrials;
+	
+//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+//                RealTrials, TRIALS, *trials);
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)

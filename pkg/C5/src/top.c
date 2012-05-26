@@ -24,6 +24,7 @@ static void c50(char **namesv,
                 double *CF,
                 int *minCases,
                 int *fuzzyThreshold,
+                int *earlyStopping,
                 char **treev,
                 char **rulesv,
                 char **outputv)
@@ -41,7 +42,8 @@ static void c50(char **namesv,
     // Set globals based on the arguments.  This is analogous
     // to parsing the command line in the c50 program.
     setglobals(*subset, *rules, *utility, *trials, *winnow, *sample,
-               *seed, *noGlobalPruning, *CF, *minCases, *fuzzyThreshold);
+               *seed, *noGlobalPruning, *CF, *minCases, *fuzzyThreshold,
+               *earlyStopping);
 
     // Handles the strbufv data structure
     rbm_removeall();
@@ -172,12 +174,12 @@ static void predictions(char **casev,
      */
     if ((val = setjmp(rbm_buf)) == 0) {
         // Real work is done here
-        Rprintf("Calling rpredictmain\n");
+        Rprintf("\n\nCalling rpredictmain\n");
         rpredictmain(trials ,predv);
 
-        Rprintf("predict finished\n");
+        Rprintf("predict finished\n\n");
     } else {
-        Rprintf("predict code called exit with value %d\n", val - JMP_OFFSET);
+        Rprintf("predict code called exit with value %d\n\n", val - JMP_OFFSET);
     }
 
     // Close file object "Of", and return its contents via argument outputv
@@ -206,6 +208,7 @@ static R_NativePrimitiveArgType c50_t[] = {
     REALSXP,  // CF
     INTSXP,   // minCases
     LGLSXP,   // fuzzyThreshold
+    LGLSXP,   // early stopping    
     STRSXP,   // treev
     STRSXP,   // rulesv
     STRSXP    // outputv
@@ -224,7 +227,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
 
 // Declare the c50 and predictions functions
 static const R_CMethodDef cEntries[] = {
-    {"C50", (DL_FUNC) &c50, 17, c50_t},
+    {"C50", (DL_FUNC) &c50, 18, c50_t},
     {"predictions", (DL_FUNC) &predictions, 7, predictions_t},
     {NULL, NULL, 0}
 };

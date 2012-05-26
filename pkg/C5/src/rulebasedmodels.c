@@ -29,6 +29,7 @@ void initglobals(void)
 
     SUBSET=0;		/* subset tests allowed */
     BOOST=0;		/* boosting invoked */
+    EARLYSTOPPING=0;     /* let C5 check for effective boosting */
     PROBTHRESH=0;	/* to use soft thresholds */
     RULES=0;		/* rule-based classifiers */
     XVAL=0;		/* perform crossvalidation */
@@ -211,19 +212,21 @@ void initglobals(void)
  */
 void setglobals(int subset, int rules, int utility, int trials, int winnow,
                 double sample, int seed, int noGlobalPruning, double cf,
-                int minCases, int fuzzyThreshold)
+                int minCases, int fuzzyThreshold, int earlyStopping)
 {
     SUBSET = subset != 0 ? true : false;                      /* Logical */
     RULES = rules != 0 ? true : false;                        /* Logical */
     UTILITY = utility;                                       /* Int */
     TRIALS = trials;                                         /* Int */
-    BOOST = trials > 1 ? true : false;                        /* Logical */    
+    BOOST = trials > 1 ? true : false;                        /* Logical */   
+    EARLYSTOPPING = earlyStopping != 0 ? true : false;        /* Logical */
     WINNOW = winnow != 0 ? true : false;                      /* Logical */
     SAMPLE = sample;                                         /* Real */
     KRInit = seed;                                           /* Int */
     GLOBAL = noGlobalPruning != 0 ? false : true;             /* Logical */
     CF = cf;                                                 /* Real */
     MINITEMS = minCases;                                     /* Int */
+
     PROBTHRESH = fuzzyThreshold != 0 ? true : false;          /* Logical */
 }
 

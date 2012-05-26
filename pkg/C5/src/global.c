@@ -48,9 +48,10 @@ int		VERBOSITY=0,	/* verbosity level (0 = none) */
 		UTILITY=0;	/* rule utility bands */
 
 Boolean		SUBSET=0,	/* subset tests allowed */
-		BOOST=0,	/* boosting invoked */
+		BOOST=0,        /* boosting invoked */
+                EARLYSTOPPING=0,/* let C5 check for effective boosting */
 		PROBTHRESH=0,	/* to use soft thresholds */
-		RULES=0,	/* rule-based classifiers */
+		RULES=0,        /* rule-based classifiers */
 		XVAL=0,		/* perform crossvalidation */
 		NOCOSTS=0,	/* ignoring costs */
 		WINNOW=0,	/* attribute winnowing */
