@@ -1,0 +1,13 @@
+Package: C50
+Type: Package
+Title: C50 Decision Trees
+Version: 0.0.1
+Date: 2011-04-28
+Author: Max Kuhn, Steve Weston, Nathan Coulter. C code for Cubist by R. Quinlan 
+Maintainer: Max Kuhn <mxkuhn@gmail.com>
+Description: C50 decision trees for pattern recognition
+Depends: lattice, reshape2, tcltk
+SystemRequirements: Tcl (>=8.5) ,stdioctcl ,tclcfive
+Suggests: mlbench
+License: GPL-3
+LazyLoad: yes

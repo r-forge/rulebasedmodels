@@ -1,0 +1,58 @@
+# ==========================================================================
+# $Id: file_proto.tmk,v 1.1 2000/08/30 13:20:51 htschirm Exp $
+# ==========================================================================
+# instead of changing files and executing commands, just create a 
+# protocol of all file/exec actions. THIS IS *****EXPERIMENTAL*****
+# ==========================================================================
+
+proc tmk::proto_echo {cmdlist} {
+    puts "PROTO> $cmdlist"
+}
+
+proc tmk::proto_on {} {
+
+    # echo every directory change (but do it anyway)
+    rename ::cd ::tmk::old_cd
+    proc ::cd {{dir $::env(HOME)}} {
+	::tmk::proto_echo [list cd $dir]
+	::tmk::old_cd $dir
+    }
+
+    # the new file command
+    rename ::file ::tmk::old_file
+    proc ::file {cmd args} {
+	if [lcontains {delete copy} $cmd] {
+	    # ***only*** protocol all write accesses
+	    ::tmk::proto_echo [list file $cmd {*}$args]
+	} elseif [lcontains {mkdir} $cmd] {
+	    # protocol AND execute
+	    ::tmk::proto_echo [list file $cmd {*}$args]
+	    eval ::tmk::old_file \"$cmd\" $args
+	} else {
+	    # use the normal file command for the rest
+	    eval ::tmk::old_file \"$cmd\" $args
+	}
+    }
+
+    # exec: only ouput what would be done
+    rename ::exec ::tmk::old_exec
+    proc ::exec {args} {
+	# exception: 'which' is used very often in config files
+	if {[lindex $args 0] == "which"} {
+	    return [eval ::tmk::old_exec $args]
+	}
+	::tmk::proto_echo [list exec {*}$args]
+    }
+
+    # future work: open "w" ; puts $f ; ...
+   
+
+}
+
+proc tmk::proto_off {} {
+
+    # re-rename commands
+    foreach cmd {cd file exec} {
+	rename tmk::old_$cmd ::$cmd
+    }
+}

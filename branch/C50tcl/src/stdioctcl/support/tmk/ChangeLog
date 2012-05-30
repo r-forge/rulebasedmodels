@@ -1,0 +1,106 @@
+2005-04-23  Hitoshi Yamauchi  <hitoshi@ytrium.mpii>
+
+	* Put release version 1.0.1.
+
+	* src/tmk, src/cmdline.tmk, src/module_config.tmk,
+	config/soft/comp/gcc.tmk: Introduce `runmode' to tmk for building
+	64 bit executable, switching gcc executable. 
+
+	* translate CHANGES.LOG to ChangeLog according to CVS log.
+
+	* There are a lot of changes so far, e.g., multi-thread (Stefan
+	Brabec, Hendrik Lensch, ..), Darwin ports (Wolfgang Heidrich), and
+	so forth. But I am sorry not to be able to find those information
+	at CHANGES.LOG file. Please add some information in this file. 
+
+2000-11-01 htschirm
+	
+	* added ::arch_name, removed DEFAULT_ARCH 
+
+2000-10-23 htschirm
+
+	* added module::DEFS (c/c++ -D options)
+
+2000-10-17 htschirm
+	
+	* set_lazy now really usable, incl. override of lazy value
+
+	* bugs fixed: module versioning and default versions
+
+2000-10-16 htschirm
+
+	* bugs fixed:
+	  file name normalization (x/.., /./)
+	  automatic lib names (base/util///)
+
+2000-10-11 ag4-adm 
+
+	* -DCOMP_ -DARCH_ now always completely uppercase
+	
+2000-08-30 htschirm 
+
+	* The last line of the .libspec files was not correct in the previous tmk 
+	  release. This bug has been fixed. However, this means that you should 
+	  regenerate all .libspec files to make sure (e.g. by enforcing linking 
+	  with -force).
+
+	* Added the "noprefix" option to log_msg
+	
+2000-08-30 htschirm 
+
+	* new "local_only" command: declares targets as local-only, so
+	that when one of these targets is specified, no subdirectory
+	processing will take place
+
+	* introduced SUBDIR_PROCESSING variable that can either be
+	"bottom-up" or "top-down" or "none". In the case of top-down,
+	subdirectories are processed AFTER processing the local targets,
+	for bottom-up the subdirectories are built first.
+
+
+2000-08-04 ag4-adm
+
+	* introduced link::exe_only: commands can be 'redirected' to only
+	affect the library specification for the local executables, as
+	opposed to both libraries and executables. This is implemented by
+	'aliasing' the linker's LIBPATH, SYSLIBS, PROJLIBS, and OPTIONS
+	variables to EXE_LIBPATH, EXE_PROJLIBS, .... Here is an example of
+	how to use it:
+	  #---------------------------------------------------------------------
+	  # this affects local lib and executables
+	  module {cxx math}
+
+	  # only the application uses qt for testing, but it's not required for
+	  #   using the local lib
+	  exe_only {
+	    module qt
+	  }
+	  #---------------------------------------------------------------------
+
+	* ===========
+	  tmk-0.9beta
+	  ===========
+	- first public release
+	- modules now live in separate namespaces
+	- redesign of c, cxx, and link modules
+	- can choose among multiple compilers in TMakefile
+	- each compiler has separate FLAGS for each language
+	- can set the linker to any language/compiler separately
+	- introduced abstract meta compiler options to render
+	  some things more transparent
+	- introduced EXE_PROJLIBS, EXE_LIBPATH, EXE_SYSLIBS, EXE_OPTIONS 
+	  to allow specifying different libraries and options for the 
+	  local executables as for the local library
+	- introduced tmk-based 'transitive linking' (.libspec files)
+
+	- new documentation on 'installing and configuring tmk'
+	- updated tutorial
+
+	*==================
+	before tmk-0.9beta
+	==================
+	- in-house use only at the 'Max-Planck-Institut fuer Informatik'
+	- in use for more than one year
+	- 20-30 users in a LAN (IRIX + Linux + Windows)
+
+
