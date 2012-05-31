@@ -1,3 +1,0 @@
-#! /bin/env tclsh
-
-puts "nothing to see here, folks!  Run tmk instead"

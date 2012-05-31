@@ -1,3 +1,0 @@
-#! /bin/env tclsh
-
-subdir [list tclcfive tests]

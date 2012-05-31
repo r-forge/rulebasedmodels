@@ -1,8 +1,0 @@
-#
-# gcc.tmk 
-# $Id: gcc-irix.tmk,v 1.1 2005/04/23 20:53:58 yamauchih Exp $
-# configure EGCS / GNU C/C++ compilers for IRIX
-#
-assert {[ regexp IRIX.* $OS ]}
-
-# currently, defalut procs are fine.
