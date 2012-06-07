@@ -109,14 +109,14 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
         
         RealTrials = TRIALS;
         
-//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-//                RealTrials, TRIALS, *trials);
+        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+                RealTrials, TRIALS, *trials);
         
         if(*trials > 0) TRIALS = *trials;
         if(TRIALS > RealTrials) TRIALS = RealTrials;
             
-//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-//                RealTrials, TRIALS, *trials);
+        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+                RealTrials, TRIALS, *trials);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
 	ForEach(Trial, 0, TRIALS-1)
@@ -143,14 +143,14 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
         
         RealTrials = TRIALS;
         
-//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-//                RealTrials, TRIALS, *trials);
+        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+                RealTrials, TRIALS, *trials);
         
         if(*trials > 0) TRIALS = *trials;
         if(TRIALS > RealTrials) TRIALS = RealTrials;
 	
-//        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-//                RealTrials, TRIALS, *trials);
+        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
+                RealTrials, TRIALS, *trials);
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)
@@ -207,8 +207,8 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
         /* XXX prediction is ClassName[Predict]? */
         outputv[i] = Predict;  // XXX add one?
-	ForEach(c ,0 ,MaxClass-1) {
-	    confidencev[MaxClass*i+c] = ClassSum[c] ;
+	ForEach(c ,1 ,MaxClass) {
+	    confidencev[MaxClass*i+c-1] = ClassSum[c] ;
 	}
 
 	/*  Print either case label or number  */
