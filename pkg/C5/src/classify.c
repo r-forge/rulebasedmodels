@@ -90,7 +90,8 @@ ClassNo PredictTreeClassify(DataRec Case, Tree DecisionTree)
 
     C = SelectClassGen(DecisionTree->Leaf, (Boolean)(MCost != Nil), ClassSum);
 
-#if defined WIN32 || defined PREDICT
+    /*  Set all confidence values in ClassSum  */
+
     ForEach(c, 1, MaxClass)
     {
 	Prior = Prior = DecisionTree->ClassDist[c] / DecisionTree->Cases;
@@ -98,10 +99,6 @@ ClassNo PredictTreeClassify(DataRec Case, Tree DecisionTree)
 	    (ClassSum[0] * ClassSum[c] + Prior) / (ClassSum[0] + 1);
     }
     Confidence = ClassSum[C];
-#else
-    Prior = DecisionTree->ClassDist[C] / DecisionTree->Cases;
-    Confidence = (ClassSum[0] * ClassSum[C] + Prior) / (ClassSum[0] + 1);
-#endif
 
     return C;
 }
@@ -572,7 +569,6 @@ ClassNo PredictRuleClassify(DataRec Case, CRuleSet RS)
 
     Confidence = Max(MostSpec[Best]->Vote / 1000.0, ClassSum[Best] / TotWeight);
 
-#if defined WIN32 || defined PREDICT
     /*  Set all confidence values in ClassSum  */
 
     ClassSum[Best] = Confidence;
@@ -584,7 +580,6 @@ ClassNo PredictRuleClassify(DataRec Case, CRuleSet RS)
 		Min(ClassSum[c] / TotWeight, MostSpec[c]->Vote / 1000.0);
 	}
     }
-#endif
 
     return Best;
 }
@@ -890,7 +885,7 @@ ClassNo SelectClass(ClassNo Default, Boolean UseCosts)
 /*      -----------  */
 {
     ClassNo	c, cc, BestClass;
-    float	ExpCost, BestCost=1E38, TotCost=0;
+    double	ExpCost, BestCost=1E38, TotCost=0;
 
     BestClass = Default;
 

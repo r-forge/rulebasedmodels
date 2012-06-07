@@ -130,6 +130,7 @@ static void predictions(char **casev,
                         char **treev,
                         char **rulesv,
                         int *predv,  /* XXX predictions are character */
+			double *confidencev,
 			int *trials,
                         char **outputv)
 {
@@ -221,6 +222,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
     STRSXP,   // treev
     STRSXP,   // rulesv
     INTSXP,   // predv
+    REALSXP,  // confidencev
     INTSXP,   // trials
     STRSXP    // outputv
 };
@@ -228,7 +230,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
 // Declare the c50 and predictions functions
 static const R_CMethodDef cEntries[] = {
     {"C50", (DL_FUNC) &c50, 18, c50_t},
-    {"predictions", (DL_FUNC) &predictions, 7, predictions_t},
+    {"predictions", (DL_FUNC) &predictions, 8, predictions_t},
     {NULL, NULL, 0}
 };
 

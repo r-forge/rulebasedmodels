@@ -131,15 +131,14 @@ Tree		*Raw=0,		/* unpruned trees */
 		*Pruned=0,	/* pruned trees */
 		WTree=0;	/* winnow tree */
 
-float		Confidence,	/* set by classify() */
-		SampleFrac=1,	/* fraction used when sampling */
+float		SampleFrac=1,	/* fraction used when sampling */
 		*Vote=0,	/* total votes for classes */
 		*BVoteBlock=0,	/* boost voting block */
 		**MCost=0,	/* misclass cost [pred][real] */
 		**NCost=0,	/* normalised MCost used for rules */
 		*WeightMul=0;	/* prior adjustment factor */
 
-float		*Confidences;	/* new feature: show all confidences */
+double		Confidence;	/* set by classify() */
 
 CRule		*MostSpec=0;	/* most specific rule for each class */
 

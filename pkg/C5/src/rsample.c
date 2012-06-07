@@ -65,7 +65,7 @@ extern void FreeGlobals();
 /*									 */
 /*************************************************************************/
 
-int rpredictmain (int *trials ,int *outputv)
+int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 /*  ----------  */
 {
     FILE		*F;
@@ -207,6 +207,9 @@ int rpredictmain (int *trials ,int *outputv)
 
         /* XXX prediction is ClassName[Predict]? */
         outputv[i] = Predict;  // XXX add one?
+	ForEach(c ,0 ,MaxClass-1) {
+	    confidencev[MaxClass*i+c] = ClassSum[c] ;
+	}
 
 	/*  Print either case label or number  */
 
