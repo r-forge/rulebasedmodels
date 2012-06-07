@@ -176,7 +176,7 @@ static void predictions(char **casev,
     if ((val = setjmp(rbm_buf)) == 0) {
         // Real work is done here
         Rprintf("\n\nCalling rpredictmain\n");
-        rpredictmain(trials ,predv);
+        rpredictmain(trials ,predv ,confidencev);
 
         Rprintf("predict finished\n\n");
     } else {

@@ -29,7 +29,7 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
           as.character(object$tree),
           as.character(object$rules),
           pred = integer(nrow(newdata)),
-	  confidences = double(length(object$levels) * nrow(newdata)),
+	  confidence = double(length(object$levels) * nrow(newdata)),
           trials = as.integer(trials),
           output = character(1),
           PACKAGE = "C50"
