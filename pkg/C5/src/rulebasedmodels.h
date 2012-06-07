@@ -15,5 +15,4 @@ extern void setglobals(int subset, int rules, int bands, int trials,
 extern void setrules(int val);
 extern void setOf(void);
 extern char *closeOf(void);
-int rpredictmain (int *trials ,int *outputv);
 #endif

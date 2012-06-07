@@ -29,15 +29,18 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
           as.character(object$tree),
           as.character(object$rules),
           pred = integer(nrow(newdata)),
-	  confidence = double(length(object$levels) * nrow(newdata)),
+          confidence = double(length(object$levels) * nrow(newdata)),
           trials = as.integer(trials),
           output = character(1),
           PACKAGE = "C50"
           )
 
-  if(type == "class")
+  out <- factor(object$levels[Z$pred], levels = object$levels)
+  if(type == "prob")
     {
-      out <- factor(object$levels[Z$pred], levels = object$levels)
-    } else out <- NULL  ## add model confidence for type = "prob"
+      dim(Z$confidence) <- c(length(object$levels) ,nrow(newdata))
+      Z$confidence <- t(Z$confidence)
+      out <- list(predictions=out ,confidence=Z$confidence)
+    }
   out
 }
