@@ -35,12 +35,13 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
           PACKAGE = "C50"
           )
 
-  out <- factor(object$levels[Z$pred], levels = object$levels)
-  if(type == "prob")
+  if(type == "class")
     {
-      dim(Z$confidence) <- c(length(object$levels) ,nrow(newdata))
-      Z$confidence <- t(Z$confidence)
-      out <- list(predictions=out ,confidence=Z$confidence)
+      out <- factor(object$levels[Z$pred], levels = object$levels)
+    } else {
+      out <- matrix(Z$confidence, ncol = 2, byrow= TRUE)
+      if(!is.null(rownames(newdata))) rownames(out) <- rownames(newdata)
+      colnames(out) <- object$levels 
     }
   out
 }
