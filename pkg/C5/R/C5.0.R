@@ -32,7 +32,7 @@ C5.0.default <- function(x, y,
       costString <- makeCostFile(costs)
     } else costString <- ""
 
-  if(trials < 1 | trials > 1000)
+  if(trials < 1 | trials > 100)
     stop("number of boosting iterations must be between 1 and 100")
 
   if(!is.data.frame(x) & !is.matrix(x)) stop("x must be a matrix or data frame")
@@ -62,10 +62,10 @@ C5.0.default <- function(x, y,
 
           as.logical(control$winnow),       # -w "winnow attributes before constructing a classifier" var name: WINNOW 
           as.double(control$sample),        # -S : use a sample of x% for training
-                                            #      and a disjoint sample for testing var name: SAMPLE
+                                        #      and a disjoint sample for testing var name: SAMPLE
           as.integer(control$seed),         # -I : set the sampling seed value
           as.integer(control$noGlobalPruning),
-                                            # -g: "turn off the global tree pruning stage" var name: GLOBAL
+                                        # -g: "turn off the global tree pruning stage" var name: GLOBAL
           as.double(control$CF),            # -c: "set the Pruning CF value" var name: CF
 
           ## Also, for the number of minimum cases, I'm not sure what the
@@ -74,7 +74,7 @@ C5.0.default <- function(x, y,
           as.integer(control$minCases),     # -m : "set the Minimum cases" var name: MINITEMS
 
           as.logical(control$fuzzyThreshold),
-                                            # -p "use the Fuzzy thresholds option" var name: PROBTHRESH     
+                                        # -p "use the Fuzzy thresholds option" var name: PROBTHRESH     
           as.logical(control$earlyStopping), # toggle C5.0 to check to see if we should stop boosting early
           ## the model is returned in 2 files: .rules and .tree
           tree = character(1),             # pass back C5.0 tree as a string
@@ -83,18 +83,22 @@ C5.0.default <- function(x, y,
           PACKAGE = "C50"
           )
 
-  ## Figure out how may trials were actually used. We should really
-  ## return this in Z, but for now...
-  output <- strsplit(Z$output, "\n")[[1]]
-  stopped <- grepl("*** boosting reduced", output, fixed = TRUE)
-  if(any(stopped))
+  ## Figure out how may trials were actually used. 
+  modelContent <- strsplit(if(control$rules) Z$rules else Z$tree, "\n")[[1]]
+  entries <- grep("^entries", modelContent, value = TRUE)
+  if(length(entries) > 0)
     {
-      output <- gsub("*** boosting reduced to ", "", output[stopped], fixed = TRUE)
-      output <- strsplit(output, " ")[[1]]
-      actual <- as.numeric(output[1])
+      actual <- as.numeric(substring(entries, 10, nchar(entries)-1))
     } else actual <- trials
 
-  
+  if(trials > 1)
+    {
+      boostResults <- getBoostResults(Z$output)
+      size <- if(!is.null(boostResults)) subset(boostResults, Data == "Training Set")$Size else NA
+    }   else {
+    boostResults <- NULL
+    size <- length(grep("[0-9])$", strsplit(Z$output, "\n")[[1]]))
+  }
   
   out <- list(names = namesString,
               cost = costString,
@@ -102,6 +106,8 @@ C5.0.default <- function(x, y,
               caseWeights = !is.null(weights),
               control = control,
               trials = c(Requested = trials, Actual = actual),
+              boostResults = boostResults,
+              size = size, 
               costs = costs,
               dims = dim(x),
               call = funcCall,
@@ -168,34 +174,35 @@ print.C5.0 <- function(x, ...)
         "\n\n")
 
     if(x$trials["Requested"] > 1)
-      {
+      {        
         if(x$trials[1] == x$trials[2])
           {
-            cat("Number of boosting iterations:", x$trials["Requested"], "\n\n")
+            cat("Number of boosting iterations:", x$trials["Requested"], "\n")
           } else {
             cat("Number of boosting iterations:", x$trials["Requested"],
-                "requested but", x$trials["Actual"],
-                "used due to early stopping\n\n")
+                "requested; ", x$trials["Actual"],
+                "used due to early stopping\n")
           }
-      }
+        if(!all(is.na(x$size))) cat(ifelse(x$control$rules, "Average number of rules:", "Average tree size:"), round(mean(x$size, na.rm = TRUE), 1), "\n\n") else cat("\n")
+      } else cat(ifelse(x$control$rules, "Number of Rules:", "Tree size:"), x$size, "\n\n")
 
     otherOptions <- NULL
-    if(x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
+    if(!x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
     if(x$control$winnow) otherOptions <- c(otherOptions, "winnowing")
-    if(! x$control$noGlobalPruning) otherOptions <- c(otherOptions, "global pruning")
+    if(x$control$noGlobalPruning) otherOptions <- c(otherOptions, "no global pruning")
     if(x$control$CF != 0.25) otherOptions <- c(otherOptions,
-                                               paste("confidence level: ", x$control$CF, sep = ""))
+         paste("confidence level: ", x$control$CF, sep = ""))
     if(x$control$minCases != 2) otherOptions <- c(otherOptions,
-                                                  paste("minimum number of cases: ", x$control$minCases, sep = ""))
+         paste("minimum number of cases: ", x$control$minCases, sep = ""))
     if(x$control$fuzzyThreshold) otherOptions <- c(otherOptions, "fuzzy thresholds")    
     if(x$control$bands > 0) otherOptions <- c(otherOptions,
                                               paste(x$control$bands, " utility bands", sep = ""))
-    if(x$control$earlyStopping) otherOptions <- c(otherOptions, "early stopping for boosting")
+    if(!x$control$earlyStopping & x$trials["Requested"] > 1) otherOptions <- c(otherOptions, "early stopping for boosting")
     if(x$control$sample > 0) otherOptions <- c(otherOptions,
                                                paste(round(100*x$control$sample, 1), "% sub-sampling", sep = ""))    
     if(!is.null(otherOptions))
       {
-        cat(truncateText(paste("Other options:", paste(otherOptions, collapse = ", "))))
+        cat(truncateText(paste("Non-standard options:", paste(otherOptions, collapse = ", "))))
         cat("\n\n")
       }
     
@@ -250,7 +257,7 @@ truncateText <- function(x)
         spaceIndex <- gregexpr("[[:space:]]", tmp2)[[1]]
         stopIndex <- spaceIndex[length(spaceIndex) - 1] - 1
         tmp <- c(substring(tmp2, 1, stopIndex),
-               substring(tmp, stopIndex + 1))
+                 substring(tmp, stopIndex + 1))
         out <- if(length(out) == 1) tmp else c(out[1:(length(x)-1)], tmp)
         if(all(nchar(out) <= w)) cont <- FALSE
       }
@@ -301,13 +308,13 @@ C5imp <- function(object, metric = "usage", ...)
 
 getOriginalVars <- function(x)
   {
-     treeDat <- strsplit(x$names, "\n")[[1]]
-     varStart <- grep(paste(x$control$label, ":", sep = ""),
-                      treeDat)
-     if(length(varStart) == 0) stop("cannot parse names file")
-     treeDat <- treeDat[(varStart+1):length(treeDat)]
-     treeDat <- strsplit(treeDat, ":")
-     unlist(lapply(treeDat, function(x) x[1]))
+    treeDat <- strsplit(x$names, "\n")[[1]]
+    varStart <- grep(paste(x$control$label, ":", sep = ""),
+                     treeDat)
+    if(length(varStart) == 0) stop("cannot parse names file")
+    treeDat <- treeDat[(varStart+1):length(treeDat)]
+    treeDat <- strsplit(treeDat, ":")
+    unlist(lapply(treeDat, function(x) x[1]))
   }
 
 getVars <- function(x)
@@ -351,4 +358,58 @@ if(FALSE)
            sample = 10, bands = 10, fuzzyThreshold = TRUE))
 
 
+  }
+
+
+getBoostResults <- function(x)
+  {
+    output <-  strsplit(x, "\n")[[1]]
+    ## what above when sampling is used
+    srt <- grep("^Trial\t", output)
+    stp <- grep("^boost\t", output)
+
+    ## error check for srt, stp
+    if(length(srt) == 0 | length(stp) == 0) return(NULL)
+    if(any(stp - srt <= 0)) return(NULL)
+    if(length(srt) != length(stp)) return(NULL)
+    
+    if(length(stp) > 1)
+      {
+        trainSrt <- grep("Evaluation on training data", output)
+        testSrt <- grep("Evaluation on test data", output)
+        if(testSrt < trainSrt)
+          {
+            srt <- rev(srt)
+            stp <- rev(stp)
+          }
+        trainBoost <- parseBoostTable(output[(srt[1] + 4):(stp[1] - 1)])
+        trainBoost$Data <- "Training Set"
+        testBoost <- parseBoostTable(output[(srt[2] + 4):(stp[2] - 1)])
+        testBoost$Data <- "Test Set"
+        boostResults <- rbind(trainBoost, testBoost)        
+      } else {
+        boostResults <- parseBoostTable(output[(srt[1] + 4):(stp[1] - 1)])
+        boostResults$Data <- "Training Set"
+      }
+    boostResults
+    
+    
+  }
+
+parseBoostTable <- function(x)
+  {
+    x <- gsub("(", " ", x, fixed = TRUE)
+    x <- gsub("%)", "", x, fixed = TRUE)    
+    x <- strsplit(x, "[[:space:]]")
+    x <- lapply(x, function(x) x[x!= ""])
+
+    if(all(unlist(lapply(x, length)) == 4))
+      {
+        x <- do.call("rbind", x)
+        x <- matrix(as.numeric(x), ncol = 4)
+        x <- as.data.frame(x)
+        colnames(x) <- c("Trial", "Size", "Errors", "Percent")
+        x$Trial <-  x$Trial + 1
+      } else x <- NULL
+    x
   }
