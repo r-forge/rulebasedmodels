@@ -1,7 +1,7 @@
 
 predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual"], type = "class", ...) 
 {
-  if(!(type %in% c("class", "prob"))) stop("type should be either 'class' or 'prob'")
+  if(!(type %in% c("class", "prob"))) stop("type should be either 'class', 'confidence' or 'prob'")
   if(is.null(newdata)) stop("newdata must be non-null")
   
   ## make sure that the order of data to make sure that it is the same
