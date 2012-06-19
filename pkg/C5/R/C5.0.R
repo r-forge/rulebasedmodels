@@ -3,6 +3,7 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 C5.0.default <- function(x, y,
                          trials = 1,
                          weights = NULL,
+                         rules = FALSE,
                          control = C5.0Control(),
                          costs = NULL,
                          ...)
@@ -10,7 +11,12 @@ C5.0.default <- function(x, y,
   funcCall <- match.call(expand.dots = TRUE)
   if(!is.factor(y)) stop("C5.0 models require a factor outcome")
 
-
+  if(control$bands > 2 & !rules)
+    {
+      warning("rule banding only works with rules; 'rules' was changed to TRUE")
+      rules <- TRUE
+    }
+  
   ## to do add weightings
   
   lvl <- levels(y)
@@ -49,7 +55,7 @@ C5.0.default <- function(x, y,
           as.character(dataString),
           as.character(costString),
           as.logical(control$subset),       # -s "use the Subset option" var name: SUBSET
-          as.logical(control$rules),        # -r "use the Ruleset option" var name: RULES
+          as.logical(rules),                # -r "use the Ruleset option" var name: RULES
           
           ## for the bands option, I'm not sure what the default should be.
           as.integer(control$bands),        # -u "sort rules by their utility into bands" var name: UTILITY
@@ -84,7 +90,7 @@ C5.0.default <- function(x, y,
           )
 
   ## Figure out how may trials were actually used. 
-  modelContent <- strsplit(if(control$rules) Z$rules else Z$tree, "\n")[[1]]
+  modelContent <- strsplit(if(rules) Z$rules else Z$tree, "\n")[[1]]
   entries <- grep("^entries", modelContent, value = TRUE)
   if(length(entries) > 0)
     {
@@ -106,6 +112,7 @@ C5.0.default <- function(x, y,
               caseWeights = !is.null(weights),
               control = control,
               trials = c(Requested = trials, Actual = actual),
+              rbm = rules,
               boostResults = boostResults,
               size = size, 
               costs = costs,
@@ -123,7 +130,6 @@ C5.0.default <- function(x, y,
 
 
 C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset tests allowed */
-                        rules = FALSE,    ## in C, equals  RULES=0,	/* rule-based classifiers */
                         bands = 0,
                         winnow = FALSE,
                         noGlobalPruning = FALSE,
@@ -140,16 +146,10 @@ C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset t
     if(sample < 0.0 | sample > .999)
       stop("sampling percentage must be between 0.0 and .999")
 
-    if(bands > 2 & !rules)
-      {
-        warning("rule banding only works with rules; 'rules' was changed to TRUE")
-        rules <- TRUE
-      }
     if(bands == 1 | bands > 10000)
       stop("if used, bands must be between 2 and 10000")
     
     list(subset = subset,
-         rules = rules,
          bands = bands,
          winnow = winnow,
          noGlobalPruning = noGlobalPruning,
@@ -167,7 +167,7 @@ print.C5.0 <- function(x, ...)
   {
     cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
 
-    if(x$control$rules) cat("Rule-Based Model\n") else cat("Classificaiton Tree\n")
+    if(x$rbm) cat("Rule-Based Model\n") else cat("Classificaiton Tree\n")
     
     cat("Number of samples:", x$dims[1],
         "\nNumber of predictors:", x$dims[2],
@@ -183,8 +183,8 @@ print.C5.0 <- function(x, ...)
                 "requested; ", x$trials["Actual"],
                 "used due to early stopping\n")
           }
-        if(!all(is.na(x$size))) cat(ifelse(x$control$rules, "Average number of rules:", "Average tree size:"), round(mean(x$size, na.rm = TRUE), 1), "\n\n") else cat("\n")
-      } else cat(ifelse(x$control$rules, "Number of Rules:", "Tree size:"), x$size, "\n\n")
+        if(!all(is.na(x$size))) cat(ifelse(x$rbm, "Average number of rules:", "Average tree size:"), round(mean(x$size, na.rm = TRUE), 1), "\n\n") else cat("\n")
+      } else cat(ifelse(x$rbm, "Number of Rules:", "Tree size:"), x$size, "\n\n")
 
     otherOptions <- NULL
     if(!x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
@@ -265,7 +265,7 @@ truncateText <- function(x)
     paste(out, collapse = "\n")
   }
 
-C5imp <- function(object, metric = "usage", ...)
+C5imp <- function(object, metric = "usage", pct = TRUE, ...)
   {
     if(!(metric %in% c("usage", "splits"))) stop("metric should be either 'usage' or 'splits'")
     allVar <- getOriginalVars(object)
@@ -291,7 +291,11 @@ C5imp <- function(object, metric = "usage", ...)
         out <- data.frame(Overall =  as.numeric(as.character(usageData$V1)))
         rownames(out) <-  usageData$V2
       } else {
-        varData <- getAtt(getVars(object))
+        varData <- strsplit(paste(object$tree, object$rules), "\n")[[1]]
+        varData <- grep("att=", varData, value = TRUE)
+        varData <- breakUp(varData)
+        varData <- unlist(lapply(varData, function(x) x["att"]))
+        
         varData <- as.data.frame(table(varData), stringsAsFactors = FALSE)
         elim <- allVar[!(allVar %in% varData$varData)]
         if(length(elim) > 0)
@@ -300,10 +304,26 @@ C5imp <- function(object, metric = "usage", ...)
             varData <- rbind(varData, elimVars) 
           }
         out <- data.frame(Overall =  as.numeric(as.character(varData$Freq)))
-        out$Overall <- out$Overall/sum(out$Overall)*100
+        if(pct) out$Overall <- out$Overall/sum(out$Overall)*100
         rownames(out) <-  varData$varData
       }
     out[order(out$Overall, decreasing = TRUE),,drop = FALSE]
+  }
+
+breakUp <- function(y)
+  {
+    y <- gsub("\"", "", y)
+    y <- strsplit(y, " ", fixed = TRUE)
+    y <- lapply(y,
+                function(z)
+                {
+                  z <- strsplit(z, "=", fixed = TRUE)
+                  nms <- unlist(lapply(z, function(a) a[1]))
+                  val <- unlist(lapply(z, function(a) a[2]))
+                  names(val) <- nms
+                  val
+                })
+   y
   }
 
 getOriginalVars <- function(x)
