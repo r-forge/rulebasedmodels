@@ -8,7 +8,6 @@ Various parameters that control aspects of the C5.0 fit.
 }
 \usage{
 C5.0Control(subset = TRUE, 
-            rules = FALSE, 
             bands = 0, 
             winnow = FALSE, 
             noGlobalPruning = FALSE, 
@@ -22,9 +21,6 @@ C5.0Control(subset = TRUE,
 \arguments{
   \item{subset}{
 A logical: should the model evaluate groups of discrete predictors for splits?
-}
-  \item{rules}{
-A logical: should the tree be decomposed into a rule-based model?
 }
   \item{bands}{
 An integer between 2 and 1000. If \code{TRUE}, the model orders the rules by their affect on the error rate and groups the rules into the specified number of bands. This modifies the output so that the effect on the error rate can be seen for the groups of rules within a band. If this options is selected and \code{rules = FALSE}, a warning is issued and \code{rules} is changed to \code{TRUE}.
@@ -64,7 +60,7 @@ Quinlan R (1993). C4.5: Programs for Machine Learning. Morgan Kaufmann Publisher
 }
 \author{
 Original GPL C code by Ross Quinlan, R code and modifications to C by
-Max Kuhn and Steve Weston
+Max Kuhn, Steve Weston and Nathan Coulter
 }
  
 

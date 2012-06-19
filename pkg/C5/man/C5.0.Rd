@@ -11,8 +11,10 @@ C5.0 algorithm
 \usage{
 C5.0(x, ...)
 
-\method{C5.0}{default}(x, y, trials = 1, weights = NULL, 
-     control = C5.0Control(), costs = NULL, ...)
+\method{C5.0}{default}(x, y, trials = 1, rules= FALSE, 
+     weights = NULL, 
+     control = C5.0Control(), 
+     costs = NULL, ...)
 }
 
 \arguments{
@@ -25,6 +27,9 @@ a factor vector with 2 or more levels
   \item{trials}{
 an integer specifying the number of boosting iterations. A value of
 one indicates that a single model is used.
+}
+  \item{rules}{
+A logical: should the tree be decomposed into a rule-based model?
 }
   \item{weights}{
 an optional numeric vector of case weights
@@ -60,7 +65,7 @@ Quinlan R (1993). C4.5: Programs for Machine Learning. Morgan Kaufmann Publisher
 }
 \author{
 Original GPL C code by Ross Quinlan, R code and modifications to C by
-Max Kuhn and Steve Weston
+Max Kuhn, Steve Weston and Nathan Coulter
 }
 \note{
 not all data types are supported 
@@ -77,6 +82,11 @@ data(churn)
 treeModel <- C5.0(x = churnTrain[, -20], y = churnTrain$churn)
 treeModel
 summary(treeModel)
+
+ruleModel <- C5.0(x = churnTrain[, -20], y = churnTrain$churn, rules = TRUE)
+ruleModel
+summary(ruleModel)
 }
+
 
 \keyword{ models }
