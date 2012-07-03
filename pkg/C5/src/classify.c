@@ -244,7 +244,7 @@ void FindLeafGen(DataRec Case, Tree T, Tree PT, float Fraction, double *Prob)
     {
 	case 0:  /* leaf */
 
-	  LeafUpdate:
+	  FindLeafGenLeafUpdate:
 
 	    /*  Use parent node if effectively no cases at this node  */
 
@@ -327,7 +327,7 @@ void FindLeafGen(DataRec Case, Tree T, Tree PT, float Fraction, double *Prob)
 
 		/* Value not found in any subset -- treat as leaf  */
 
-		goto LeafUpdate;
+		goto FindLeafGenLeafUpdate;
 	    }
 	    else
 	    {

@@ -808,7 +808,7 @@ Tree GetTree(String Extension)
 Tree PredictGetTree(String Extension)
 /*   -------  */
 {
-    CheckFile(Extension, false);
+    PredictCheckFile(Extension, false);
 
     return ( BINARY ? BinInTree() : PredictInTree() );
 }
@@ -1117,7 +1117,7 @@ CRuleSet GetRules(String Extension)
 CRuleSet PredictGetRules(String Extension)
 /*	 --------  */
 {
-    CheckFile(Extension, false);
+    PredictCheckFile(Extension, false);
 
     return ( BINARY ? BinInRules() : InRules() );
 }

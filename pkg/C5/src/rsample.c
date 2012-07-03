@@ -248,7 +248,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
 	/*  Free the memory used by this case  */
 
-	FreeLastCase(Case);
+	PredictFreeLastCase(Case);
 
         i++;
     }
