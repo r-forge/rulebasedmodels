@@ -7,7 +7,9 @@ Predict new samples using a C5.0 model
 This function produces predicted classes or confidence values from a C5.0 model.
 }
 \usage{
-\method{predict}{C5.0}(object, newdata = NULL, type = "class", ...)
+\method{predict}{C5.0}(object, newdata = NULL, 
+        trials = object$trials["Actual"],
+        type = "class", ...)
 }
 
 \arguments{
@@ -17,6 +19,10 @@ an object of class \code{C5.0}
   \item{newdata}{
 a matrix or data frame of predictors
 }
+  \item{trials}{an integer for how many boosting iterations are used
+for prediction. See the note below.  }
+
+
   \item{type}{
 either \code{"class"} for the predicted class or \code{"prob"} for model confidence values.
 }
@@ -25,10 +31,21 @@ other options (not currently used)
 }
 }
 \details{
-Model confidence values reflect the distribution of the classes in terminal nodes or within rules. For single trees or rule-based models (i.e. not boosted), the predicted confidence value is the confidence value form the most specific, active rule. Note that C4.5 sorts the rules, and uses the first active rule for prediction.
+Note that the number of trials in the object my be less than what was
+specified originally. If the number requested is larger than the
+actual number available, the maximum actual is used and a warning is
+issued.
 
-For boosting, the per-class confidence values are aggregated over all of the trees created during the boosting process and these aggregate values are normalized so that the overall per-class confidence values sum to one. 
-}
+Model confidence values reflect the distribution of the classes in
+terminal nodes or within rules. For single trees or rule-based models
+(i.e. not boosted), the predicted confidence value is the confidence
+value form the most specific, active rule. Note that C4.5 sorts the
+rules, and uses the first active rule for prediction.
+
+For boosting, the per-class confidence values are aggregated over all
+of the trees created during the boosting process and these aggregate
+values are normalized so that the overall per-class confidence values
+sum to one.  }
 
 
 \value{
