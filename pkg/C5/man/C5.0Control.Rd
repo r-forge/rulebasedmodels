@@ -16,6 +16,7 @@ C5.0Control(subset = TRUE,
             fuzzyThreshold = FALSE, 
             sample = 0, 
             seed = sample.int(4096, size = 1) - 1L,  
+            earlyStopping = TRUE,
             label = "outcome")
 }
 \arguments{
@@ -46,6 +47,8 @@ A value between (0, .999) that specifies the random proportion of the data shoul
   \item{seed}{
 An integer for the random number seed within the C code.
 }
+  \item{earlyStopping}{A logical to toggle whether the internal method for stopping boosting should be used.
+}
   \item{label}{
 A character label for the outcome used in the output.
 }
@@ -71,7 +74,7 @@ Max Kuhn, Steve Weston and Nathan Coulter
 data(churn)
 
 treeModel <- C5.0(x = churnTrain[, -20], y = churnTrain$churn,
-                  control = C5.0Control(rules = TRUE))
+                  control = C5.0Control(winnow = TRUE))
 summary(treeModel)
 
 
