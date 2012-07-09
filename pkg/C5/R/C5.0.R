@@ -2,8 +2,8 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 
 C5.0.default <- function(x, y,
                          trials = 1,
-                         weights = NULL,
                          rules = FALSE,
+                         weights = NULL,
                          control = C5.0Control(),
                          costs = NULL,
                          ...)
@@ -100,6 +100,11 @@ C5.0.default <- function(x, y,
   if(trials > 1)
     {
       boostResults <- getBoostResults(Z$output)
+      ## This next line is here to avoid a false positive warning in R
+      ## CMD check:
+      ## * checking R code for possible problems ... NOTE
+      ## C5.0.default: no visible binding for global variable ‘Data’
+      Data <- NULL
       size <- if(!is.null(boostResults)) subset(boostResults, Data == "Training Set")$Size else NA
     }   else {
     boostResults <- NULL
