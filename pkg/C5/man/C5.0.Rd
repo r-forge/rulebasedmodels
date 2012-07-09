@@ -32,7 +32,7 @@ one indicates that a single model is used.
 A logical: should the tree be decomposed into a rule-based model?
 }
   \item{weights}{
-an optional numeric vector of case weights
+an optional numeric vector of case weights (not currently implemented)
 }
   \item{control}{
 a list of control parameters; see \code{\link{C5.0Control}}
