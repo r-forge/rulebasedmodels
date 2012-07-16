@@ -212,7 +212,8 @@ void initglobals(void)
  */
 void setglobals(int subset, int rules, int utility, int trials, int winnow,
                 double sample, int seed, int noGlobalPruning, double cf,
-                int minCases, int fuzzyThreshold, int earlyStopping)
+                int minCases, int fuzzyThreshold, int earlyStopping,
+                char costv)
 {
     SUBSET = subset != 0 ? true : false;                      /* Logical */
     RULES = rules != 0 ? true : false;                        /* Logical */
@@ -227,6 +228,7 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     CF = cf;                                                 /* Real */
     MINITEMS = minCases;                                     /* Int */
 
+    NOCOSTS = costv != NULL ? true : false;                   /* Logical */
     PROBTHRESH = fuzzyThreshold != 0 ? true : false;          /* Logical */
 }
 

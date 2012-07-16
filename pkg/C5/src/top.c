@@ -43,7 +43,7 @@ static void c50(char **namesv,
     // to parsing the command line in the c50 program.
     setglobals(*subset, *rules, *utility, *trials, *winnow, *sample,
                *seed, *noGlobalPruning, *CF, *minCases, *fuzzyThreshold,
-               *earlyStopping);
+               *earlyStopping, *costv));
 
     // Handles the strbufv data structure
     rbm_removeall();
