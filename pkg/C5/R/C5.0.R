@@ -172,7 +172,7 @@ print.C5.0 <- function(x, ...)
   {
     cat("\nCall:\n", truncateText(deparse(x$call, width.cutoff = 500)), "\n\n", sep = "")
 
-    if(x$rbm) cat("Rule-Based Model\n") else cat("Classificaiton Tree\n")
+    if(x$rbm) cat("Rule-Based Model\n") else cat("Classification Tree\n")
     
     cat("Number of samples:", x$dims[1],
         "\nNumber of predictors:", x$dims[2],
