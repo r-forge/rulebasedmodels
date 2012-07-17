@@ -3,7 +3,7 @@
 
 
 makeNamesFile <-
-function(x, y, w = NULL, label = "outcome", comments = TRUE)
+  function(x, y, w = NULL, label = "outcome", comments = TRUE)
   {
     if(comments)
       {
@@ -49,15 +49,16 @@ makeCostFile <- function(cst)
           {
             if(i != j)
               {
-                if(cst[i,j] > 0)
+                if(cst[i,j] > 0 & cst[i,j] != 1)
                   {
                     out <- paste(out,
-                                 paste(classes[i], ", ", classes[i],
+                                 paste(classes[i], ", ", classes[j],
                                        ": ", cst[i,j], sep = ""),
                                  sep = "\n")
                   }
+                
               }
           }
       }
-      out
+    out
   }
