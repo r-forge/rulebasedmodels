@@ -55,6 +55,14 @@ rules.
 
 C5.0 contains an option for boosting.
 
+The cost matrix should by CxC, where C is the number of
+classes. Diagonal elements are ignored. Columns should correspond to
+the true classes and rows are the predicted classes. For example, if C
+= 3 with classes Red, Blue and Green (in that order), a value of 5 in
+the (2,3) element of the matrix would indicate that the cost of
+predicting a Green sample as Blue is five times the usual value (of
+one).
+
 }
 \value{
 An object of class \code{C5.0} with elements:
