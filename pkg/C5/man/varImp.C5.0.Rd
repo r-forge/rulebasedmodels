@@ -7,7 +7,7 @@ Variable Importance Measures for C5.0 Models
 This function calculates the variable importance (aka attribute usage) for C5.0 models.
 }
 \usage{
-C5imp(object, metric = "usage", ...)
+C5imp(object, metric = "usage", pct = TRUE, ...)
 }
 \arguments{
   \item{object}{
@@ -15,6 +15,9 @@ an object of class \code{C5.0}
 }
   \item{metric}{
 either 'usage' or 'splits' (see Details below)
+}
+  \item{pct}{
+a logical: should the importance values be converted to be between 0 and 100?
 }
   \item{\dots}{
 other options (not currently used)
