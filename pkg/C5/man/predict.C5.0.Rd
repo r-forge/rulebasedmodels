@@ -31,21 +31,33 @@ other options (not currently used)
 }
 }
 \details{
+
 Note that the number of trials in the object my be less than what was
-specified originally. If the number requested is larger than the
+specified originally (unless \code{earlyStopping = FALSE} was used in
+\code{\link{C5.0Control}}). If the number requested is larger than the
 actual number available, the maximum actual is used and a warning is
 issued.
 
 Model confidence values reflect the distribution of the classes in
-terminal nodes or within rules. For single trees or rule-based models
-(i.e. not boosted), the predicted confidence value is the confidence
-value form the most specific, active rule. Note that C4.5 sorts the
-rules, and uses the first active rule for prediction.
+terminal nodes or within rules. 
+
+For rule-based models (i.e. not boosted), the predicted confidence
+value is the confidence value from the most specific, active
+rule. Note that C4.5 sorts the rules, and uses the first active rule
+for prediction. However, the default in the orignla sources did not
+normalize the confidence values. For examnple, for two classes it was
+possible to get confidence values of (0.3815, 0.8850) or (0.0000,
+0.922), which do not add to one. For rules, this code divides the
+values by there sum. The previous values would be converted to
+(0.3012, 0.6988) and (0, 1). There are also cases where no rule is
+activated. Here, equal values are assinged to each class.
 
 For boosting, the per-class confidence values are aggregated over all
 of the trees created during the boosting process and these aggregate
 values are normalized so that the overall per-class confidence values
-sum to one.  }
+sum to one. 
+
+}
 
 
 \value{
