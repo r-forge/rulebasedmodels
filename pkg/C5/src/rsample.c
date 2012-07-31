@@ -72,6 +72,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
     DataRec		Case;
     int			CaseNo=0, MaxClassLen=5, o, TotalRules=0,
 			StartList, CurrentPosition, RealTrials;
+    double               TotalConf=0;
     ClassNo		Predict, c;
 //    Boolean		XRefForm=false;
 //    void		ShowRules(int);
@@ -109,22 +110,18 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
         
         RealTrials = TRIALS;
         
-        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-                RealTrials, TRIALS, *trials);
-        
         if(*trials > 0) TRIALS = *trials;
         if(TRIALS > RealTrials) TRIALS = RealTrials;
             
-        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-                RealTrials, TRIALS, *trials);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
+        Rprintf("TRIALS: %4d\n", TRIALS);
 	ForEach(Trial, 0, TRIALS-1)
 	{
 	    RuleSet[Trial] = PredictGetRules(".rules");
 	    TotalRules += RuleSet[Trial]->SNRules;
 	}
-
+ 
 //	if ( RULESUSED )
 //	{
 //	    RulesUsed = Alloc(TotalRules + TRIALS, RuleNo);
@@ -143,14 +140,9 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
         
         RealTrials = TRIALS;
         
-        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-                RealTrials, TRIALS, *trials);
-        
         if(*trials > 0) TRIALS = *trials;
         if(TRIALS > RealTrials) TRIALS = RealTrials;
-	
-        Rprintf(" RealTrials = %d\n TRIALS = %d\n trials = %d\n\n",
-                RealTrials, TRIALS, *trials);
+
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)
@@ -207,9 +199,22 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
         /* XXX prediction is ClassName[Predict]? */
         outputv[i] = Predict;  // XXX add one?
+        TotalConf = 0;
 	ForEach(c ,1 ,MaxClass) {
 	    confidencev[MaxClass*i+c-1] = ClassSum[c] ;
+            TotalConf += ClassSum[c];
 	}
+        // AMK In case no rule is triggered
+        if(TotalConf == 0){
+            ForEach(c ,1 ,MaxClass) {
+                confidencev[MaxClass*i+c-1] = 1/c;
+            }
+        }
+        // AMK if a class has no active rules, normalize the conf values.
+        // In other cases, the probabilities don't exactly add up (e.g. 0.999999920630845)
+        ForEach(c ,1 ,MaxClass) {
+            confidencev[MaxClass*i+c-1] = confidencev[MaxClass*i+c-1]/TotalConf;
+        }            
 
 	/*  Print either case label or number  */
 
