@@ -71,7 +71,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
     FILE		*F;
     DataRec		Case;
     int			CaseNo=0, MaxClassLen=5, o, TotalRules=0,
-			StartList, CurrentPosition, RealTrials;
+    StartList, CurrentPosition, RealTrials;
     double               TotalConf=0;
     ClassNo		Predict, c;
 //    Boolean		XRefForm=false;
@@ -83,8 +83,6 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
      The integer inside *trials is the value that was used when calling 
      predict.C5.0. That R code passes a value of zero if the default 
      value of trials is used */ 
-    
-
     
     MODE = m_predict;
 
@@ -101,48 +99,29 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
     if ( RULES )
     {
-	PredictCheckFile(".rules", false);
-        /* If the user allowed early stopping of boosting, the interal 
-         value for TRIALS may be less than the one specificed by the
-         the user at prediction time. If this is the case, we reset
-         TRIALS to the internal value, which is the largest value 
-         possible. */
-        
-        RealTrials = TRIALS;
-        
-        if(*trials > 0) TRIALS = *trials;
-        if(TRIALS > RealTrials) TRIALS = RealTrials;
-            
+	CheckFile(".rules", false);
+	SetTrials(&TRIALS ,*trials);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
-
         Rprintf("TRIALS: %4d\n", TRIALS);
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    RuleSet[Trial] = PredictGetRules(".rules");
+	    RuleSet[Trial] = GetRules(".rules");
 	    TotalRules += RuleSet[Trial]->SNRules;
 	}
  
-//	if ( RULESUSED )
-//	{
-//	    RulesUsed = Alloc(TotalRules + TRIALS, RuleNo);
-//	}
+	/*
+	if ( RULESUSED )
+	{
+	    RulesUsed = Alloc(TotalRules + TRIALS, RuleNo);
+	}
+	*/
 
 	MostSpec = Alloc(MaxClass+1, CRule);
     }
     else
     {
-	PredictCheckFile(".tree", false);
-        /* If the user allowed early stopping of boosting, the interal 
-         value for TRIALS may be less than the one specificed by the
-         the user at prediction time. If this is the case, we reset
-         TRIALS to the internal value, which is the largest value 
-         possible. */
-        
-        RealTrials = TRIALS;
-        
-        if(*trials > 0) TRIALS = *trials;
-        if(TRIALS > RealTrials) TRIALS = RealTrials;
-
+	CheckFile(".tree", false);
+	SetTrials(&TRIALS ,*trials);
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)
@@ -197,8 +176,8 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
 	Predict = PredictClassify(Case);
 
-        /* XXX prediction is ClassName[Predict]? */
-        outputv[i] = Predict;  // XXX add one?
+	/* XXX prediction is ClassName[Predict]? */
+	outputv[i] = Predict;  // XXX add one?
         TotalConf = 0;
 	ForEach(c ,1 ,MaxClass) {
 	    confidencev[MaxClass*i+c-1] = ClassSum[c] ;
@@ -255,7 +234,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
 	PredictFreeLastCase(Case);
 
-        i++;
+	i++;
     }
 
     /*  Close the case file and free allocated memory  */
@@ -317,5 +296,25 @@ void ShowRules(int Spaces)
 	}
 
 	p = pLast + 1;
+    }
+}
+
+int SetTrials (int *internal ,int user) {
+    /*effects:
+	    internal may be modified
+    */
+
+    /* If the user allowed early stopping of boosting, the internal 
+     value for TRIALS may be less than the one specificed by the
+     the user at prediction time. If this is the case, we reset
+     TRIALS to the internal value, which is the largest value 
+     possible. */
+
+    Rprintf("internal TRIALS value = %d\n user trials value = %d\n", *internal, user);
+    if (user > 0 && user <= *internal) {
+	*internal = user;
+	Rprintf("using user-specified trials value");
+    } else {
+	Rprintf("using internal trials value");
     }
 }

@@ -37,7 +37,6 @@ static void c50(char **namesv,
     // Initialize the globals to the values that the c50
     // program would have at the start of execution
     initglobals();
-    Rprintf("Calling setOf\n");
 
     // Set globals based on the arguments.  This is analogous
     // to parsing the command line in the c50 program.
@@ -58,24 +57,31 @@ static void c50(char **namesv,
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
 
     // Register this strbuf using the name "undefined.names"
-    rbm_register(sb_names, "undefined.names", 1);
+	if (rbm_register(sb_names, "undefined.names", 0) < 0) {
+		error("undefined.names already exists");
+	}
 
     // Create a strbuf using *datav and register it as "undefined.data"
     STRBUF *sb_datav = strbuf_create_full(*datav, strlen(*datav));
     // XXX why is sb_datav copied? was that part of my debugging?
     // XXX or is this the cause of the leak?
-    rbm_register(strbuf_copy(sb_datav), "undefined.data", 1);
+	if (rbm_register(strbuf_copy(sb_datav), "undefined.data", 0) < 0) {
+		error("undefined data already exists");
+	}
 
     // Create a strbuf using *costv and register it as "undefined.cost"
     STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
     // XXX should sb_costv be copied?
-    rbm_register(sb_costv, "undefined.cost", 1);
+	if (rbm_register(sb_costv, "undefined.cost", 0) < 0) {
+		error("undefined.cost already exists");
+	}
 
     /*
      * We need to initialize rbm_buf before calling any code that
      * might call exit/rbm_exit.
      */
     if ((val = setjmp(rbm_buf)) == 0) {
+
         // Real work is done here
         Rprintf("Calling c50main\n");
         c50main();
@@ -150,22 +156,30 @@ static void predictions(char **casev,
     setOf();
 
     STRBUF *sb_cases = strbuf_create_full(*casev, strlen(*casev));
-    rbm_register(sb_cases, "undefined.cases", 1);
+	if (rbm_register(sb_cases, "undefined.cases", 0) < 0) {
+		error("undefined.cases already exists");
+	}
 
     STRBUF *sb_names = strbuf_create_full(*namesv, strlen(*namesv));
-    rbm_register(sb_names, "undefined.names", 1);
+	if (rbm_register(sb_names, "undefined.names", 0) < 0) {
+		error("undefined.names already exists");
+	}
 
     if (strlen(*treev)) {
 	STRBUF *sb_treev = strbuf_create_full(*treev, strlen(*treev));
 	/* XXX should sb_treev be copied? */
-	rbm_register(sb_treev, "undefined.tree", 1);
+	if (rbm_register(sb_treev, "undefined.tree", 0) < 0) {
+	    error("undefined.tree already exists");
+	}
     } else if (strlen(*rulesv))  {
 	STRBUF *sb_rulesv = strbuf_create_full(*rulesv, strlen(*rulesv));
 	/* XXX should sb_rulesv be copied? */
-	rbm_register(sb_rulesv, "undefined.rules", 1);
+	if (rbm_register(sb_rulesv, "undefined.rules", 0) < 0) {
+	    error("undefined.rules already exists");
+	}
 	setrules(1);
     } else {
-	/* TODO: raise an error here */
+	error("either a tree or rules must be provided");
     }
 
 

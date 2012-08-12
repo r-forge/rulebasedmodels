@@ -111,18 +111,18 @@ int predictmain(int Argc, char *Argv[])
 
     GetNames(F);
 
-    /*  Read the appropriate classifier file.  Call PredictCheckFile() to
+    /*  Read the appropriate classifier file.  Call CheckFile() to
 	determine the number of trials, then allocate space for
 	trees or rulesets  */
 
     if ( RULES )
     {
-	PredictCheckFile(".rules", false);
+	CheckFile(".rules", false);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
 
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    RuleSet[Trial] = PredictGetRules(".rules");
+	    RuleSet[Trial] = GetRules(".rules");
 	    TotalRules += RuleSet[Trial]->SNRules;
 	}
 
@@ -135,7 +135,7 @@ int predictmain(int Argc, char *Argv[])
     }
     else
     {
-	PredictCheckFile(".tree", false);
+	CheckFile(".tree", false);
 	Pruned = AllocZero(TRIALS+1, Tree);
 
 	ForEach(Trial, 0, TRIALS-1)

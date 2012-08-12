@@ -71,6 +71,7 @@ char	PropName[20],
 	*PropVal=Nil,
 	*Unquoted;
 int	PropValSize=0;
+char *	LastExt="";
 
 #define	PROPS 23
 
@@ -104,6 +105,7 @@ void modelfilesinit (void) {
     BINARY = false;
     PropVal = Nil;
     PropValSize = 0;
+    LastExt = "";
 }
 
 void modelfilesfreeglobals(void) {
@@ -123,8 +125,6 @@ void modelfilesfreeglobals(void) {
 void CheckFile(String Extension, Boolean Write)
 /*   ---------  */
 {
-    static char	*LastExt="";
-
     if ( ! TRf || strcmp(LastExt, Extension) )
     {
 	LastExt = Extension;
@@ -135,44 +135,23 @@ void CheckFile(String Extension, Boolean Write)
 	    fclose(TRf);
 	}
 
-	if ( Write )
-	{
-	    WriteFilePrefix(Extension);
-	}
-	else
-	{
-	    ReadFilePrefix(Extension);
-	}
+        if (MODE == m_build) {
+            if ( Write )
+            {
+                WriteFilePrefix(Extension);
+            }
+            else
+            {
+                ReadFilePrefix(Extension);
+            }
+        } else {
+            PredictReadFilePrefix(Extension);
+        }
+
     }
 }
 
 
-/*************************************************************************/
-/*									 */
-/*	Check whether file is open.  If it is not, open it and		 */
-/*	read/write discrete names					 */
-/*									 */
-/*************************************************************************/
-
-
-void PredictCheckFile(String Extension, Boolean Write)
-/*   ---------  */
-{
-    static char	*LastExt="";
-
-    if ( ! TRf || strcmp(LastExt, Extension) )
-    {
-	LastExt = Extension;
-
-	if ( TRf )
-	{
-	    fprintf(TRf, "\n");
-	    fclose(TRf);
-	}
-
-	PredictReadFilePrefix(Extension);
-    }
-}
 
 /*************************************************************************/
 /*									 */
@@ -1111,17 +1090,12 @@ CRuleSet GetRules(String Extension)
 {
     CheckFile(Extension, false);
 
-    return InRules();
+    if (MODE == m_build) {
+	return InRules();
+    } else {
+	return ( BINARY ? BinInRules() : InRules() );
+    }
 }
-
-CRuleSet PredictGetRules(String Extension)
-/*	 --------  */
-{
-    PredictCheckFile(Extension, false);
-
-    return ( BINARY ? BinInRules() : InRules() );
-}
-
 
 
 CRuleSet InRules()

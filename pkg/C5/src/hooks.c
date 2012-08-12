@@ -76,7 +76,7 @@
 
 /* moved InTree to modelfiles.c/PredictInTree */
 
-/* moved GetRules to modelfiles.c/PredictGetRules */
+/* integrated GetRules into modelfiles.c/GetRules */
 
 /* InRules was identical to modelfiles.c/InRules */
 
@@ -146,7 +146,7 @@
 
 /* GetFile was identical to utility.c/GetFile */
 
-/* moved CheckFile to modelfiles.c/PredictCheckFile */
+/* integrated CheckFile into modelfiles.c/CheckFile */
 
 /* moved ProcessOption to utility.c/PredictProcesssOption */
 
