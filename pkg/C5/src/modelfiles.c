@@ -135,18 +135,18 @@ void CheckFile(String Extension, Boolean Write)
 	    fclose(TRf);
 	}
 
-        if (MODE == m_build) {
-            if ( Write )
-            {
-                WriteFilePrefix(Extension);
-            }
-            else
-            {
-                ReadFilePrefix(Extension);
-            }
-        } else {
-            PredictReadFilePrefix(Extension);
-        }
+	if (MODE == m_build) {
+	    if ( Write )
+	    {
+		WriteFilePrefix(Extension);
+	    }
+	    else
+	    {
+		ReadFilePrefix(Extension);
+	    }
+	} else {
+	    PredictReadFilePrefix(Extension);
+	}
 
     }
 }
@@ -787,7 +787,7 @@ Tree GetTree(String Extension)
 Tree PredictGetTree(String Extension)
 /*   -------  */
 {
-    PredictCheckFile(Extension, false);
+    CheckFile(Extension, false);
 
     return ( BINARY ? BinInTree() : PredictInTree() );
 }
