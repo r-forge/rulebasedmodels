@@ -47,16 +47,12 @@ makeCostFile <- function(cst)
       {
         for(j in 1:ncol(cst))
           {
-            if(i != j)
+            if(i != j && cst[i,j] > 1)
               {
-                if(cst[i,j] > 0 & cst[i,j] != 1)
-                  {
-                    out <- paste(out,
-                                 paste(classes[i], ", ", classes[j],
-                                       ": ", cst[i,j], sep = ""),
-                                 sep = "\n")
-                  }
-                
+                out <- paste(out,
+                             paste(classes[i], ", ", classes[j],
+                                   ": ", cst[i,j], "\n", sep = ""),
+                             sep = "")
               }
           }
       }
