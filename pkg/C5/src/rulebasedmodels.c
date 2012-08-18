@@ -215,6 +215,11 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
                 int minCases, int fuzzyThreshold, int earlyStopping,
                 char costv)
 {
+    // I don't think there is a need for the NOCOSTS variable
+    // in the C50 package, so the costv argument is ignored,
+    // and the NOCOSTS global variable is always left at the
+    // default value.
+
     SUBSET = subset != 0 ? true : false;                      /* Logical */
     RULES = rules != 0 ? true : false;                        /* Logical */
     UTILITY = utility;                                       /* Int */
@@ -227,8 +232,6 @@ void setglobals(int subset, int rules, int utility, int trials, int winnow,
     GLOBAL = noGlobalPruning != 0 ? false : true;             /* Logical */
     CF = cf;                                                 /* Real */
     MINITEMS = minCases;                                     /* Int */
-
-    NOCOSTS = costv != NULL ? true : false;                   /* Logical */
     PROBTHRESH = fuzzyThreshold != 0 ? true : false;          /* Logical */
 }
 

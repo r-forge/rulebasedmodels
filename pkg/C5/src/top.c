@@ -69,12 +69,17 @@ static void c50(char **namesv,
 		error("undefined data already exists");
 	}
 
-    // Create a strbuf using *costv and register it as "undefined.cost"
-    STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
-    // XXX should sb_costv be copied?
-	if (rbm_register(sb_costv, "undefined.cost", 0) < 0) {
-		error("undefined.cost already exists");
-	}
+    // Create a strbuf using *costv and register it as "undefined.costs"
+    if (strlen(*costv) > 0) {
+        Rprintf("registering cost matrix: %s", *costv);
+        STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
+        // XXX should sb_costv be copied?
+	    if (rbm_register(sb_costv, "undefined.costs", 0) < 0) {
+		    error("undefined.cost already exists");
+	    }
+    } else {
+        Rprintf("no cost matrix to register\n");
+    }
 
     /*
      * We need to initialize rbm_buf before calling any code that
