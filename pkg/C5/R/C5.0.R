@@ -280,7 +280,7 @@ C5imp <- function(object, metric = "usage", pct = TRUE, ...)
         usageIndex <- grep("Attribute usage:", object$output, fixed = TRUE)
         if(length(usageIndex) == 0) stop("Error in parsing model output")
         object$output <- object$output[usageIndex:length(object$output)]
-        usageData <- grep("%", object$output, fixed = TRUE, value = TRUE)
+        usageData <- grep("%\t", object$output, fixed = TRUE, value = TRUE)
 
         usageData <- strsplit(usageData, "%", fixed = TRUE)
         if(!all(unlist(lapply(usageData, length)) == 2)) stop("Error in parsing model output")
@@ -379,8 +379,7 @@ if(FALSE)
          trials = 100,
          control=C5.0Control(
            CF = .1, winnow = TRUE,
-           globalPruning = TRUE, minCases = 10, rule = TRUE,
-           sample = 10, bands = 10, fuzzyThreshold = TRUE))
+           sample = .10, bands = 10, fuzzyThreshold = TRUE))
 
 
   }
@@ -428,12 +427,13 @@ parseBoostTable <- function(x)
     x <- strsplit(x, "[[:space:]]")
     x <- lapply(x, function(x) x[x!= ""])
 
-    if(all(unlist(lapply(x, length)) == 4))
+    if(all(unlist(lapply(x, length)) %in% 4:5))
       {
         x <- do.call("rbind", x)
-        x <- matrix(as.numeric(x), ncol = 4)
+        x <- matrix(as.numeric(x), ncol = ncol(x))
         x <- as.data.frame(x)
-        colnames(x) <- c("Trial", "Size", "Errors", "Percent")
+        cls <- c("Trial", "Size", "Errors", "Percent", "Cost")
+        colnames(x) <- cls[1:ncol(x)]
         x$Trial <-  x$Trial + 1
       } else x <- NULL
     x
