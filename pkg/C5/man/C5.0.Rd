@@ -1,5 +1,6 @@
 \name{C5.0.default}
 \alias{C5.0.default}
+\alias{C5.0.formula}
 \alias{C5.0}
 \title{
 C5.0 Decision Trees and Rule-Based Models
@@ -15,6 +16,10 @@ C5.0(x, ...)
      weights = NULL, 
      control = C5.0Control(), 
      costs = NULL, ...)
+
+
+\method{C5.0}{formula}(formula, data, weights, subset,
+     na.action = na.fail, ...)
 }
 
 \arguments{
@@ -41,8 +46,21 @@ a list of control parameters; see \code{\link{C5.0Control}}
 a matrix of costs associated with the possible errors. The matrix
 should have C columns and rows where C is the number of class levels.
 }
+  \item{formula}{
+a formula, with a response and at least one predictor.
+}
+  \item{data}{
+an optional data frame in which to interpret the variables named in the formula.
+}
+  \item{subset}{
+optional expression saying that only a subset of the rows of the data should be used in the fit.
+}
+  \item{na.action}{
+a function which indicates what should happen when the data contain \code{NA}s. The default is to throw an error. 
+}
+
   \item{\dots}{
-other options to pass into the function (not currently used)
+other options to pass into the function (not currently used with default method)
 }
 }
 \details{
@@ -54,6 +72,8 @@ The model can take the form of a full decision tree or a collection of
 rules.
 
 C5.0 contains an option for boosting.
+
+When using the formula method, factors and other classes are preserved (i.e. dummy variables are not automatically created). This particular model handels non-numeric data of some types (such as character, factor and ordered data). 
 
 The cost matrix should by CxC, where C is the number of
 classes. Diagonal elements are ignored. Columns should correspond to
