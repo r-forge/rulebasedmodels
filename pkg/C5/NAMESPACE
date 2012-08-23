@@ -3,11 +3,13 @@ useDynLib(C50)
 export(C5.0Control,
        C5.0,
        C5.0.default,
+       C5.0.formula,
        C5imp,
        predict.C5.0,
        summary.C5.0)
 
 S3method(C5.0, default)
+S3method(C5.0, formula)
 
 S3method(summary, C5.0)
 S3method(print, summary.C5.0)
