@@ -169,6 +169,7 @@ void PrintUsageInfo(CaseNo *Usage)
     Attribute	Att, Best;
     float	Tests;
     Boolean	First=true;
+    double      varUsage;
 
     Tests = Max(1, MaxCase+1);
 
@@ -197,10 +198,27 @@ void PrintUsageInfo(CaseNo *Usage)
 	/* Also, I eliminated adding 0.5 to everything below. There
 	/* is likely some really good reason to do this, but I think 
 	/* the above line with Tests = Max(1, MaxCase+1); should
-	/* eliminate teh chances of divide by zero. We'll see! */
-        fprintf(Of, "\t%3.2f%%\t%s\n",
-	    (100 * Usage[Best]) / Tests, AttName[Best]);
+	/* eliminate the chances of divide by zero. We'll see! */
 
+	varUsage = (100 * Usage[Best]) / Tests;
+        if(varUsage < 100)
+        {
+	  if(varUsage >= 10)
+	    {
+	      fprintf(Of, "\t %3.2f%%\t%s\n",
+		      varUsage, AttName[Best]);
+	    } 
+	  else
+	    {
+	      fprintf(Of, "\t  %3.2f%%\t%s\n",
+		      varUsage, AttName[Best]);
+	    }
+        } 
+        else 
+       { 
+          fprintf(Of, "\t%3.2f%%\t%s\n",
+	 	 varUsage, AttName[Best]);
+        }
 	Usage[Best] = 0;
     }
 }
