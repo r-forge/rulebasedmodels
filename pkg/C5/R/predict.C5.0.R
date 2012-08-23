@@ -4,8 +4,12 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
   if(!(type %in% c("class", "prob"))) stop("type should be either 'class', 'confidence' or 'prob'")
   if(is.null(newdata)) stop("newdata must be non-null")
   
-  ## make sure that the order of data to make sure that it is the same
-  newdata <- newdata[, object$predictors, drop = FALSE]
+  if (!is.null(object$Terms))
+    {
+      object$Terms <- delete.response(object$Terms)
+      newdata <- model.frame(object$Terms, newdata, na.action = na.fail, xlev = object$xlevels) 
+    } else newdata <- newdata[, object$predictors, drop = FALSE]
+
 
   if(length(trials) > 1) stop("only one value of trials is allowed")
   if(trials > object$trials["Actual"]) warning(paste("'trials' should be <=", object$trials["Actual"], "for this object. Predictions generated using", object$trials["Actual"], "trials"))

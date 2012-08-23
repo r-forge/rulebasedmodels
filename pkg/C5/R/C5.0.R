@@ -133,14 +133,16 @@ C5.0.default <- function(x, y,
   out
 }
 
-C5.0.formula <- function (formula, data, weights, subset, na.action = na.fail, ...) 
+C5.0.formula <- function (formula, data, weights, subset, na.action = na.pass, ...) 
 {
   call <- match.call()
 
   m <- match.call(expand.dots = FALSE)
+  m$rules <- m$trails <- m$control <- m$costs <- m$... <- NULL
   m$na.action <- na.action
   m[[1L]] <- as.name("model.frame")
   m <- eval(m, parent.frame())
+  Terms <- attr(m, "terms")
   
   y <- model.extract(m, "response")
   wt <- model.extract(m, "weights")
@@ -148,6 +150,8 @@ C5.0.formula <- function (formula, data, weights, subset, na.action = na.fail, .
   m <- m[,-1,drop = FALSE]
   out <- C5.0.default(x = m, y = y, ...)
   out$call <- call
+  out$Terms <- Terms
+  out$xlevels <- .getXlevels(Terms, m)
   out
 
 }
