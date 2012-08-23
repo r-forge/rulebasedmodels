@@ -133,6 +133,25 @@ C5.0.default <- function(x, y,
   out
 }
 
+C5.0.formula <- function (formula, data, weights, subset, na.action = na.fail, ...) 
+{
+  call <- match.call()
+
+  m <- match.call(expand.dots = FALSE)
+  m$na.action <- na.action
+  m[[1L]] <- as.name("model.frame")
+  m <- eval(m, parent.frame())
+  
+  y <- model.extract(m, "response")
+  wt <- model.extract(m, "weights")
+  if (length(wt) == 0L)  wt <- NULL
+  m <- m[,-1,drop = FALSE]
+  out <- C5.0.default(x = m, y = y, ...)
+  out$call <- call
+  out
+
+}
+
 
 C5.0Control <- function(subset = TRUE,    ## in C, equals  SUBSET=0,	/* subset tests allowed */
                         bands = 0,
