@@ -19,7 +19,7 @@ C5.0(x, ...)
 
 
 \method{C5.0}{formula}(formula, data, weights, subset,
-     na.action = na.fail, ...)
+     na.action = na.pass, ...)
 }
 
 \arguments{
@@ -56,7 +56,7 @@ an optional data frame in which to interpret the variables named in the formula.
 optional expression saying that only a subset of the rows of the data should be used in the fit.
 }
   \item{na.action}{
-a function which indicates what should happen when the data contain \code{NA}s. The default is to throw an error. 
+a function which indicates what should happen when the data contain \code{NA}s. The default is to include missing values since hte model can accommodate them. 
 }
 
   \item{\dots}{
@@ -111,7 +111,7 @@ treeModel <- C5.0(x = churnTrain[, -20], y = churnTrain$churn)
 treeModel
 summary(treeModel)
 
-ruleModel <- C5.0(x = churnTrain[, -20], y = churnTrain$churn, rules = TRUE)
+ruleModel <- C5.0(churn ~ ., data = churnTrain, rules = TRUE)
 ruleModel
 summary(ruleModel)
 }
