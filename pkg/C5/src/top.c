@@ -140,6 +140,7 @@ static void predictions(char **casev,
                         char **namesv,
                         char **treev,
                         char **rulesv,
+                        char **costv,
                         int *predv,  /* XXX predictions are character */
 			double *confidencev,
 			int *trials,
@@ -187,6 +188,17 @@ static void predictions(char **casev,
 	error("either a tree or rules must be provided");
     }
 
+    // Create a strbuf using *costv and register it as "undefined.costs"
+    if (strlen(*costv) > 0) {
+        Rprintf("registering cost matrix: %s", *costv);
+        STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
+        // XXX should sb_costv be copied?
+	    if (rbm_register(sb_costv, "undefined.costs", 0) < 0) {
+		    error("undefined.cost already exists");
+	    }
+    } else {
+        Rprintf("no cost matrix to register\n");
+    }
 
     /*
      * We need to initialize rbm_buf before calling any code that
@@ -240,6 +252,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
     STRSXP,   // namesv
     STRSXP,   // treev
     STRSXP,   // rulesv
+    STRSXP,   // costv
     INTSXP,   // predv
     REALSXP,  // confidencev
     INTSXP,   // trials
@@ -249,7 +262,7 @@ static R_NativePrimitiveArgType predictions_t[] = {
 // Declare the c50 and predictions functions
 static const R_CMethodDef cEntries[] = {
     {"C50", (DL_FUNC) &c50, 18, c50_t},
-    {"predictions", (DL_FUNC) &predictions, 8, predictions_t},
+    {"predictions", (DL_FUNC) &predictions, 9, predictions_t},
     {NULL, NULL, 0}
 };
 
