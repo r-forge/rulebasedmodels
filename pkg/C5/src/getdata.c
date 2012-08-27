@@ -40,6 +40,22 @@
 
 #define Inc 2048
 
+#ifdef WIN32
+static double
+drand48()
+{
+    double dval;
+
+    do {
+        dval = ((double) rand()) / ((double) RAND_MAX);
+    } while (dval < 0.0 || dval >= 1.0);
+
+    return dval;
+}
+#else
+double drand48(void);
+#endif
+
 Boolean SuppressErrorMessages=false;
 #define XError(a,b,c)	\
     if (MODE == m_build) { \
