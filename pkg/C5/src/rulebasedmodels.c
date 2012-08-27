@@ -213,7 +213,7 @@ void initglobals(void)
 void setglobals(int subset, int rules, int utility, int trials, int winnow,
                 double sample, int seed, int noGlobalPruning, double cf,
                 int minCases, int fuzzyThreshold, int earlyStopping,
-                char costv)
+                char *costv)
 {
     // I don't think there is a need for the NOCOSTS variable
     // in the C50 package, so the costv argument is ignored,

@@ -12,7 +12,7 @@ extern void setglobals(int subset, int rules, int bands, int trials,
                       int noGlobalPruning,
                       double CF, int minCases, int fuzzyThreshold,
                       int earlyStopping,
-                      char costv);
+                      char *costv);
 extern void setrules(int val);
 extern void setOf(void);
 extern char *closeOf(void);
