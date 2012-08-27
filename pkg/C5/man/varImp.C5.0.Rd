@@ -56,7 +56,7 @@ Quinlan R (1993). C4.5: Programs for Machine Learning. Morgan Kaufmann Publisher
 }
 \author{
 Original GPL C code by Ross Quinlan, R code and modifications to C by
-Max Kuhn and Steve Weston
+Max Kuhn, Steve Weston and Nathan Coulter
 }
 
 
