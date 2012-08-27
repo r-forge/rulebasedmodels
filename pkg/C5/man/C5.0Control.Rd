@@ -27,7 +27,7 @@ A logical: should the model evaluate groups of discrete predictors for splits?
 An integer between 2 and 1000. If \code{TRUE}, the model orders the rules by their affect on the error rate and groups the rules into the specified number of bands. This modifies the output so that the effect on the error rate can be seen for the groups of rules within a band. If this options is selected and \code{rules = FALSE}, a warning is issued and \code{rules} is changed to \code{TRUE}.
 }
   \item{winnow}{
-A logical: should predictor winnowing be used?
+A logical: should predictor winnowing (i.e feature selection) be used?
 }
   \item{noGlobalPruning}{
 A logical to toggle whether the final, global pruning step to simplify the tree.
