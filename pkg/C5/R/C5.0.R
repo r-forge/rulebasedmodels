@@ -120,7 +120,6 @@ C5.0.default <- function(x, y,
               rbm = rules,
               boostResults = boostResults,
               size = size, 
-              costs = costs,
               dims = dim(x),
               call = funcCall,
               levels = levels(y),
@@ -138,7 +137,7 @@ C5.0.formula <- function (formula, data, weights, subset, na.action = na.pass, .
   call <- match.call()
 
   m <- match.call(expand.dots = FALSE)
-  m$rules <- m$trails <- m$control <- m$costs <- m$... <- NULL
+  m$rules <- m$trails <- m$control <- m$cost <- m$... <- NULL
   m$na.action <- na.action
   m[[1L]] <- as.name("model.frame")
   m <- eval(m, parent.frame())
@@ -297,6 +296,7 @@ C5imp <- function(object, metric = "usage", pct = TRUE, ...)
   {
     if(!(metric %in% c("usage", "splits"))) stop("metric should be either 'usage' or 'splits'")
     allVar <- getOriginalVars(object)
+    allVar <- gsub("\\", "", allVar, fixed = TRUE)
     if(metric == "usage")
       {
         object$output <- strsplit( object$output, "\n")[[1]]
