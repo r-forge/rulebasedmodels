@@ -277,7 +277,7 @@ void ConstructClassifiers()
             // Rptintf("termination 1\n");
 	}
 	else
-	if ( (Trial && NoStructure || ErrWt / Cases >= 0.49) && EARLYSTOPPING)
+	if ( ( ( Trial && NoStructure ) || ErrWt / Cases >= 0.49) && EARLYSTOPPING)
 	{
 	    TRIALS = ( Trial ? Trial : 1 );
 	    fprintf(Of, TX_Reduced2(TRIALS), TRIALS);

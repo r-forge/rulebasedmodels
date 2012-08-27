@@ -755,9 +755,9 @@ Attribute FindBestAtt(CaseCount Cases)
 		    SUBSET ? Subsets[Att] : MaxAttVal[Att] );
 
 	    if ( Val > BestVal ||
-		 Val > 0.999 * BestVal &&
-		 ( NBr < BestNBr ||
-		   NBr == BestNBr && Gain[Att] > Gain[BestAtt] ) )
+		 ( Val > 0.999 * BestVal &&
+		   ( NBr < BestNBr ||
+		     ( NBr == BestNBr && Gain[Att] > Gain[BestAtt] ) ) ) )
 	    {
 		BestAtt = Att;
 		BestVal = Val;
