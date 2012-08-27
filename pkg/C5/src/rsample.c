@@ -58,6 +58,8 @@
 #include "extern.h"
 
 extern void FreeGlobals();
+extern void Rprintf(const char *, ...);
+extern int SetTrials (int *internal ,int user);
 
 /*************************************************************************/
 /*									 */
