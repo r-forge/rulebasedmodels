@@ -16,7 +16,7 @@ customer churn. There are 19 predictors, mostly numeric: \code{state}
 \code{total_intl_minutes}, \code{total_intl_calls},
 \code{total_intl_charge} and \code{number_customer_service_calls}.
 
-The outcome is cntained in a column called \code{churn} (also yes/no).
+The outcome is contained in a column called \code{churn} (also yes/no).
 
 The training data has 3333 samples and the test set contains 1667. 
 
