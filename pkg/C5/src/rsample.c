@@ -268,7 +268,7 @@ void ShowRules(int Spaces)
 {
     int	p, pLast, a, b, First;
 
-    printf("%*s", Spaces, "");
+    Rprintf("%*s", Spaces, "");
 
     p = 0;
     ForEach(Trial, 0, TRIALS-1)
@@ -290,9 +290,9 @@ void ShowRules(int Spaces)
 		}
 	    }
 
-	    if ( TRIALS > 1 ) printf("%d/", Trial);
+	    if ( TRIALS > 1 ) Rprintf("%d/", Trial);
 
-	    printf("%d ", RulesUsed[First]);
+	    Rprintf("%d ", RulesUsed[First]);
 
 	    RulesUsed[First] = 0;
 	}
