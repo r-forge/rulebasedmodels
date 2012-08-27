@@ -44,18 +44,24 @@ terminal nodes or within rules.
 For rule-based models (i.e. not boosted), the predicted confidence
 value is the confidence value from the most specific, active
 rule. Note that C4.5 sorts the rules, and uses the first active rule
-for prediction. However, the default in the orignla sources did not
-normalize the confidence values. For examnple, for two classes it was
+for prediction. However, the default in the original sources did not
+normalize the confidence values. For example, for two classes it was
 possible to get confidence values of (0.3815, 0.8850) or (0.0000,
 0.922), which do not add to one. For rules, this code divides the
 values by there sum. The previous values would be converted to
 (0.3012, 0.6988) and (0, 1). There are also cases where no rule is
-activated. Here, equal values are assinged to each class.
+activated. Here, equal values are assigned to each class.
 
 For boosting, the per-class confidence values are aggregated over all
 of the trees created during the boosting process and these aggregate
 values are normalized so that the overall per-class confidence values
 sum to one. 
+
+When the \code{cost} argument is used in the main function, class
+probabilities derived from the class distribution in the terminal
+nodes may not be consistent with the final predicted class. For this
+reason, requesting class probabilities from a model using unequal
+costs will throw an error.
 
 }
 
@@ -69,7 +75,7 @@ Quinlan R (1993). C4.5: Programs for Machine Learning. Morgan Kaufmann Publisher
 }
 \author{
 Original GPL C code by Ross Quinlan, R code and modifications to C by
-Max Kuhn and Steve Weston
+Max Kuhn, Steve Weston and Nathan Coulter
 }
 
 
