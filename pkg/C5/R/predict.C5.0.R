@@ -2,6 +2,7 @@
 predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual"], type = "class", ...) 
 {
   if(!(type %in% c("class", "prob"))) stop("type should be either 'class', 'confidence' or 'prob'")
+  if(object$cost != "" & type == "prob") stop("confidence values (i.e. class probabilities) should not be used with costs")
   if(is.null(newdata)) stop("newdata must be non-null")
   
   if (!is.null(object$Terms))
