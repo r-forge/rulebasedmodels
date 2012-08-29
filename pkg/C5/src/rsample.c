@@ -74,7 +74,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
     DataRec		Case;
     int			CaseNo=0, MaxClassLen=5, o, TotalRules=0,
     StartList, CurrentPosition, RealTrials;
-    double               TotalConf=0;
+    double               TotalConf=0, NumClasses=0;
     ClassNo		Predict, c;
 //    Boolean		XRefForm=false;
 //    void		ShowRules(int);
@@ -104,7 +104,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 	CheckFile(".rules", false);
 	SetTrials(&TRIALS ,*trials);
 	RuleSet = AllocZero(TRIALS+1, CRuleSet);
-        Rprintf("TRIALS: %4d\n", TRIALS);
+        // Rprintf("TRIALS: %4d\n", TRIALS);
 	ForEach(Trial, 0, TRIALS-1)
 	{
 	    RuleSet[Trial] = GetRules(".rules");
@@ -181,15 +181,19 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 	/* XXX prediction is ClassName[Predict]? */
 	outputv[i] = Predict;  // XXX add one?
         TotalConf = 0;
+        NumClasses = 0;
 	ForEach(c ,1 ,MaxClass) {
 	    confidencev[MaxClass*i+c-1] = ClassSum[c] ;
             TotalConf += ClassSum[c];
+            NumClasses += 1;
 	}
+        
         // AMK In case no rule is triggered
         if(TotalConf == 0){
             ForEach(c ,1 ,MaxClass) {
-                confidencev[MaxClass*i+c-1] = 1/c;
+                confidencev[MaxClass*i+c-1] = 1/NumClasses;
             }
+            TotalConf = 1;            
         }
         // AMK if a class has no active rules, normalize the conf values.
         // In other cases, the probabilities don't exactly add up (e.g. 0.999999920630845)
@@ -312,11 +316,11 @@ int SetTrials (int *internal ,int user) {
      TRIALS to the internal value, which is the largest value 
      possible. */
 
-    Rprintf("internal TRIALS value = %d\n user trials value = %d\n", *internal, user);
+    // Rprintf("internal TRIALS value = %d\n user trials value = %d\n", *internal, user);
     if (user > 0 && user <= *internal) {
 	*internal = user;
-	Rprintf("using user-specified trials value");
+	// Rprintf("using user-specified trials value");
     } else {
-	Rprintf("using internal trials value");
+	// Rprintf("using internal trials value");
     }
 }
