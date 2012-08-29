@@ -21,7 +21,7 @@ C5.0Control(subset = TRUE,
 }
 \arguments{
   \item{subset}{
-A logical: should the model evaluate groups of discrete predictors for splits?
+A logical: should the model evaluate groups of discrete predictors for splits? Note: the C5.0 command line version defaults this parameter to \code{FALSE}, meaning no attempted gropings will be evaluated during the tree growing stage.
 }
   \item{bands}{
 An integer between 2 and 1000. If \code{TRUE}, the model orders the rules by their affect on the error rate and groups the rules into the specified number of bands. This modifies the output so that the effect on the error rate can be seen for the groups of rules within a band. If this options is selected and \code{rules = FALSE}, a warning is issued and \code{rules} is changed to \code{TRUE}.
