@@ -214,7 +214,7 @@ print.C5.0 <- function(x, ...)
       } else cat(ifelse(x$rbm, "Number of Rules:", "Tree size:"), x$size, "\n\n")
 
     otherOptions <- NULL
-    if(!x$control$subset) otherOptions <- c(otherOptions, "attribute subsetting")   
+    if(x$control$subset) otherOptions <- c(otherOptions, "attempt to group attributes")   
     if(x$control$winnow) otherOptions <- c(otherOptions, "winnowing")
     if(x$control$noGlobalPruning) otherOptions <- c(otherOptions, "no global pruning")
     if(x$control$CF != 0.25) otherOptions <- c(otherOptions,
