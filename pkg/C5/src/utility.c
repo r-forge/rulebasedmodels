@@ -357,28 +357,6 @@ void Error(int ErrNo, String S1, String S2)
     Boolean	Quit=false, WarningOnly=false;
     char	Buffer[10000], *Msg=Buffer;
 
-#ifdef WIN32
-    if ( ErrNo == NOMEM )
-    {
-	MessageBox(NULL, "Cannot allocate sufficient memory", "Fatal Error",
-			 MB_ICONERROR | MB_OK);
-	Goodbye(1);
-    }
-    else
-    if ( ErrNo == MODELFILE )
-    {
-	if ( ! ErrMsgs )
-	{
-	    sprintf(Msg, "File %s is incompatible with .names file\n(%s `%s')",
-			 Fn, S1, S2);
-	    MessageBox(NULL, Msg, "Cannot Load Classifier",
-		       MB_ICONERROR | MB_OK);
-	}
-	ErrMsgs++;
-	return;
-    }
-#endif
-
     if ( Of ) fprintf(Of, "\n");
 
     if ( ErrNo == NOFILE || ErrNo == NOMEM || ErrNo == MODELFILE )
@@ -550,29 +528,13 @@ void Error(int ErrNo, String S1, String S2)
 	    
     }
 
-#ifdef WIN32
-    if ( Of )
-    {
-	fprintf(Of, Buffer);
-    }
-    else
-    if ( ErrMsgs <= 10 )
-    {
-	MessageBox(NULL, Buffer, ( WarningOnly ? "Warning" : "Error" ), MB_OK);
-    }
-#else
     fprintf(Of, Buffer);
-#endif
 	
     if ( ! WarningOnly ) ErrMsgs++;
 
     if ( ErrMsgs == 10 )
     {
-#if defined WIN32 && ! defined _CONSOLE
-	MessageBox(NULL, T_ErrorLimit, "Too many errors!", MB_OK);
-#else
 	fprintf(Of,  T_ErrorLimit);
-#endif
 	/* hooks.c/Error did not decrement MaxCase */
 	if (MODE == m_build) {
 	    MaxCase--;
