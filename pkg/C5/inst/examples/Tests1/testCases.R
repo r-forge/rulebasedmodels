@@ -162,7 +162,9 @@ for(i in 1:nrow(combos))
     maxConf <- apply(predConf, 1, max)
     names(maxConf) <- NULL
     cat("   Probabilities:")
-    print(all.equal(round(maxConf, 4), round(expConf, 4)))
+    probCheck <- all.equal(round(maxConf, 4), round(expConf, 4))
+    print(probCheck)
+    if(class(probCheck)[1] == "character" && combos[i,"trials"] ==1 && combos[i,"rules"]) cat("That's ok, we fixed an issue with C5\n")
     if(any(totalConf < .99) | (any(totalConf > 1.01)))
       {
         cat(" *do not add to one*\n")
