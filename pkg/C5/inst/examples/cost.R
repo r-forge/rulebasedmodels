@@ -18,3 +18,11 @@ print(treeModelCost$cost)
 print(identical(costs, treeModelCost$costs))
 print(identical(costs, treeModelCost$costMatrix))
 print(treeModelCost$costs)
+
+
+classes <- predict(treeModelCost, churnTrain[,-20])
+probs <- predict(treeModelCost, churnTrain[,-20], type = "prob")[,1]
+classes2 <- factor(ifelse(probs >= .5,
+                          levels(churnTrain$churn)[1],
+                          levels(churnTrain$churn)[2]),
+                   levels =  levels(churnTrain$churn))
