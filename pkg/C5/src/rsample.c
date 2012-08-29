@@ -128,7 +128,7 @@ int rpredictmain (int *trials ,int *outputv ,double *confidencev)
 
 	ForEach(Trial, 0, TRIALS-1)
 	{
-	    Pruned[Trial] = PredictGetTree(".tree");
+	    Pruned[Trial] = GetTree(".tree");
 	}
     }
 

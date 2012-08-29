@@ -781,16 +781,9 @@ Tree GetTree(String Extension)
 {
     CheckFile(Extension, false);
 
-    return InTree();
+    return ( BINARY ? BinInTree() : InTree() );
 }
 
-Tree PredictGetTree(String Extension)
-/*   -------  */
-{
-    CheckFile(Extension, false);
-
-    return ( BINARY ? BinInTree() : PredictInTree() );
-}
 
 Tree InTree()
 /*   ------  */
@@ -890,106 +883,6 @@ Tree InTree()
 	ForEach(v, 1, T->Forks)
 	{
 	    T->Branch[v] = InTree();
-	}
-    }
-
-    return T;
-}
-
-Tree PredictInTree()
-/*   ------  */
-{
-    Tree	T;
-    DiscrValue	v, Subset=0;
-    char	Delim, *p;
-    ClassNo	c;
-    int		X;
-    double	XD;
-
-    T = (Tree) AllocZero(1, TreeRec);
-
-    do
-    {
-	switch ( ReadProp(&Delim) )
-	{
-	    case ERRORP:
-		return Nil;
-
-	    case TYPEP:
-		sscanf(PropVal, "\"%d\"", &X); T->NodeType = X;
-		break;
-
-	    case CLASSP:
-		Unquoted = RemoveQuotes(PropVal);
-		T->Leaf = Which(Unquoted, ClassName, 1, MaxClass);
-		if ( ! T->Leaf ) Error(MODELFILE, E_MFCLASS, Unquoted);
-		break;
-
-	    case ATTP:
-		Unquoted = RemoveQuotes(PropVal);
-		T->Tested = Which(Unquoted, AttName, 1, MaxAtt);
-		if ( ! T->Tested || Exclude(T->Tested) )
-		{
-		    Error(MODELFILE, E_MFATT, Unquoted);
-		}
-		break;
-
-	    case CUTP:
-		sscanf(PropVal, "\"%lf\"", &XD);	T->Cut = XD;
-		T->Lower = T->Upper = T->Cut;
-		break;
-
-	    case LOWP:
-		sscanf(PropVal, "\"%lf\"", &XD);	T->Lower = XD;
-		break;
-
-	    case HIGHP:
-		sscanf(PropVal, "\"%lf\"", &XD);	T->Upper = XD;
-		break;
-
-	    case FORKSP:
-		sscanf(PropVal, "\"%d\"", &T->Forks);
-		break;
-
-	    case FREQP:
-		T->ClassDist = Alloc(MaxClass+1, CaseCount);
-		p = PropVal+1;
-
-		ForEach(c, 1, MaxClass)
-		{
-		    T->ClassDist[c] = strtod(p, &p);
-		    T->Cases += T->ClassDist[c];
-		    p++;
-		}
-		break;
-
-	    case ELTSP:
-		if ( ! Subset++ )
-		{
-		    T->Subset = AllocZero(T->Forks+1, Set);
-		}
-
-		T->Subset[Subset] = MakeSubset(T->Tested);
-		break;
-	}
-    }
-    while ( Delim == ' ' );
-
-    if ( T->ClassDist )
-    {
-	T->Errors = T->Cases - T->ClassDist[T->Leaf];
-    }
-    else
-    {
-	T->ClassDist = Alloc(1, CaseCount);
-    }
-
-    if ( T->NodeType )
-    {
-	T->Branch = AllocZero(T->Forks+1, Tree);
-	ForEach(v, 1, T->Forks)
-	{
-	    T->Branch[v] = PredictInTree();
 	}
     }
 

@@ -72,9 +72,9 @@
 
 /* moved ReadHeader to modelfiles.c/PredictReadHeader */
 
-/* moved GetTree to modelfiles.c/PredictGetTree */
+/* Integrated GetTree into  modelfiles.c/GetTree */
 
-/* moved InTree to modelfiles.c/PredictInTree */
+/* Instead of InTree, use modelfiles.c/InTree superset */
 
 /* integrated GetRules into modelfiles.c/GetRules */
 

@@ -39,6 +39,7 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
           trials = as.integer(trials),
           output = character(1),
           PACKAGE = "C50"
+          ,DUP=FALSE
           )
 
   if(type == "class")
