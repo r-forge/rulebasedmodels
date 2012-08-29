@@ -45,7 +45,7 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
     {
       out <- factor(object$levels[Z$pred], levels = object$levels)
     } else {
-      out <- matrix(Z$confidence, ncol = 2, byrow= TRUE)
+      out <- matrix(Z$confidence, ncol = length(object$levels), byrow= TRUE)
       if(!is.null(rownames(newdata))) rownames(out) <- rownames(newdata)
       colnames(out) <- object$levels 
     }
