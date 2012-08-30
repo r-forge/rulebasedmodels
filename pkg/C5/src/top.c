@@ -32,7 +32,7 @@ static void c50(char **namesv,
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
 
     // Announce ourselves for testing
-    Rprintf("c50 called\n");
+    // Rprintf("c50 called\n");
 
     // Initialize the globals to the values that the c50
     // program would have at the start of execution
@@ -48,7 +48,7 @@ static void c50(char **namesv,
     rbm_removeall();
 
     // XXX Should this be controlled via an option?
-    Rprintf("Calling setOf\n");
+    // Rprintf("Calling setOf\n");
     setOf();
 
     // Create a strbuf using *namesv as the buffer.
@@ -71,14 +71,14 @@ static void c50(char **namesv,
 
     // Create a strbuf using *costv and register it as "undefined.costs"
     if (strlen(*costv) > 0) {
-        Rprintf("registering cost matrix: %s", *costv);
+        // Rprintf("registering cost matrix: %s", *costv);
         STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
         // XXX should sb_costv be copied?
 	    if (rbm_register(sb_costv, "undefined.costs", 0) < 0) {
 		    error("undefined.cost already exists");
 	    }
     } else {
-        Rprintf("no cost matrix to register\n");
+        // Rprintf("no cost matrix to register\n");
     }
 
     /*
@@ -88,10 +88,10 @@ static void c50(char **namesv,
     if ((val = setjmp(rbm_buf)) == 0) {
 
         // Real work is done here
-        Rprintf("Calling c50main\n");
+        // Rprintf("Calling c50main\n");
         c50main();
 
-        Rprintf("c50main finished\n");
+        // Rprintf("c50main finished\n");
 
         if (*rules == 0) {
             // Get the contents of the the tree file
@@ -149,7 +149,7 @@ static void predictions(char **casev,
     int val;  /* Used by setjmp/longjmp for implementing rbm_exit */
 
     // Announce ourselves for testing
-    Rprintf("predictions called\n");
+    // Rprintf("predictions called\n");
 
     // Initialize the globals
     initglobals();
@@ -158,7 +158,7 @@ static void predictions(char **casev,
     rbm_removeall();
 
     // XXX Should this be controlled via an option?
-    Rprintf("Calling setOf\n");
+    // Rprintf("Calling setOf\n");
     setOf();
 
     STRBUF *sb_cases = strbuf_create_full(*casev, strlen(*casev));
@@ -190,14 +190,14 @@ static void predictions(char **casev,
 
     // Create a strbuf using *costv and register it as "undefined.costs"
     if (strlen(*costv) > 0) {
-        Rprintf("registering cost matrix: %s", *costv);
+        // Rprintf("registering cost matrix: %s", *costv);
         STRBUF *sb_costv = strbuf_create_full(*costv, strlen(*costv));
         // XXX should sb_costv be copied?
 	    if (rbm_register(sb_costv, "undefined.costs", 0) < 0) {
 		    error("undefined.cost already exists");
 	    }
     } else {
-        Rprintf("no cost matrix to register\n");
+        // Rprintf("no cost matrix to register\n");
     }
 
     /*
@@ -206,10 +206,10 @@ static void predictions(char **casev,
      */
     if ((val = setjmp(rbm_buf)) == 0) {
         // Real work is done here
-        Rprintf("\n\nCalling rpredictmain\n");
+        // Rprintf("\n\nCalling rpredictmain\n");
         rpredictmain(trials ,predv ,confidencev);
 
-        Rprintf("predict finished\n\n");
+        // Rprintf("predict finished\n\n");
     } else {
         Rprintf("predict code called exit with value %d\n\n", val - JMP_OFFSET);
     }
@@ -270,7 +270,7 @@ static const R_CMethodDef cEntries[] = {
 void R_init_C50(DllInfo *dll)
 {
     // Announce ourselves for testing
-    Rprintf("R_init_C50 called\n");
+    // Rprintf("R_init_C50 called\n");
 
     // Register the functions "c50" and "predictions"
     R_registerRoutines(dll, cEntries, NULL, NULL, NULL);
