@@ -1,8 +1,8 @@
 Package: C50
 Type: Package
 Title: C5.0 Decision Trees and Rule-Based Models
-Version: 0.0.9
-Date: 2012-08-23
+Version: 0.1.0-013
+Date: 2012-10-19
 Author: Max Kuhn, Steve Weston, Nathan Coulter. C code for C5.0 by R. Quinlan 
 Maintainer: Max Kuhn <mxkuhn@gmail.com>
 Description: C5.0 decision trees and rule-based models for pattern recognition
