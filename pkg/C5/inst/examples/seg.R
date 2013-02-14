@@ -7,6 +7,11 @@ colnames(moo1) <- c("result", paste("A", 1:50, sep=""))
 stats <- data.frame(moo1)
 stats.nl <- stats[, -c(13:25,10,26:28,3)]
 
+## Using gtorture makes this run much slower (a day
+## versus a few minutes), and doesn't seem to change
+## the failure at all.
+# gctorture(TRUE)
+
 cat('First loop:\n')
 for (d in 1:nrow(stats.nl)) {
     print(d)
