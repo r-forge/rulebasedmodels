@@ -3,6 +3,17 @@
 \newcommand{\cpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
 
+
+\section{Changes in version 0.0.14}{
+\itemize{ 
+
+\item The Windows build configuration was updated.
+
+\item Some files were synced with the \cpkg{C50} package. 
+
+ }  
+}
+
 \section{Changes in version 0.0.13}{
 \itemize{ 
 
