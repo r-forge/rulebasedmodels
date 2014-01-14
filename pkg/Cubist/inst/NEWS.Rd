@@ -2,7 +2,14 @@
 \title{News for Package \pkg{Cubist}}
 \newcommand{\cpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 
+\section{Changes in version 0.0.15}{
+\itemize{ 
 
+\item A bug was fixed where the model failed if no predictors were
+included in the model (thanks to Gabe Gershenfeld for the find). 
+
+ }  
+}
 
 \section{Changes in version 0.0.14}{
 \itemize{ 

@@ -84,10 +84,10 @@ cubist.default <- function(x, y,
 
 
   usage <- varUsage(Z$output)
-  if(nrow(usage) < ncol(x))
+  if(is.null(usage) || nrow(usage) < ncol(x))
     {
       xNames <- colnames(x)
-      uNames <- as.character(usage$Variable)
+      uNames <- if(!is.null(usage)) as.character(usage$Variable) else ""
       if(!all(xNames %in% uNames))
         {
 
