@@ -47,6 +47,11 @@ static void c50(char **namesv,
     // Handles the strbufv data structure
     rbm_removeall();
 
+    // Deallocates memory allocated by NewCase.
+    // Not necessary since it's also called at the end of this function,
+    // but it doesn't hurt, and I'm feeling paranoid.
+    FreeCases();
+
     // XXX Should this be controlled via an option?
     // Rprintf("Calling setOf\n");
     setOf();
@@ -131,6 +136,9 @@ static void c50(char **namesv,
     char *output = R_alloc(strlen(outputString) + 1, 1);
     strcpy(output, outputString);
     *outputv = output;
+
+    // Deallocates memory allocated by NewCase
+    FreeCases();
 
     // We reinitialize the globals on exit out of general paranoia
     initglobals();
