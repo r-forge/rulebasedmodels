@@ -9,6 +9,7 @@
 
 extern void c50main();
 extern void sample(double *outputv);
+extern void FreeCases(void);
 
 static void c50(char **namesv,
                 char **datav,

@@ -9,6 +9,7 @@
 
 extern void cubistmain();
 extern void samplemain(double *outputv);
+extern void FreeCases(void);
 
 static void cubist(char **namesv,
                    char **datav,
