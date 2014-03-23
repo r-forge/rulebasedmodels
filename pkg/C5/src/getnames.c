@@ -630,7 +630,7 @@ void ListAttsUsed()
     {
 	if ( DefOp(D[e]) == OP_ATT )
 	{
-	    Att = (Attribute) DefSVal(D[e]);
+	    Att = (Attribute) (long) DefSVal(D[e]);
 	    if ( ! DefUses[Att] )
 	    {
 		DefUses[Att] = true;
