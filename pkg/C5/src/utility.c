@@ -137,10 +137,7 @@ void *Pmalloc(size_t Bytes)
 
     Error(NOMEM, "", "");
 
-#ifdef WIN32
     return Nil;
-#endif
-
 }
 
 
@@ -161,9 +158,7 @@ void *Prealloc(void *Present, size_t Bytes)
 
     Error(NOMEM, "", "");
 
-#ifdef WIN32
     return Nil;
-#endif
 }
 
 
@@ -180,10 +175,7 @@ void *Pcalloc(size_t Number, unsigned int Size)
 
     Error(NOMEM, "", "");
 
-#ifdef WIN32
     return Nil;
-#endif
-
 }
 
 
