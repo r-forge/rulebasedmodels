@@ -454,7 +454,7 @@ Boolean Atom(void)
     {
 	BN += strlen(AttName[Att]);
 
-	Dump(OP_ATT, 0, (String) (long) Att, Fi);
+	Dump(OP_ATT, 0, (String) (intptr_t) Att, Fi);
     }
     else
     if ( isdigit(Buff[BN]) )
@@ -903,7 +903,7 @@ AttValue EvaluateDef(Definition D, DataRec Case)
 	switch ( DefOp((DElt = D[DN])) )
 	{
 	    case OP_ATT:
-		    Att = (long) (intptr_t) DefSVal(DElt);
+		    Att = (Attribute) (intptr_t) DefSVal(DElt);
 
 		    if ( Continuous(Att) )
 		    {
